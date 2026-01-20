@@ -39,25 +39,6 @@ services:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     working_dir: /home/agent/workspace
 
-  # Google Gemini - Python focused
-  gemini:
-    build:
-      context: .
-      dockerfile: Dockerfile.gemini
-      args:
-        BASE_IMAGE: ubuntu:25.10
-        INSTALL_PYTHON: "true"
-    image: ghcr.io/boringhappy/coder:gemini
-    container_name: gemini-dev
-    stdin_open: true
-    tty: true
-    volumes:
-      - .:/home/agent/workspace
-      - ~/.gitconfig:/home/agent/.gitconfig:ro
-    environment:
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-    working_dir: /home/agent/workspace
-
   # Base image for custom builds
   base:
     build:

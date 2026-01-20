@@ -23,7 +23,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        variant: [base, claude, codex, gemini]
+        variant: [base, claude, codex]
 
     steps:
       - name: Checkout repository

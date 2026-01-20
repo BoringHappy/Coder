@@ -1,10 +1,10 @@
 # Coder
 
-A secure Docker-based development environment supporting multiple AI coding agents (Claude Code, GitHub Copilot, Google Gemini) with elevated execution privileges in isolated containers.
+A secure Docker-based development environment supporting multiple AI coding agents (Claude Code, GitHub Copilot) with elevated execution privileges in isolated containers.
 
 ## Features
 
-- **Multiple AI Agents**: Choose between Claude Code, GitHub Copilot CLI, or Google Gemini
+- **Multiple AI Agents**: Choose between Claude Code, GitHub Copilot CLI
 - **Secure Isolation**: Each agent runs inside a Docker container, protecting your host system
 - **Flexible Tech Stacks**: Configurable base image with optional Go, Node.js, Python, and Rust
 - **Complete Dev Environment**: Pre-installed with essential development tools
@@ -23,11 +23,6 @@ A secure Docker-based development environment supporting multiple AI coding agen
 - **Languages**: Node.js
 - **Tools**: Core tools + GitHub Copilot CLI
 - **Use Case**: JavaScript/TypeScript development with Copilot
-
-### Google Gemini (Python)
-- **Languages**: Python
-- **Tools**: Core tools + Google Generative AI SDK
-- **Use Case**: Python development with Gemini API
 
 ### Base (Customizable)
 - **Languages**: Configurable (Go, Node.js, Python, Rust)
@@ -73,7 +68,6 @@ docker run -it --rm \
 - `ghcr.io/boringhappy/coder:main` or `:latest` - Claude Code (default)
 - `ghcr.io/boringhappy/coder:main-claude` - Claude Code (explicit)
 - `ghcr.io/boringhappy/coder:main-codex` - GitHub Copilot CLI (Node.js)
-- `ghcr.io/boringhappy/coder:main-gemini` - Google Gemini (Python)
 - `ghcr.io/boringhappy/coder:main-base` - Base image (customizable)
 - `ghcr.io/boringhappy/coder:v1.0.0` - Claude Code release (default)
 - `ghcr.io/boringhappy/coder:v1.0.0-<variant>` - Specific variant release
@@ -87,12 +81,6 @@ docker run -it --rm \
   -v $(pwd):/home/agent/workspace \
   -e GITHUB_TOKEN=$GITHUB_TOKEN \
   ghcr.io/boringhappy/coder:main-codex
-
-# Google Gemini
-docker run -it --rm \
-  -v $(pwd):/home/agent/workspace \
-  -e GOOGLE_API_KEY=$GOOGLE_API_KEY \
-  ghcr.io/boringhappy/coder:main-gemini
 ```
 
 ### Using Docker Compose
@@ -130,9 +118,6 @@ docker compose run --rm claude
 # GitHub Copilot
 docker compose run --rm codex
 
-# Google Gemini
-docker compose run --rm gemini
-
 # Or run zsh shell
 docker compose run --rm claude zsh
 ```
@@ -168,7 +153,6 @@ docker build -f Dockerfile.base \
 
 - `ANTHROPIC_API_KEY` - Required for Claude Code variant
 - `GITHUB_TOKEN` - Required for GitHub Copilot variant
-- `GOOGLE_API_KEY` - Required for Google Gemini variant
 
 ## Security Notes
 

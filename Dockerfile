@@ -35,22 +35,36 @@ RUN set -ex && \
 RUN set -euxo pipefail && \
     apt-get update && \
     apt-get install -yy --no-install-recommends \
+        curl \
         dnsutils \
         git \
         gh \
+        htop \
+        iputils-ping \
         jq \
         less \
         lsof \
         make \
+        ncdu \
+        net-tools \
+        openssh-client \
         procps \
         psmisc \
         ripgrep \
         rsync \
         socat \
         sudo \
+        tar \
+        telnet \
+        tmux \
         unzip \
+        vim \
+        wget \
+        zip \
         zsh \
-        tree
+        tree && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install programming languages and tools
 RUN set -euxo pipefail && \
@@ -65,7 +79,9 @@ RUN set -euxo pipefail && \
         python3-pip \
         build-essential \
         pkg-config \
-        libssl-dev 
+        libssl-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* 
 
 USER agent
 # Set working directory

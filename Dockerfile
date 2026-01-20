@@ -1,0 +1,87 @@
+FROM ubuntu:25.10
+
+# Build argument
+ARG TARGETPLATFORM=linux/amd64
+
+# Environment variables
+ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
+ENV PATH=/home/agent/.cargo/bin:/home/agent/.local/bin:/usr/local/share/npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV SHELL=/bin/zsh
+
+USER root
+
+# Create agent user and configure permissions
+RUN set -ex && \
+    # Remove base image user
+    userdel ubuntu || true && \
+    # Create non-root user with zsh
+    useradd --create-home --uid 1000 --shell /bin/zsh agent && \
+    groupadd -f docker && \
+    usermod -aG sudo agent && \
+    usermod -aG docker agent && \
+    # Configure sudoers
+    mkdir /etc/sudoers.d && \
+    chmod 0755 /etc/sudoers.d && \
+    echo "agent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/agent && \
+    echo "Defaults:%sudo env_keep += \"http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY SSL_CERT_FILE NODE_EXTRA_CA_CERTS REQUESTS_CA_BUNDLE\"" > /etc/sudoers.d/proxyconfig && \
+    # Create sandbox config
+    mkdir -p /home/agent/.docker/sandbox/locks && \
+    chown -R agent:agent /home/agent && \
+    # Set up npm global package folder
+    mkdir -p /usr/local/share/npm-global && \
+    chown -R agent:agent /usr/local/share/npm-global
+
+# Install core development tools including zsh
+RUN set -euxo pipefail && \
+    apt-get update && \
+    apt-get install -yy --no-install-recommends \
+        dnsutils \
+        git \
+        gh \
+        jq \
+        less \
+        lsof \
+        make \
+        procps \
+        psmisc \
+        ripgrep \
+        rsync \
+        socat \
+        sudo \
+        unzip \
+        zsh \
+        tree
+
+# Install programming languages and tools
+RUN set -euxo pipefail && \
+    apt-get update && \
+    apt-get install -yy --no-install-recommends \
+        bc \
+        golang \
+        man-db \
+        nodejs \
+        npm \
+        python3 \
+        python3-pip \
+        build-essential \
+        pkg-config \
+        libssl-dev 
+
+USER agent
+# Set working directory
+WORKDIR /home/agent/workspace
+# Install Oh My Zsh
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Rust and Cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+# Install Claude Code
+RUN set -ex && \
+    curl -fsSL https://claude.ai/install.sh | bash
+
+# Default command
+CMD ["claude", "--dangerously-skip-permissions"]

@@ -1,6 +1,6 @@
-FROM ubuntu:25.10
+ARG BASE_IMAGE=ubuntu:25.10
+FROM ${BASE_IMAGE}
 
-# Build argument
 ARG TARGETPLATFORM=linux/amd64
 
 # Environment variables

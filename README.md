@@ -1,43 +1,63 @@
 # Coder
 
-A secure Docker-based development environment running Claude Code with elevated execution privileges in an isolated container.
+A secure Docker-based development environment supporting multiple AI coding agents (Claude Code, GitHub Copilot, Google Gemini) with elevated execution privileges in isolated containers.
 
 ## Features
 
-- **Secure Isolation**: Claude Code runs inside a Docker container, protecting your host system
-- **Complete Dev Environment**: Pre-installed with Go, Node.js, Python, Rust, and essential tools
+- **Multiple AI Agents**: Choose between Claude Code, GitHub Copilot CLI, or Google Gemini
+- **Secure Isolation**: Each agent runs inside a Docker container, protecting your host system
+- **Flexible Tech Stacks**: Configurable base image with optional Go, Node.js, Python, and Rust
+- **Complete Dev Environment**: Pre-installed with essential development tools
 - **Shell**: zsh with Oh My Zsh for enhanced terminal experience
 - **Git Integration**: Mounted `.gitconfig` and GitHub CLI configuration
-- **Persistent Storage**: Claude configuration and workspace data persist across container restarts
+- **Persistent Storage**: Agent configurations and workspace data persist across container restarts
+
+## Available Variants
+
+### Claude Code (Full Stack)
+- **Languages**: Go, Node.js, Python, Rust
+- **Tools**: All development tools + Claude Code CLI
+- **Use Case**: Full-featured AI-assisted development
+
+### GitHub Copilot (Node.js)
+- **Languages**: Node.js
+- **Tools**: Core tools + GitHub Copilot CLI
+- **Use Case**: JavaScript/TypeScript development with Copilot
+
+### Google Gemini (Python)
+- **Languages**: Python
+- **Tools**: Core tools + Google Generative AI SDK
+- **Use Case**: Python development with Gemini API
+
+### Base (Customizable)
+- **Languages**: Configurable (Go, Node.js, Python, Rust)
+- **Tools**: Core development tools only
+- **Use Case**: Custom builds with specific tech stacks
 
 ## What's Included
 
-### Programming Languages
-- Go
-- Node.js + npm
-- Python 3 + pip + uv
-- Rust + Cargo
-
-### Development Tools
+### Core Development Tools (All Variants)
 - Git + GitHub CLI (gh)
 - vim, tmux
 - ripgrep, jq, tree
 - make, curl, wget
 - htop, ncdu
 - SSH client, telnet, ping
-- And more...
-
-### Shell
 - zsh with Oh My Zsh
-- Non-root user `agent` (UID 1000) with sudo access
+
+### Programming Languages (Variant-Specific)
+See "Available Variants" section above for language support per variant.
 
 ## Quick Start
 
-### Using Pre-built Image
+### Using Pre-built Images
 
+**Claude Code (Full Stack - Recommended):**
 ```bash
-# Pull the image
+# Pull the full-featured Claude Code image (default/latest)
 docker pull ghcr.io/boringhappy/coder:main
+# or
+docker pull ghcr.io/boringhappy/coder:latest
 
 # Run Claude Code
 docker run -it --rm \
@@ -47,26 +67,48 @@ docker run -it --rm \
   -v ~/.config/gh:/home/agent/.config/gh:ro \
   -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
   ghcr.io/boringhappy/coder:main
+```
 
-# Or run zsh shell
+**Other Available Tags:**
+- `ghcr.io/boringhappy/coder:main` or `:latest` - Claude Code (default)
+- `ghcr.io/boringhappy/coder:main-claude` - Claude Code (explicit)
+- `ghcr.io/boringhappy/coder:main-codex` - GitHub Copilot CLI (Node.js)
+- `ghcr.io/boringhappy/coder:main-gemini` - Google Gemini (Python)
+- `ghcr.io/boringhappy/coder:main-base` - Base image (customizable)
+- `ghcr.io/boringhappy/coder:v1.0.0` - Claude Code release (default)
+- `ghcr.io/boringhappy/coder:v1.0.0-<variant>` - Specific variant release
+- `ghcr.io/boringhappy/coder:sha-<commit>-<variant>` - Specific commit builds
+
+**Quick Examples for Other Variants:**
+
+```bash
+# GitHub Copilot
 docker run -it --rm \
   -v $(pwd):/home/agent/workspace \
-  -v ~/.claude:/home/agent/.claude \
-  -v ~/.gitconfig:/home/agent/.gitconfig:ro \
-  -v ~/.config/gh:/home/agent/.config/gh:ro \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  ghcr.io/boringhappy/coder:main zsh
+  -e GITHUB_TOKEN=$GITHUB_TOKEN \
+  ghcr.io/boringhappy/coder:main-codex
+
+# Google Gemini
+docker run -it --rm \
+  -v $(pwd):/home/agent/workspace \
+  -e GOOGLE_API_KEY=$GOOGLE_API_KEY \
+  ghcr.io/boringhappy/coder:main-gemini
 ```
 
 ### Using Docker Compose
 
-Create a `docker-compose.yml` file:
+Download the complete configuration:
+
+```bash
+curl -O https://raw.githubusercontent.com/boringhappy/coder/main/docker-compose.yml
+```
+
+Or create a minimal `docker-compose.yml`:
 
 ```yaml
 services:
-  claude-dev:
+  claude:
     image: ghcr.io/boringhappy/coder:main
-    container_name: claude-dev
     stdin_open: true
     tty: true
     volumes:
@@ -82,25 +124,58 @@ services:
 Run:
 
 ```bash
-# Start Claude Code
-docker compose run --rm claude-dev
+# Claude Code
+docker compose run --rm claude
 
-# Or start zsh shell
-docker compose run --rm claude-dev zsh
+# GitHub Copilot
+docker compose run --rm codex
+
+# Google Gemini
+docker compose run --rm gemini
+
+# Or run zsh shell
+docker compose run --rm claude zsh
+```
+
+## Building Custom Variants
+
+Use the base image with build arguments:
+
+```bash
+# Build with only Python and Node.js
+docker build -f Dockerfile.base \
+  --build-arg BASE_IMAGE=ubuntu:25.10 \
+  --build-arg INSTALL_GO=false \
+  --build-arg INSTALL_NODE=true \
+  --build-arg INSTALL_PYTHON=true \
+  --build-arg INSTALL_RUST=false \
+  -t my-custom-coder .
+
+# Or use Alpine Linux
+docker build -f Dockerfile.base \
+  --build-arg BASE_IMAGE=alpine:latest \
+  -t my-alpine-coder .
 ```
 
 ## Volume Mounts
 
 - `.:/home/agent/workspace` - Current directory as workspace
-- `~/.claude:/home/agent/.claude` - Claude configuration and history
+- `~/.claude:/home/agent/.claude` - Claude configuration (Claude variant only)
 - `~/.gitconfig:/home/agent/.gitconfig:ro` - Git configuration (read-only)
 - `~/.config/gh:/home/agent/.config/gh:ro` - GitHub CLI authentication (read-only)
 
+## Environment Variables
+
+- `ANTHROPIC_API_KEY` - Required for Claude Code variant
+- `GITHUB_TOKEN` - Required for GitHub Copilot variant
+- `GOOGLE_API_KEY` - Required for Google Gemini variant
+
 ## Security Notes
 
-- The container runs as non-root user `agent` with sudo access
+- All containers run as non-root user `agent` (UID 1000) with sudo access
 - Git and GitHub CLI configs are mounted read-only
 - Claude Code runs with `--dangerously-skip-permissions` flag for convenience
+- Each variant is isolated in its own container
 
 ## License
 

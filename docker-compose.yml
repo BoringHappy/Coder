@@ -1,0 +1,80 @@
+services:
+  # Claude Code - Full development environment (default)
+  claude:
+    build:
+      context: .
+      dockerfile: Dockerfile.claude
+      args:
+        BASE_IMAGE: ubuntu:25.10
+    image: ghcr.io/boringhappy/coder:main
+    container_name: claude-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/home/agent/workspace
+      - ~/.claude:/home/agent/.claude
+      - ~/.gitconfig:/home/agent/.gitconfig:ro
+      - ~/.config/gh:/home/agent/.config/gh:ro
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    working_dir: /home/agent/workspace
+
+  # GitHub Copilot CLI - Node.js focused
+  codex:
+    build:
+      context: .
+      dockerfile: Dockerfile.codex
+      args:
+        BASE_IMAGE: ubuntu:25.10
+        INSTALL_NODE: "true"
+    image: ghcr.io/boringhappy/coder:codex
+    container_name: codex-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/home/agent/workspace
+      - ~/.gitconfig:/home/agent/.gitconfig:ro
+      - ~/.config/gh:/home/agent/.config/gh:ro
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    working_dir: /home/agent/workspace
+
+  # Google Gemini - Python focused
+  gemini:
+    build:
+      context: .
+      dockerfile: Dockerfile.gemini
+      args:
+        BASE_IMAGE: ubuntu:25.10
+        INSTALL_PYTHON: "true"
+    image: ghcr.io/boringhappy/coder:gemini
+    container_name: gemini-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/home/agent/workspace
+      - ~/.gitconfig:/home/agent/.gitconfig:ro
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    working_dir: /home/agent/workspace
+
+  # Base image for custom builds
+  base:
+    build:
+      context: .
+      dockerfile: Dockerfile.base
+      args:
+        BASE_IMAGE: ubuntu:25.10
+        INSTALL_GO: "true"
+        INSTALL_NODE: "true"
+        INSTALL_PYTHON: "true"
+        INSTALL_RUST: "true"
+    image: ghcr.io/boringhappy/coder:base
+    container_name: base-dev
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/home/agent/workspace
+      - ~/.gitconfig:/home/agent/.gitconfig:ro
+    working_dir: /home/agent/workspace
+    command: zsh

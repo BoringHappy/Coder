@@ -1,0 +1,85 @@
+ARG BASE_IMAGE=ubuntu:25.10
+FROM ${BASE_IMAGE}
+
+ARG TARGETPLATFORM=linux/amd64
+ARG INSTALL_GO=false
+ARG INSTALL_NODE=true
+ARG INSTALL_PYTHON=false
+ARG INSTALL_RUST=false
+
+ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
+ENV PATH=/home/agent/.local/bin:/usr/local/share/npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV SHELL=/bin/zsh
+
+USER root
+
+# Create agent user and configure permissions
+RUN set -ex && \
+    userdel ubuntu || true && \
+    useradd --create-home --uid 1000 --shell /bin/zsh agent && \
+    groupadd -f docker && \
+    usermod -aG sudo agent && \
+    usermod -aG docker agent && \
+    mkdir /etc/sudoers.d && \
+    chmod 0755 /etc/sudoers.d && \
+    echo "agent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/agent && \
+    echo "Defaults:%sudo env_keep += \"http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY SSL_CERT_FILE NODE_EXTRA_CA_CERTS REQUESTS_CA_BUNDLE\"" > /etc/sudoers.d/proxyconfig && \
+    mkdir -p /home/agent/.docker/sandbox/locks && \
+    chown -R agent:agent /home/agent && \
+    mkdir -p /usr/local/share/npm-global && \
+    chown -R agent:agent /usr/local/share/npm-global
+
+# Install core development tools including zsh
+RUN set -euxo pipefail && \
+    apt-get update && \
+    apt-get install -yy --no-install-recommends \
+        curl \
+        dnsutils \
+        git \
+        gh \
+        htop \
+        iputils-ping \
+        jq \
+        less \
+        lsof \
+        make \
+        ncdu \
+        net-tools \
+        openssh-client \
+        procps \
+        psmisc \
+        ripgrep \
+        rsync \
+        socat \
+        sudo \
+        tar \
+        telnet \
+        tmux \
+        unzip \
+        vim \
+        wget \
+        zip \
+        zsh \
+        tree && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install programming languages conditionally
+RUN set -euxo pipefail && \
+    apt-get update && \
+    apt-get install -yy --no-install-recommends bc man-db && \
+    if [ "$INSTALL_NODE" = "true" ]; then apt-get install -yy --no-install-recommends nodejs npm; fi && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+USER agent
+WORKDIR /home/agent/workspace
+
+# Install Oh My Zsh
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+# Install GitHub Copilot CLI
+RUN npm install -g @githubnext/github-copilot-cli
+
+# Default command
+CMD ["github-copilot-cli"]

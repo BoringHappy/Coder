@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ubuntu:25.10
+ARG BASE_IMAGE=ubuntu:noble
 FROM ${BASE_IMAGE}
 
 ARG TARGETPLATFORM=linux/amd64
@@ -100,4 +100,4 @@ RUN set -ex && \
     curl -fsSL https://claude.ai/install.sh | bash
 
 # Default command
-CMD ["claude", "--dangerously-skip-permissions"]
+CMD ["claude", "--allow-dangerously-skip-permissions", "--dangerously-skip-permissions"]

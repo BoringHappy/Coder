@@ -23,6 +23,8 @@ def main():
                 shutil.copy2(src_file, dest_file)
                 print(f"Copied skill: {rel_path}")
 
+    print("Setting up skills Done...")
+
 
 if __name__ == "__main__":
     main()

@@ -16,6 +16,7 @@ Docker-based Claude Code environment with automated Git/PR setup.
 - Docker and Docker Compose
 - Git configured (`~/.gitconfig`)
 - GitHub CLI authenticated (`~/.config/gh`)
+- Claude Code settings (`~/.claude/settings.json`) with API key configured
 
 ### Usage
 

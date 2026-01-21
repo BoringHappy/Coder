@@ -209,3 +209,4 @@ __marimo__/
 .vscode/
 .claude/
 claude_settings/
+docker-compose-test.yml

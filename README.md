@@ -1,116 +1,78 @@
 # Coder
 
-A secure Docker-based development environment running Claude Code with elevated execution privileges in an isolated container.
+Docker-based Claude Code environment with automated Git/PR setup.
 
 ## Features
 
-- **Secure Isolation**: Claude Code runs inside a Docker container, protecting your host system
-- **Complete Dev Environment**: Pre-installed with Go, Node.js, Python, Rust, and essential tools
-- **Shell**: zsh with Oh My Zsh for enhanced terminal experience
-- **Git Integration**: Mounted `.gitconfig` and GitHub CLI configuration
-- **Persistent Storage**: Claude configuration and workspace data persist across container restarts
-
-## What's Included
-
-### Programming Languages
-- Go
-- Node.js + npm
-- Python 3 + pip + uv
-- Rust + Cargo
-
-### Development Tools
-- Git + GitHub CLI (gh)
-- vim, tmux
-- ripgrep, jq, tree
-- make, curl, wget
-- htop, ncdu
-- SSH client, telnet, ping
-
-### Shell
+- Automated repository cloning and PR management
+- Pre-installed: Go, Node.js, Python, Rust
 - zsh with Oh My Zsh
-- Non-root user `agent` (UID 1000) with sudo access
+- Persistent Claude configuration
 
 ## Quick Start
 
-### Using Pre-built Image
+### Prerequisites
 
-```bash
-# Pull the image
-docker pull ghcr.io/boringhappy/coder:main
-# or
-docker pull ghcr.io/boringhappy/coder:latest
+- Docker and Docker Compose
+- Git configured (`~/.gitconfig`)
+- GitHub CLI authenticated (`~/.config/gh`)
 
-# Run Claude Code
-docker run -it --rm \
-  -v $(pwd):/home/agent/workspace \
-  -v ~/.claude:/home/agent/.claude \
-  -v ~/.gitconfig:/home/agent/.gitconfig:ro \
-  -v ~/.config/gh:/home/agent/.config/gh:ro \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  ghcr.io/boringhappy/coder:main
+### Usage
 
-# Or run zsh shell
-docker run -it --rm \
-  -v $(pwd):/home/agent/workspace \
-  -v ~/.claude:/home/agent/.claude \
-  -v ~/.gitconfig:/home/agent/.gitconfig:ro \
-  -v ~/.config/gh:/home/agent/.config/gh:ro \
-  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
-  ghcr.io/boringhappy/coder:main zsh
-```
-
-### Using Docker Compose
-
-Download the configuration:
-
-```bash
-curl -O https://raw.githubusercontent.com/boringhappy/coder/main/docker-compose.yml
-```
-
-Or create a `docker-compose.yml`:
+#### Docker Compose
+Create `docker-compose.yml`:
 
 ```yaml
 services:
   claude:
     image: ghcr.io/boringhappy/coder:main
+    container_name: claude-dev
     stdin_open: true
     tty: true
     volumes:
-      - .:/home/agent/workspace
-      - ~/.claude:/home/agent/.claude
+      - ~/.claude:/home/agent/.claude   # Better to use another local folder
       - ~/.gitconfig:/home/agent/.gitconfig:ro
       - ~/.config/gh:/home/agent/.config/gh:ro
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GIT_REPO_URL=https://github.com/your-org/your-repo.git
+      - PR_TITLE=Work on feature/your-branch
+      - BRANCH_NAME=feature/your-branch  # or PR_NUMBER=123
     working_dir: /home/agent/workspace
 ```
 
-Run:
-
+With docker-compose:
 ```bash
-# Start Claude Code
 docker compose run --rm claude
-
-# Or start zsh shell
-docker compose run --rm claude zsh
 ```
 
-## Volume Mounts
-
-- `.:/home/agent/workspace` - Current directory as workspace
-- `~/.claude:/home/agent/.claude` - Claude configuration and history
-- `~/.gitconfig:/home/agent/.gitconfig:ro` - Git configuration (read-only)
-- `~/.config/gh:/home/agent/.config/gh:ro` - GitHub CLI authentication (read-only)
+#### Docker Run
+```bash
+docker run -it --rm \
+  -v ~/.claude:/home/agent/.claude \   # Better to use another local folder
+  -v ~/.gitconfig:/home/agent/.gitconfig:ro \
+  -v ~/.config/gh:/home/agent/.config/gh:ro \
+  -e GIT_REPO_URL=https://github.com/your-org/your-repo.git \
+  -e PR_TITLE="Work on feature/your-branch" \
+  -e BRANCH_NAME=feature/your-branch \
+  -w /home/agent/workspace \
+  claude-dev
+```
 
 ## Environment Variables
 
-- `ANTHROPIC_API_KEY` - Required for Claude Code
+- `GIT_REPO_URL` - [Required]Repository URL
+- `PR_TITLE` - [Required]Title for new PRs
+- `BRANCH_NAME` - Branch to work on
+- `PR_NUMBER` - Existing PR number (alternative to BRANCH_NAME)
 
-## Security Notes
 
-- The container runs as non-root user `agent` (UID 1000) with sudo access
-- Git and GitHub CLI configs are mounted read-only
-- Claude Code runs with `--dangerously-skip-permissions` flag for convenience
+## How It Works
+
+On startup, the container:
+1. Clones/updates repository to `/home/agent/workspace`
+2. Checks out specified branch or PR
+3. Creates PR if working on new branch
+4. Starts Claude Code
 
 ## License
 

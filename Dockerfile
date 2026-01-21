@@ -20,13 +20,18 @@ RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 USER root
 RUN chsh -s $(which zsh) agent
 
-# Copy the setup script
-COPY setup-git-pr.py /usr/local/bin/setup-git-pr.py
-RUN chmod +x /usr/local/bin/setup-git-pr.py
+# Copy skills directory
+COPY skills /usr/local/share/skills
+
+# Copy setup scripts
+COPY setup /usr/local/bin/setup
+RUN chmod +x /usr/local/bin/setup/*.py
 
 # Create entrypoint wrapper
 RUN echo '#!/bin/bash\n\
-python3 /usr/local/bin/setup-git-pr.py\n\
+for script in /usr/local/bin/setup/*.py; do\n\
+  python3 "$script"\n\
+done\n\
 exec "$@"' > /usr/local/bin/entrypoint-wrapper.sh && \
     chmod +x /usr/local/bin/entrypoint-wrapper.sh
 

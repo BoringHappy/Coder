@@ -21,9 +21,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        variant: [base, claude, codex]
 
     steps:
       - name: Checkout repository
@@ -45,27 +42,23 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch,suffix=-${{ matrix.variant }}
-            type=ref,event=pr,suffix=-${{ matrix.variant }}
-            type=semver,pattern={{version}},suffix=-${{ matrix.variant }}
-            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.variant }}
-            type=semver,pattern={{major}},suffix=-${{ matrix.variant }}
-            type=sha,suffix=-${{ matrix.variant }}
-            type=ref,event=branch,enable=${{ matrix.variant == 'claude' }}
-            type=semver,pattern={{version}},enable=${{ matrix.variant == 'claude' }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ matrix.variant == 'claude' }}
-            type=semver,pattern={{major}},enable=${{ matrix.variant == 'claude' }}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
           flavor: |
-            latest=${{ matrix.variant == 'claude' }}
+            latest=true
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile.${{ matrix.variant }}
+          file: Dockerfile.claude
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.variant }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.variant }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           platforms: linux/amd64

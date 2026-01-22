@@ -4,6 +4,12 @@ Docker-based Claude Code environment with automated Git/PR setup.
 
 > **⚠️ Security Notice:** This container runs with `--dangerously-skip-permissions` by default, allowing Claude to execute commands without confirmation. Use only in isolated environments with trusted repositories.
 
+## Why Coder?
+
+Tired of approving every single command when pair programming with AI? Yet hesitant to grant full bypass permissions on your local machine? Every GitHub interaction requiring manual confirmation breaks your flow.
+
+Coder solves this by running Claude Code in an isolated Docker container where it can operate freely without compromising your system. True pair programming starts here—let Claude focus on coding while you focus on the bigger picture.
+
 ## Features
 
 - Automated repository cloning and PR management

@@ -16,9 +16,9 @@ Docker-based Claude Code environment with automated Git/PR setup.
 
 ### Prerequisites
 
-- Docker and Docker Compose
-- GitHub personal access token
-- Claude Code settings (`~/.claude/settings.json`) with API key configured
+- Docker
+- GitHub CLI (`gh`) authenticated
+- Claude Code settings (`~/.claude_in_docker/settings.json`) with API key configured
 
 ### Usage
 
@@ -26,19 +26,27 @@ Docker-based Claude Code environment with automated Git/PR setup.
 
 The easiest way to run - automatically uses your local git config and GitHub CLI token:
 
-1. Create `.env` file:
 ```bash
-GIT_REPO_URL=https://github.com/your-org/your-repo.git
-BRANCH_NAME=feature/your-branch
-PR_TITLE=Work on feature/your-branch
+# Run with current repo (auto-detects remote origin)
+make run BRANCH_NAME=feature/your-branch
+
+# Or specify a different repo
+make run GIT_REPO_URL=https://github.com/your-org/your-repo.git BRANCH_NAME=feature/your-branch
+
+# Work on existing PR
+make run PR_NUMBER=123
+
+# Custom PR title (optional - defaults to branch name)
+make run BRANCH_NAME=add-new-feature PR_TITLE="Add new feature"
 ```
 
-2. Run:
-```bash
-make run
-```
+Available parameters:
+- `GIT_REPO_URL` - Repository URL (defaults to current repo's remote origin)
+- `BRANCH_NAME` - Branch to work on
+- `PR_NUMBER` - Existing PR number (alternative to BRANCH_NAME)
+- `PR_TITLE` - PR title (optional, defaults to branch name with title case)
 
-This automatically sets `GIT_USER_NAME`, `GIT_USER_EMAIL` from your git config and `GITHUB_TOKEN` from `gh auth token`.
+You can also use a `.env` file for additional environment variables.
 
 #### Docker Run
 ```bash
@@ -58,13 +66,13 @@ docker run -it --rm \
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GIT_REPO_URL` | Yes | Repository URL to clone |
-| `PR_TITLE` | Yes | Title for new PRs |
+| `GIT_REPO_URL` | No | Repository URL (defaults to current repo's remote) |
 | `GITHUB_TOKEN` | Yes | GitHub personal access token |
 | `GIT_USER_NAME` | Yes | Git commit author name |
 | `GIT_USER_EMAIL` | Yes | Git commit author email |
 | `BRANCH_NAME` | No | Branch to work on |
 | `PR_NUMBER` | No | Existing PR number (alternative to BRANCH_NAME) |
+| `PR_TITLE` | No | PR title (defaults to branch name with title case) |
 | `CODER_IMAGE` | No | Custom image (default: `boringhappy/coder:main`) |
 
 

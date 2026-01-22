@@ -40,23 +40,6 @@ make run
 
 This automatically sets `GIT_USER_NAME`, `GIT_USER_EMAIL` from your git config and `GITHUB_TOKEN` from `gh auth token`.
 
-#### Docker Compose
-
-1. Create `.env` file:
-```bash
-GITHUB_TOKEN=your_github_token
-GIT_USER_NAME=your_name
-GIT_USER_EMAIL=your_email@example.com
-GIT_REPO_URL=https://github.com/your-org/your-repo.git
-BRANCH_NAME=feature/your-branch
-PR_TITLE=Work on feature/your-branch
-```
-
-2. Run:
-```bash
-docker compose run --rm claude
-```
-
 #### Docker Run
 ```bash
 docker run -it --rm \

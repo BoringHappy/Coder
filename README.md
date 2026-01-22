@@ -17,34 +17,65 @@ Docker-based Claude Code environment with automated Git/PR setup.
 ### Prerequisites
 
 - Docker and Docker Compose
-- Git configured (`~/.gitconfig`)
-- GitHub CLI authenticated (`~/.config/gh`)
+- GitHub personal access token
 - Claude Code settings (`~/.claude/settings.json`) with API key configured
 
 ### Usage
 
-#### Docker Compose
-Create `docker-compose.yml`:
+#### Using Make (Recommended)
 
+The easiest way to run - automatically uses your local git config and GitHub CLI token:
+
+1. Create `.env` file:
+```bash
+GIT_REPO_URL=https://github.com/your-org/your-repo.git
+BRANCH_NAME=feature/your-branch
+PR_TITLE=Work on feature/your-branch
+```
+
+2. Run:
+```bash
+make run
+```
+
+This automatically sets `GIT_USER_NAME`, `GIT_USER_EMAIL` from your git config and `GITHUB_TOKEN` from `gh auth token`.
+
+#### Docker Compose
+
+1. Create `.env` file:
+```bash
+GITHUB_TOKEN=your_github_token
+GIT_USER_NAME=your_name
+GIT_USER_EMAIL=your_email@example.com
+GIT_REPO_URL=https://github.com/your-org/your-repo.git
+BRANCH_NAME=feature/your-branch
+PR_TITLE=Work on feature/your-branch
+```
+
+2. Create `docker-compose.yml`:
 ```yaml
 services:
   claude:
-    image: ghcr.io/boringhappy/coder:main
+    image: ${CODER_IMAGE:-boringhappy/coder:main}
     container_name: claude-dev
     stdin_open: true
     tty: true
     volumes:
-      - ~/.claude:/home/agent/.claude   # Better to use another local folder
-      - ~/.gitconfig:/home/agent/.gitconfig:ro
-      - ~/.config/gh:/home/agent/.config/gh:ro
+      - ~/.claude_in_docker:/home/agent/.claude
     environment:
-      - GIT_REPO_URL=https://github.com/your-org/your-repo.git
-      - PR_TITLE=Work on feature/your-branch
-      - BRANCH_NAME=feature/your-branch  # or PR_NUMBER=123
+      - GIT_REPO_URL=${GIT_REPO_URL}
+      - BRANCH_NAME=${BRANCH_NAME}
+      - PR_NUMBER=${PR_NUMBER:-}
+      - PR_TITLE=${PR_TITLE}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GIT_USER_NAME=${GIT_USER_NAME}
+      - GIT_USER_EMAIL=${GIT_USER_EMAIL}
+    env_file:
+      - .env
     working_dir: /home/agent/workspace
 ```
 
-With docker-compose:
+3. Run:
 ```bash
 docker compose run --rm claude
 ```
@@ -52,22 +83,29 @@ docker compose run --rm claude
 #### Docker Run
 ```bash
 docker run -it --rm \
-  -v ~/.claude:/home/agent/.claude \   # Better to use another local folder
-  -v ~/.gitconfig:/home/agent/.gitconfig:ro \
-  -v ~/.config/gh:/home/agent/.config/gh:ro \
+  -v ~/.claude_in_docker:/home/agent/.claude \
   -e GIT_REPO_URL=https://github.com/your-org/your-repo.git \
   -e PR_TITLE="Work on feature/your-branch" \
   -e BRANCH_NAME=feature/your-branch \
+  -e GITHUB_TOKEN=your_github_token \
+  -e GIT_USER_NAME=your_name \
+  -e GIT_USER_EMAIL=your_email@example.com \
   -w /home/agent/workspace \
-  claude-dev
+  boringhappy/coder:main
 ```
 
 ## Environment Variables
 
-- `GIT_REPO_URL` - [Required]Repository URL
-- `PR_TITLE` - [Required]Title for new PRs
-- `BRANCH_NAME` - Branch to work on
-- `PR_NUMBER` - Existing PR number (alternative to BRANCH_NAME)
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GIT_REPO_URL` | Yes | Repository URL to clone |
+| `PR_TITLE` | Yes | Title for new PRs |
+| `GITHUB_TOKEN` | Yes | GitHub personal access token |
+| `GIT_USER_NAME` | Yes | Git commit author name |
+| `GIT_USER_EMAIL` | Yes | Git commit author email |
+| `BRANCH_NAME` | No | Branch to work on |
+| `PR_NUMBER` | No | Existing PR number (alternative to BRANCH_NAME) |
+| `CODER_IMAGE` | No | Custom image (default: `boringhappy/coder:main`) |
 
 
 ## How It Works

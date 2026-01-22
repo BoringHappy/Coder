@@ -15,7 +15,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -q '\\.py$'; then ruff format --quiet \"$file_path\" 2>/dev/null; elif echo \"$file_path\" | grep -q '\\.json$'; then tmp=$(mktemp) && jq . \"$file_path\" > \"$tmp\" 2>/dev/null && mv \"$tmp\" \"$file_path\"; fi; }"
+          "command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -q '\\.py$'; then ruff format --quiet \"$file_path\" 2>/dev/null; elif echo \"$file_path\" | grep -q '\\.json$'; then tmp=$(mktemp) && (jq . \"$file_path\" > \"$tmp\" 2>/dev/null && mv \"$tmp\" \"$file_path\" || rm -f \"$tmp\"); fi; }"
         }
       ]
     }

@@ -66,7 +66,7 @@ docker run -it --rm \
   -e GIT_USER_NAME=your_name \
   -e GIT_USER_EMAIL=your_email@example.com \
   -w /home/agent/workspace \
-  boringhappy/codemate:main
+  ghcr.io/boringhappy/codemate:main
 ```
 
 ## Environment Variables
@@ -80,7 +80,7 @@ docker run -it --rm \
 | `BRANCH_NAME` | No | Branch to work on |
 | `PR_NUMBER` | No | Existing PR number (alternative to BRANCH_NAME) |
 | `PR_TITLE` | No | PR title (defaults to branch name with title case) |
-| `CODEMATE_IMAGE` | No | Custom image (default: `boringhappy/codemate:main`) |
+| `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:main`) |
 
 
 ## How It Works

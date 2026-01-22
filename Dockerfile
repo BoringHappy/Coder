@@ -32,4 +32,4 @@ RUN chmod +x /usr/local/bin/setup/setup.sh \
 USER agent
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
-CMD ["claude", "--dangerously-skip-permissions"]
+CMD ["claude", "--dangerously-skip-permissions", "--append-system-prompt", "/usr/local/bin/setup/prompt/system_prompt.txt"]

@@ -26,4 +26,4 @@ run:
 		-e GIT_USER_EMAIL \
 		--env-file .env \
 		-w /home/agent/workspace \
-		$${CODEMATE_IMAGE:-boringhappy/codemate:main} $(extra)
+		$${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main} $(extra)

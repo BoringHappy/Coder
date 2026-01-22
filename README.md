@@ -25,6 +25,7 @@ Coder solves this by running Claude Code in an isolated Docker container where i
 - Docker
 - GitHub CLI (`gh`) authenticated
 - Claude Code settings (`~/.claude_in_docker/settings.json`) with API key configured
+- `~/.claude_in_docker.json` - Auto-generated on first run to store configuration and skip setup on subsequent runs
 
 ### Usage
 

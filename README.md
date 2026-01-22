@@ -52,30 +52,7 @@ BRANCH_NAME=feature/your-branch
 PR_TITLE=Work on feature/your-branch
 ```
 
-2. Create `docker-compose.yml`:
-```yaml
-services:
-  claude:
-    image: ${CODER_IMAGE:-boringhappy/coder:main}
-    container_name: claude-dev
-    stdin_open: true
-    tty: true
-    volumes:
-      - ~/.claude_in_docker:/home/agent/.claude
-    environment:
-      - GIT_REPO_URL=${GIT_REPO_URL}
-      - BRANCH_NAME=${BRANCH_NAME}
-      - PR_NUMBER=${PR_NUMBER:-}
-      - PR_TITLE=${PR_TITLE}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - GIT_USER_NAME=${GIT_USER_NAME}
-      - GIT_USER_EMAIL=${GIT_USER_EMAIL}
-    env_file:
-      - .env
-    working_dir: /home/agent/workspace
-```
-
-3. Run:
+2. Run:
 ```bash
 docker compose run --rm claude
 ```

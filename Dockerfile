@@ -25,17 +25,11 @@ COPY skills /usr/local/share/skills
 
 # Copy setup scripts
 COPY setup /usr/local/bin/setup
-RUN chmod +x /usr/local/bin/setup/*.py
-
-# Create entrypoint wrapper
-RUN echo '#!/bin/bash\n\
-for script in /usr/local/bin/setup/*.py; do\n\
-  python3 "$script"\n\
-done\n\
-exec "$@"' > /usr/local/bin/entrypoint-wrapper.sh && \
-    chmod +x /usr/local/bin/entrypoint-wrapper.sh
+RUN chmod +x /usr/local/bin/setup/setup.sh \
+    && chmod +x /usr/local/bin/setup/shell/*.sh \
+    && chmod +x /usr/local/bin/setup/python/*.py
 
 USER agent
 
-ENTRYPOINT ["/usr/local/bin/entrypoint-wrapper.sh"]
+ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["claude", "--dangerously-skip-permissions"]

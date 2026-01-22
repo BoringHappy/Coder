@@ -1,5 +1,5 @@
 BRANCH_NAME ?= test-auto-coder
-PR_TITLE ?= Test auto coder
+PR_TITLE ?=
 
 .PHONY: run
 

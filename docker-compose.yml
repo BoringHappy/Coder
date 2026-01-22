@@ -11,7 +11,7 @@ services:
       - BRANCH_NAME=${BRANCH_NAME:-test-auto-coder}
       - PR_NUMBER=${PR_NUMBER:-}
       - PR_TITLE=${PR_TITLE:-Test auto coder}
-      - GH_TOKEN=${GH_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GIT_USER_NAME=${GIT_USER_NAME}
       - GIT_USER_EMAIL=${GIT_USER_EMAIL}
     env_file:

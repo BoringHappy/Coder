@@ -27,7 +27,7 @@ def get_pr_template():
 
 def main():
     git_repo_url = os.environ["GIT_REPO_URL"]
-    pr_title = os.environ["PR_TITLE"]
+    pr_title = os.getenv("PR_TITLE", "")
 
     branch_name = os.getenv("BRANCH_NAME", "")
     pr_number = os.getenv("PR_NUMBER", "")
@@ -87,7 +87,8 @@ def main():
 
                 print("Creating pull request")
                 pr_body = get_pr_template()
-                result = run(f"gh pr create --title '{pr_title}' --body '{pr_body}'")
+                title = pr_title if pr_title else branch_name.replace("-", " ")
+                result = run(f"gh pr create --title '{title}' --body '{pr_body}'")
                 pr_url = result.stdout.strip()
 
     print("Git setup completed successfully")

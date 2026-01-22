@@ -14,12 +14,12 @@ def run(cmd, check=True):
 def get_repo_name_from_url(git_url):
     """Extract repository name from git URL."""
     # Remove .git suffix if present
-    if git_url.endswith('.git'):
+    if git_url.endswith(".git"):
         git_url = git_url[:-4]
 
     # Extract the last part of the path
     # Works for both https://github.com/user/repo and git@github.com:user/repo
-    repo_name = git_url.rstrip('/').split('/')[-1]
+    repo_name = git_url.rstrip("/").split("/")[-1]
     return repo_name
 
 
@@ -53,6 +53,9 @@ def main():
     # Extract repo name from git URL
     repo_name = get_repo_name_from_url(git_repo_url)
     workspace = f"/home/agent/{repo_name}"
+
+    # Ensure agent user has permission to the workspace directory
+    run(f"sudo chown -R agent:agent {workspace}", check=False)
 
     if not os.path.exists(f"{workspace}/.git"):
         print(f"Cloning repository: {git_repo_url}")

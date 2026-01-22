@@ -33,9 +33,6 @@ RUN chmod +x /usr/local/bin/setup/setup.sh \
 RUN mkdir -p /etc/claude-code \
     && cp /usr/local/bin/setup/managed-settings.json /etc/claude-code/managed-settings.json
 
-# Create /home/agent directory with proper ownership
-RUN mkdir -p /home/agent && chown agent:agent /home/agent
-
 USER agent
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]

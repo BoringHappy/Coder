@@ -1,0 +1,33 @@
+{
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "prompt",
+          "prompt": "Run /get-pr-details to fetch current PR information and display it to the user."
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "Edit|Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "jq -r '.tool_input.file_path' | { read file_path; if echo \"$file_path\" | grep -q '\\.py$'; then ruff format --quiet \"$file_path\" 2>/dev/null; elif echo \"$file_path\" | grep -q '\\.json$'; then tmp=$(mktemp) && jq . \"$file_path\" > \"$tmp\" 2>/dev/null && mv \"$tmp\" \"$file_path\"; fi; }"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "type": "prompt",
+          "prompt": "If there are uncommitted changes, run /git-commit to stage, commit, and push them."
+        }
+      ]
+    }
+  ]
+}

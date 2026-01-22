@@ -3,45 +3,8 @@
 import json
 from pathlib import Path
 
-HOOKS_DIR = Path("/home/agent/workspace/hooks")
+HOOKS_FILE = Path("/home/agent/workspace/hooks/hooks.json")
 SETTINGS_FILE = Path("/home/agent/.claude/settings.json")
-
-
-def get_hooks_config():
-    """Define hooks configuration."""
-    return {
-        "SessionStart": [
-            {
-                "hooks": [
-                    {
-                        "type": "prompt",
-                        "prompt": "Run /get-pr-details to fetch current PR information and display it to the user.",
-                    }
-                ]
-            }
-        ],
-        "PostToolUse": [
-            {
-                "matcher": "Edit|Write",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": f"python3 {HOOKS_DIR}/format-code.py",
-                    }
-                ],
-            }
-        ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "type": "prompt",
-                        "prompt": "If there are uncommitted changes, run /git-commit to stage, commit, and push them.",
-                    }
-                ]
-            }
-        ],
-    }
 
 
 def hooks_equal(h1, h2):
@@ -72,7 +35,7 @@ def main():
         settings = json.loads(SETTINGS_FILE.read_text())
 
     existing_hooks = settings.get("hooks", {})
-    new_hooks = get_hooks_config()
+    new_hooks = json.loads(HOOKS_FILE.read_text())
     merged = merge_hooks(existing_hooks, new_hooks)
 
     settings["hooks"] = merged

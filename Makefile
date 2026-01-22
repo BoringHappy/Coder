@@ -13,6 +13,7 @@ run:
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
 	[ -f ~/.claude_in_docker.json ] || echo '{}' > ~/.claude_in_docker.json && \
 	docker run --rm --pull always \
+		--network host \
 		-it \
 		-v ~/.claude_in_docker:/home/agent/.claude \
 		-v ~/.claude_in_docker.json:/home/agent/.claude.json \

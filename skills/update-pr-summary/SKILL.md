@@ -15,7 +15,7 @@ Analyzes the current pull request changes and generates an improved summary/desc
 2. **Analyzes changes**: Reviews the diff to understand what was modified
 3. **Checks for template**: Looks for pull_request_template.md to follow the project's format
 4. **Generates improved summary**: Creates a better description based on the actual changes
-5. **Updates the PR**: Uses `gh pr edit` to update the PR description
+5. **Updates the PR**: Uses `gh api` GraphQL mutation to update the PR description
 
 ## Current PR Information
 
@@ -40,10 +40,7 @@ Based on the PR diff and current description above, create an improved PR summar
 
 After generating the improved summary, update the PR using:
 ```bash
-gh pr edit --body "$(cat <<'EOF'
-[your improved summary here]
-EOF
-)"
+gh api repos/:owner/:repo/pulls/$(gh pr view --json number -q .number) -X PATCH -f body='[your improved summary here]'
 ```
 
 ## Prerequisites

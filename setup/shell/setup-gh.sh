@@ -7,6 +7,8 @@ fi
 
 echo "Setting up GitHub CLI authentication..."
 
-echo "$GITHUB_TOKEN" | gh auth login --with-token
+TOKEN="$GITHUB_TOKEN"
+unset GITHUB_TOKEN
+echo "$TOKEN" | gh auth login --with-token
 
 echo "GitHub CLI authentication completed successfully"

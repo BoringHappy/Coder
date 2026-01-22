@@ -1,7 +1,16 @@
 .PHONY: run
 
 run:
-	-GIT_USER_NAME="$$(git config user.name)" \
-	GIT_USER_EMAIL="$$(git config user.email)" \
-	GITHUB_TOKEN="$$(gh auth token)" \
-	docker compose run --rm --pull always claude ${extra}
+	docker run --rm --pull always \
+		-it \
+		-v ~/.claude_in_docker:/home/agent/.claude \
+		-e GIT_REPO_URL=$${GIT_REPO_URL:-https://github.com/BoringHappy/Coder.git} \
+		-e BRANCH_NAME=$${BRANCH_NAME:-test-auto-coder} \
+		-e PR_NUMBER=$${PR_NUMBER:-} \
+		-e "PR_TITLE=$${PR_TITLE:-Test auto coder}" \
+		-e "GITHUB_TOKEN=$$(gh auth token)" \
+		-e "GIT_USER_NAME=$$(git config user.name)" \
+		-e "GIT_USER_EMAIL=$$(git config user.email)" \
+		--env-file .env \
+		-w /home/agent/workspace \
+		$${CODER_IMAGE:-boringhappy/coder:main} ${extra}

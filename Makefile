@@ -1,8 +1,8 @@
-GIT_REPO_URL ?= $(shell git config --get remote.origin.url 2>/dev/null || echo 'https://github.com/BoringHappy/Coder.git')
-BRANCH_NAME ?= test-auto-coder
+GIT_REPO_URL ?= $(shell git config --get remote.origin.url 2>/dev/null || echo 'https://github.com/BoringHappy/CodeMate.git')
+BRANCH_NAME ?= test-auto-codemate
 PR_NUMBER ?=
 PR_TITLE ?=
-CODER_IMAGE ?=
+CODEMATE_IMAGE ?=
 
 .PHONY: run
 
@@ -25,4 +25,4 @@ run:
 		-e GIT_USER_EMAIL \
 		--env-file .env \
 		-w /home/agent/workspace \
-		$${CODER_IMAGE:-boringhappy/coder:main} $(extra)
+		$${CODEMATE_IMAGE:-boringhappy/codemate:main} $(extra)

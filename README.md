@@ -1,14 +1,14 @@
-# Coder
+# CodeMate
 
 Docker-based Claude Code environment with automated Git/PR setup.
 
 > **⚠️ Security Notice:** This container runs with `--dangerously-skip-permissions` by default, allowing Claude to execute commands without confirmation. Use only in isolated environments with trusted repositories.
 
-## Why Coder?
+## Why CodeMate?
 
 Tired of approving every single command when pair programming with AI? Yet hesitant to grant full bypass permissions on your local machine? Every GitHub interaction requiring manual confirmation breaks your flow.
 
-Coder solves this by running Claude Code in an isolated Docker container where it can operate freely without compromising your system. True pair programming starts here—let Claude focus on coding while you focus on the bigger picture.
+CodeMate solves this by running Claude Code in an isolated Docker container where it can operate freely without compromising your system. True pair programming starts here—let Claude focus on coding while you focus on the bigger picture.
 
 ## Features
 
@@ -66,7 +66,7 @@ docker run -it --rm \
   -e GIT_USER_NAME=your_name \
   -e GIT_USER_EMAIL=your_email@example.com \
   -w /home/agent/workspace \
-  boringhappy/coder:main
+  boringhappy/codemate:main
 ```
 
 ## Environment Variables
@@ -80,7 +80,7 @@ docker run -it --rm \
 | `BRANCH_NAME` | No | Branch to work on |
 | `PR_NUMBER` | No | Existing PR number (alternative to BRANCH_NAME) |
 | `PR_TITLE` | No | PR title (defaults to branch name with title case) |
-| `CODER_IMAGE` | No | Custom image (default: `boringhappy/coder:main`) |
+| `CODEMATE_IMAGE` | No | Custom image (default: `boringhappy/codemate:main`) |
 
 
 ## How It Works
@@ -121,7 +121,7 @@ Create `.github/pull_request_template.md` in your target repository to standardi
 
 ### Use a `.env` File
 
-Create a `.env` file in the Coder directory for persistent configuration:
+Create a `.env` file in the CodeMate directory for persistent configuration:
 
 ```bash
 GIT_REPO_URL=https://github.com/your-org/your-repo.git
@@ -149,7 +149,7 @@ Include a `CLAUDE.md` in your repository root to provide Claude with project-spe
 
 ### Security Recommendations
 
-- Run Coder only on trusted repositories
+- Run CodeMate only on trusted repositories
 - Use short-lived GitHub tokens with minimal scopes
 - Avoid mounting sensitive host directories
 - Review changes before merging PRs created by Claude

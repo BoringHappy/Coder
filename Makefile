@@ -2,11 +2,12 @@ GIT_REPO_URL ?= $(shell git config --get remote.origin.url 2>/dev/null || echo '
 BRANCH_NAME ?= test-auto-coder
 PR_NUMBER ?=
 PR_TITLE ?=
+CODER_IMAGE ?=
 
 .PHONY: run
 
 run:
-	set -a && [ -f .env ] && . .env; set +a && \
+	set -a && if [ -f .env ]; then . ./.env; fi && set +a && \
 	export GITHUB_TOKEN="$$(gh auth token)" && \
 	export GIT_USER_NAME="$$(git config user.name)" && \
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
@@ -22,4 +23,4 @@ run:
 		-e GIT_USER_EMAIL \
 		--env-file .env \
 		-w /home/agent/workspace \
-		$${CODER_IMAGE:-$$(grep -s '^CODER_IMAGE=' .env | cut -d= -f2- || echo 'boringhappy/coder:main')} $(extra)
+		$${CODER_IMAGE:-boringhappy/coder:main} $(extra)

@@ -100,6 +100,59 @@ Built-in Claude Code skills to streamline PR workflows:
 | Update PR Title | `/update-pr-title` | Creates a concise, descriptive PR title based on changes |
 | Fix PR Comments | `/fix-pr-comments` | Addresses PR review feedback, commits fixes, and replies to comments |
 
+## Best Practices
+
+### Add a Pull Request Template
+
+Create `.github/pull_request_template.md` in your target repository to standardize PR descriptions:
+
+```markdown
+## Summary
+<!-- Brief description of changes -->
+
+## Test Plan
+<!-- How to verify the changes -->
+
+## Checklist
+- [ ] Tests added/updated
+- [ ] Documentation updated
+```
+
+### Use a `.env` File
+
+Create a `.env` file in the Coder directory for persistent configuration:
+
+```bash
+GIT_REPO_URL=https://github.com/your-org/your-repo.git
+GIT_USER_NAME=your_name
+GIT_USER_EMAIL=your_email@example.com
+```
+
+Then run with: `make run BRANCH_NAME=feature/xyz`
+
+### Add a `CLAUDE.md` File
+
+Include a `CLAUDE.md` in your repository root to provide Claude with project-specific context:
+
+```markdown
+# Project Guidelines
+
+## Build Commands
+- `make build` - Build the project
+- `make test` - Run tests
+
+## Code Style
+- Use conventional commits
+- Follow existing patterns
+```
+
+### Security Recommendations
+
+- Run Coder only on trusted repositories
+- Use short-lived GitHub tokens with minimal scopes
+- Avoid mounting sensitive host directories
+- Review changes before merging PRs created by Claude
+
 ## License
 
 MIT

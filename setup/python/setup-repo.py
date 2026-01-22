@@ -11,6 +11,20 @@ def run(cmd, check=True):
     return result
 
 
+def get_pr_template():
+    """Read PR template from .github/PULL_REQUEST_TEMPLATE.md if it exists."""
+    template_path = "/home/agent/workspace/.github/PULL_REQUEST_TEMPLATE.md"
+    if os.path.exists(template_path):
+        with open(template_path, "r") as f:
+            return f.read()
+    return """## Summary
+<N/A>
+
+## Test plan
+- [ ] Review and test changes
+"""
+
+
 def main():
     git_repo_url = os.environ["GIT_REPO_URL"]
     pr_title = os.environ["PR_TITLE"]
@@ -72,13 +86,7 @@ def main():
                 run(f"git push -u origin {branch_name}")
 
                 print("Creating pull request")
-                pr_body = """## Summary
-<N/A>
-
-## Test plan
-- [ ] Review and test changes
-
-"""
+                pr_body = get_pr_template()
                 result = run(f"gh pr create --title '{pr_title}' --body '{pr_body}'")
                 pr_url = result.stdout.strip()
 

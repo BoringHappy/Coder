@@ -11,4 +11,7 @@ TOKEN="$GITHUB_TOKEN"
 unset GITHUB_TOKEN
 echo "$TOKEN" | gh auth login --with-token
 
+echo "Setting up git credential helper..."
+gh auth setup-git
+
 echo "GitHub CLI authentication completed successfully"

@@ -10,6 +10,7 @@ Docker-based Claude Code environment with automated Git/PR setup.
 - Pre-installed: Go, Node.js, Python, Rust
 - zsh with Oh My Zsh
 - Persistent Claude configuration
+- Built-in Claude Code skills for PR workflow automation
 
 ## Quick Start
 
@@ -76,6 +77,16 @@ On startup, the container:
 2. Checks out specified branch or PR
 3. Creates PR if working on new branch
 4. Starts Claude Code
+
+## Skills
+
+Built-in Claude Code skills to streamline PR workflows:
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| Update PR Summary | `/update-pr-summary` | Analyzes PR changes and generates an improved description |
+| Update PR Title | `/update-pr-title` | Creates a concise, descriptive PR title based on changes |
+| Fix PR Comments | `/fix-pr-comments` | Addresses PR review feedback, commits fixes, and replies to comments |
 
 ## License
 

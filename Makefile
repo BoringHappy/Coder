@@ -1,4 +1,4 @@
-GIT_REPO_URL ?= https://github.com/BoringHappy/Coder.git
+GIT_REPO_URL ?= $(shell git config --get remote.origin.url 2>/dev/null || echo 'https://github.com/BoringHappy/Coder.git')
 BRANCH_NAME ?= test-auto-coder
 PR_NUMBER ?=
 PR_TITLE ?=

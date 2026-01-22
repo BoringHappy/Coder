@@ -14,7 +14,7 @@ Analyzes the pull request changes and summary to generate an improved title.
 1. **Fetches PR information**: Gets the current PR title, description, and metadata
 2. **Analyzes changes**: Reviews the diff to understand what was modified
 3. **Generates improved title**: Creates a concise, descriptive title based on the changes and summary
-4. **Updates the PR**: Uses `gh pr edit` to update the PR title
+4. **Updates the PR**: Uses `gh api` REST API to update the PR title
 
 ## Current PR Information
 
@@ -38,7 +38,7 @@ Based on the PR information above, create an improved PR title that:
 
 After generating the improved title, update the PR using:
 ```bash
-gh pr edit --title "Your improved title here"
+gh api repos/:owner/:repo/pulls/$(gh pr view --json number -q .number) -X PATCH -f title="Your improved title here"
 ```
 
 ## Prerequisites

@@ -14,6 +14,7 @@ run:
 	docker run --rm --pull always \
 		-it \
 		-v ~/.claude_in_docker:/home/agent/.claude \
+		-v ~/.claude_in_docker.json:/home/agent/.claude.json \
 		-e GIT_REPO_URL=$(GIT_REPO_URL) \
 		-e BRANCH_NAME=$(BRANCH_NAME) \
 		-e PR_NUMBER=$(PR_NUMBER) \

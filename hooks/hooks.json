@@ -4,8 +4,8 @@
       {
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Run /get-pr-details to fetch current PR information and display it to the user."
+            "type": "command",
+            "prompt": "gh pr view --json title,body,files --jq '{title: .title, body: .body, files: [.files[].path]}' | cat"
           }
         ]
       }
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "If there are uncommitted changes, run /git-commit to stage, commit, and push them."
+            "prompt": "If there are uncommitted changes, run git-commit skill to stage, commit, and push them."
           }
         ]
       }

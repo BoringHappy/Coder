@@ -35,7 +35,7 @@ def main():
         settings = json.loads(SETTINGS_FILE.read_text())
 
     existing_hooks = settings.get("hooks", {})
-    new_hooks = json.loads(HOOKS_FILE.read_text())
+    new_hooks = json.loads(HOOKS_FILE.read_text()).get("hooks", {})
     merged = merge_hooks(existing_hooks, new_hooks)
 
     settings["hooks"] = merged

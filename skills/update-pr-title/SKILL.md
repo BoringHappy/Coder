@@ -14,7 +14,7 @@ Analyzes the pull request changes and summary to generate an improved title.
 1. **Fetches PR information**: Gets the current PR title, description, and metadata
 2. **Analyzes changes**: Reviews the diff to understand what was modified
 3. **Generates improved title**: Creates a concise, descriptive title based on the changes and summary
-4. **Updates the PR**: Uses `gh api` GraphQL mutation to update the PR title
+4. **Updates the PR**: Uses `gh api` REST API to update the PR title
 
 ## Current PR Information
 

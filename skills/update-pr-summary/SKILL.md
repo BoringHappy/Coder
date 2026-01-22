@@ -15,7 +15,7 @@ Analyzes the current pull request changes and generates an improved summary/desc
 2. **Analyzes changes**: Reviews the diff to understand what was modified
 3. **Checks for template**: Looks for pull_request_template.md to follow the project's format
 4. **Generates improved summary**: Creates a better description based on the actual changes
-5. **Updates the PR**: Uses `gh api` GraphQL mutation to update the PR description
+5. **Updates the PR**: Uses `gh api` REST API to update the PR description
 
 ## Current PR Information
 

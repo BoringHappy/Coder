@@ -11,9 +11,21 @@ def run(cmd, check=True):
     return result
 
 
-def get_pr_template():
+def get_repo_name_from_url(git_url):
+    """Extract repository name from git URL."""
+    # Remove .git suffix if present
+    if git_url.endswith('.git'):
+        git_url = git_url[:-4]
+
+    # Extract the last part of the path
+    # Works for both https://github.com/user/repo and git@github.com:user/repo
+    repo_name = git_url.rstrip('/').split('/')[-1]
+    return repo_name
+
+
+def get_pr_template(workspace):
     """Read PR template from .github/PULL_REQUEST_TEMPLATE.md if it exists."""
-    template_path = "/home/agent/workspace/.github/PULL_REQUEST_TEMPLATE.md"
+    template_path = f"{workspace}/.github/PULL_REQUEST_TEMPLATE.md"
     if os.path.exists(template_path):
         with open(template_path, "r") as f:
             return f.read()
@@ -38,11 +50,14 @@ def main():
 
     print("Setting up git repository...")
 
-    workspace = "/home/agent/workspace"
+    # Extract repo name from git URL
+    repo_name = get_repo_name_from_url(git_repo_url)
+    workspace = f"/home/agent/{repo_name}"
+
     if not os.path.exists(f"{workspace}/.git"):
         print(f"Cloning repository: {git_repo_url}")
         os.chdir("/home/agent")
-        run(f"git clone {git_repo_url} workspace")
+        run(f"git clone {git_repo_url} {repo_name}")
         os.chdir(workspace)
     else:
         print("Using existing repository")
@@ -86,7 +101,7 @@ def main():
                 run(f"git push -u origin {branch_name}")
 
                 print("Creating pull request")
-                pr_body = get_pr_template()
+                pr_body = get_pr_template(workspace)
                 title = pr_title if pr_title else branch_name.replace("-", " ")
                 result = run(f"gh pr create --title '{title}' --body '{pr_body}'")
                 pr_url = result.stdout.strip()

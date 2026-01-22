@@ -4,6 +4,9 @@ PR_NUMBER ?=
 PR_TITLE ?=
 CODEMATE_IMAGE ?=
 
+# Extract repo name from git URL
+REPO_NAME := $(shell echo $(GIT_REPO_URL) | sed 's/\.git$$//' | sed 's|.*/||')
+
 .PHONY: run
 
 run:
@@ -25,5 +28,5 @@ run:
 		-e GIT_USER_NAME \
 		-e GIT_USER_EMAIL \
 		--env-file .env \
-		-w /home/agent/workspace \
+		-w /home/agent/$(REPO_NAME) \
 		$${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main} $(extra)

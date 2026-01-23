@@ -5,6 +5,7 @@ PR_TITLE ?=
 CODEMATE_IMAGE ?=
 BASE_IMAGE ?= docker/sandbox-templates:claude-code
 LOCAL_IMAGE_TAG ?= codemate:local
+CONTAINER_NAME := codemate-$(shell echo $(BRANCH_NAME) | sed 's/[^a-zA-Z0-9_-]/-/g')
 
 # Detect OS for network flag (--network host not supported on macOS)
 UNAME_S := $(shell uname -s)
@@ -26,7 +27,7 @@ define docker_run
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
 	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
 	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
-	docker run --rm $(1) \
+	docker run --rm --name $(CONTAINER_NAME) $(1) \
 		$(NETWORK_FLAG) \
 		-it \
 		-v $(PWD)/.claude_in_docker:/home/agent/.claude \
@@ -45,13 +46,25 @@ define docker_run
 		$(2) $(extra)
 endef
 
+# Helper to run or attach to container
+# Usage: $(call run_or_attach,<image>,<extra_flags>)
+define run_or_attach
+	@if docker ps --format '{{.Names}}' | grep -q "^$(CONTAINER_NAME)$$"; then \
+		echo "Container $(CONTAINER_NAME) is running. Attaching..."; \
+		docker exec -it $(CONTAINER_NAME) zsh; \
+	else \
+		echo "Creating new container $(CONTAINER_NAME)..."; \
+		$(call docker_run,$(2),$(1)); \
+	fi
+endef
+
 .PHONY: run build run-local
 
 run:
-	$(call docker_run,--pull always,$${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main})
+	$(call run_or_attach,$${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main},--pull always)
 
 build:
 	docker build --build-arg BASE_IMAGE=$(BASE_IMAGE) -t $(LOCAL_IMAGE_TAG) .
 
 run-local:
-	$(call docker_run,,$(LOCAL_IMAGE_TAG))
+	$(call run_or_attach,$(LOCAL_IMAGE_TAG),)

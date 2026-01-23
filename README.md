@@ -26,6 +26,19 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 - GitHub CLI (`gh`) authenticated
 - `.env` file with `ANTHROPIC_API_KEY` configured (see `.env.example`)
 
+#### Mac Users
+
+On macOS, you need a Docker runtime since Docker doesn't run natively. Choose one:
+
+- **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** - Official Docker GUI application
+- **[Colima](https://github.com/abiosoft/colima)** - Lightweight Docker runtime (recommended for CLI users)
+
+To install Colima:
+```bash
+brew install colima
+colima start
+```
+
 ### Usage
 
 #### Using Make (Recommended)

@@ -1,7 +1,6 @@
 ---
 name: get-pr-details
 description: Gets details of a GitHub pull request including title, description, file changes, and review comments. Use when the user wants to view PR information.
-context: fork
 ---
 
 # Get PR Details

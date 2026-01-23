@@ -33,12 +33,6 @@ On macOS, you need a Docker runtime since Docker doesn't run natively. Choose on
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** - Official Docker GUI application
 - **[Colima](https://github.com/abiosoft/colima)** - Lightweight Docker runtime (recommended for CLI users)
 
-To install Colima:
-```bash
-brew install colima
-colima start
-```
-
 ### Usage
 
 #### Using Make (Recommended)

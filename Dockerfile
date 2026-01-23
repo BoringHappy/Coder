@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     zsh \
     git \
     curl \
+    tree \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Oh My Zsh for agent user

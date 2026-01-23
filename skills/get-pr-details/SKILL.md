@@ -11,16 +11,16 @@ Retrieves and displays pull request information including title, description, an
 ## PR Information
 
 Title:
-!`gh pr view --json title -q .title`
+!`gh pr view --json title -q .title | cat`
 
 Branch:
-!`gh pr view --json headRefName,baseRefName -q '"\(.headRefName) → \(.baseRefName)"'`
+!`gh pr view --json headRefName,baseRefName -q '"\(.headRefName) → \(.baseRefName)"' | cat`
 
 Description:
-!`gh pr view --json body -q .body`
+!`gh pr view --json body -q .body | cat`
 
 Changed files:
-!`gh pr view --json files -q '.files[].path'`
+!`gh pr view --json files -q '.files[].path' | cat`
 
 ## Instructions
 

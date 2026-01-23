@@ -1,4 +1,5 @@
-FROM docker/sandbox-templates:claude-code
+ARG BASE_IMAGE=docker/sandbox-templates:claude-code
+FROM ${BASE_IMAGE}
 
 # Install zsh and dependencies
 USER root

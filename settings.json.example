@@ -1,4 +1,19 @@
 {
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "<fill yours token>",
+    "ANTHROPIC_BASE_URL": "<fill yours token>",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "theme": "dark",
+  "dangerouslyDisablePermissions": true,
   "defaultMode": "bypassPermissions",
   "hooks": {
     "SessionStart": [

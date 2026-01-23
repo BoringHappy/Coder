@@ -206,7 +206,11 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# Draft Files
+.todo.md
+
 .vscode/
 .claude/
-claude_settings/
-.todo.md
+settings.json
+.claude_in_docker/
+.claude_in_docker.json

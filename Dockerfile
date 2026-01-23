@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     zsh \
     git \
     curl \
+    tree \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Oh My Zsh for agent user
@@ -21,20 +22,17 @@ RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 USER root
 RUN chsh -s $(which zsh) agent
 
-# Copy skills directory
-COPY skills /usr/local/share/skills
-
 # Copy setup scripts
 COPY setup /usr/local/bin/setup
 RUN chmod +x /usr/local/bin/setup/setup.sh \
     && chmod +x /usr/local/bin/setup/shell/*.sh \
     && chmod +x /usr/local/bin/setup/python/*.py
 
-# Copy managed-settings.json to /etc/claude-code/
-RUN mkdir -p /etc/claude-code \
-    && cp /usr/local/bin/setup/managed-settings.json /etc/claude-code/managed-settings.json
-
+# Switch to agent user for remaining operations
 USER agent
+
+# Copy skills directory to .claude/skills
+COPY skills /home/agent/.claude/skills
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["claude", "--dangerously-skip-permissions", "--append-system-prompt", "/usr/local/bin/setup/prompt/system_prompt.txt"]

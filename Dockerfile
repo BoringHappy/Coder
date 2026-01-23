@@ -35,4 +35,4 @@ USER agent
 COPY skills /home/agent/.claude/skills
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
-CMD ["claude", "--dangerously-skip-permissions", "--append-system-prompt", "/usr/local/bin/setup/prompt/system_prompt.txt"]
+CMD ["sh", "-c", "claude --dangerously-skip-permissions --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]

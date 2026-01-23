@@ -24,8 +24,7 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 
 - Docker
 - GitHub CLI (`gh`) authenticated
-- Claude Code settings (`~/.claude_in_docker/settings.json`) with API key configured
-- `~/.claude_in_docker.json` - Auto-generated on first run to store configuration and skip setup on subsequent runs
+- `.env` file with `ANTHROPIC_API_KEY` configured (see `.env.example`)
 
 ### Usage
 
@@ -45,6 +44,16 @@ make run PR_NUMBER=123
 
 # Custom PR title (optional - defaults to branch name)
 make run BRANCH_NAME=add-new-feature PR_TITLE="Add new feature"
+```
+
+#### Building and Running Locally
+
+```bash
+# Build local image
+make build
+
+# Run with local image
+make run-local BRANCH_NAME=feature/your-branch
 ```
 
 Available parameters:
@@ -86,7 +95,7 @@ docker run -it --rm \
 ## How It Works
 
 On startup, the container:
-1. Clones/updates repository to `/home/agent/workspace`
+1. Clones/updates repository to `/home/agent/<repo-name>`
 2. Checks out specified branch or PR
 3. Creates PR if working on new branch
 4. Starts Claude Code
@@ -97,9 +106,9 @@ Built-in Claude Code skills to streamline PR workflows:
 
 | Skill | Command | Description |
 |-------|---------|-------------|
-| Update PR Summary | `/update-pr-summary` | Analyzes PR changes and generates an improved description |
-| Update PR Title | `/update-pr-title` | Creates a concise, descriptive PR title based on changes |
+| Update PR | `/update-pr` | Updates PR title and summary based on changes. Use `--summary-only` to skip title update |
 | Fix PR Comments | `/fix-pr-comments` | Addresses PR review feedback, commits fixes, and replies to comments |
+| Git Commit | `/git-commit` | Stages all changes, commits with a meaningful message, and pushes to remote |
 
 ## Best Practices
 

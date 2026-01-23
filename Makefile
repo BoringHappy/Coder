@@ -16,6 +16,7 @@ run:
 	export GITHUB_TOKEN="$$(gh auth token)" && \
 	export GIT_USER_NAME="$$(git config user.name)" && \
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
+	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
 	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
 	docker run --rm --pull always \
 		--network host \
@@ -43,6 +44,7 @@ run-local:
 	export GITHUB_TOKEN="$$(gh auth token)" && \
 	export GIT_USER_NAME="$$(git config user.name)" && \
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
+	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
 	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
 	docker run --rm \
 		--network host \

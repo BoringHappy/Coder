@@ -6,20 +6,28 @@ CODEMATE_IMAGE ?=
 BASE_IMAGE ?= docker/sandbox-templates:claude-code
 LOCAL_IMAGE_TAG ?= codemate:local
 
+# Detect OS for network flag (--network host not supported on macOS)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    NETWORK_FLAG :=
+else
+    NETWORK_FLAG := --network host
+endif
+
 # Extract repo name from git URL
 REPO_NAME := $(shell echo $(GIT_REPO_URL) | sed 's/\.git$$//' | sed 's|.*/||')
 
-.PHONY: run build run-local
-
-run:
+# Common docker run command template
+# Usage: $(call docker_run,<extra_flags>,<image>)
+define docker_run
 	set -a && if [ -f .env ]; then . ./.env; fi && set +a && \
 	export GITHUB_TOKEN="$$(gh auth token)" && \
 	export GIT_USER_NAME="$$(git config user.name)" && \
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
 	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
 	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
-	docker run --rm --pull always \
-		--network host \
+	docker run --rm $(1) \
+		$(NETWORK_FLAG) \
 		-it \
 		-v $(PWD)/.claude_in_docker:/home/agent/.claude \
 		-v $(PWD)/.claude_in_docker.json:/home/agent/.claude.json \
@@ -34,32 +42,16 @@ run:
 		-e GIT_USER_EMAIL \
 		--env-file .env \
 		-w /home/agent/$(REPO_NAME) \
-		$${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main} $(extra)
+		$(2) $(extra)
+endef
+
+.PHONY: run build run-local
+
+run:
+	$(call docker_run,--pull always,$${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main})
 
 build:
 	docker build --build-arg BASE_IMAGE=$(BASE_IMAGE) -t $(LOCAL_IMAGE_TAG) .
 
 run-local:
-	set -a && if [ -f .env ]; then . ./.env; fi && set +a && \
-	export GITHUB_TOKEN="$$(gh auth token)" && \
-	export GIT_USER_NAME="$$(git config user.name)" && \
-	export GIT_USER_EMAIL="$$(git config user.email)" && \
-	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
-	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
-	docker run --rm \
-		--network host \
-		-it \
-		-v $(PWD)/.claude_in_docker:/home/agent/.claude \
-		-v $(PWD)/.claude_in_docker.json:/home/agent/.claude.json \
-		-v $(PWD)/skills:/home/agent/.claude/skills \
-		-v $(PWD)/settings.json:/home/agent/.claude/settings.json \
-		-e GIT_REPO_URL=$(GIT_REPO_URL) \
-		-e BRANCH_NAME=$(BRANCH_NAME) \
-		-e PR_NUMBER=$(PR_NUMBER) \
-		-e "PR_TITLE=$(PR_TITLE)" \
-		-e GITHUB_TOKEN \
-		-e GIT_USER_NAME \
-		-e GIT_USER_EMAIL \
-		--env-file .env \
-		-w /home/agent/$(REPO_NAME) \
-		$(LOCAL_IMAGE_TAG) $(extra)
+	$(call docker_run,,$(LOCAL_IMAGE_TAG))

@@ -20,12 +20,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
 RUN npm install -g agent-browser \
     && agent-browser install --with-deps
 
-# Install Playwright browsers and system dependencies
-RUN npx playwright install chromium \
-    && npx playwright install-deps chromium
+# Install Playwright system dependencies as root
+RUN npx playwright install-deps chromium
 
 # Install Oh My Zsh for agent user
 USER agent
+
+# Install Playwright browsers as agent user (user-specific cache)
+RUN npx playwright install chromium
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 
 # Set ys theme in .zshrc

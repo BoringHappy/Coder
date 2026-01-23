@@ -53,7 +53,7 @@ define run_or_attach
 		echo "Container $(CONTAINER_NAME) already exists."; \
 		if docker ps --format '{{.Names}}' | grep -q "^$(CONTAINER_NAME)$$"; then \
 			echo "Container is running. Attaching..."; \
-			docker exec -it $(CONTAINER_NAME) /bin/bash; \
+			docker exec -it $(CONTAINER_NAME) zsh; \
 		else \
 			echo "Container is stopped. Starting and attaching..."; \
 			docker start -ai $(CONTAINER_NAME); \

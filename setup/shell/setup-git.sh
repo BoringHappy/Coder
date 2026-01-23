@@ -8,21 +8,21 @@ BLUE='\033[1;34m'
 RESET='\033[0m'
 
 if [ -z "$GIT_USER_NAME" ]; then
-    echo -e "${RED}Error: GIT_USER_NAME environment variable is required${RESET}"
+    printf "${RED}Error: GIT_USER_NAME environment variable is required${RESET}\n"
     exit 1
 fi
 
 if [ -z "$GIT_USER_EMAIL" ]; then
-    echo -e "${RED}Error: GIT_USER_EMAIL environment variable is required${RESET}"
+    printf "${RED}Error: GIT_USER_EMAIL environment variable is required${RESET}\n"
     exit 1
 fi
 
-echo -e "${YELLOW}Setting up git config...${RESET}"
+printf "${YELLOW}Setting up git config...${RESET}\n"
 
-echo -e "  Setting git user.name: ${BLUE}$GIT_USER_NAME${RESET}"
+printf "  Setting git user.name: ${BLUE}$GIT_USER_NAME${RESET}\n"
 git config --global user.name "$GIT_USER_NAME"
 
-echo -e "  Setting git user.email: ${BLUE}$GIT_USER_EMAIL${RESET}"
+printf "  Setting git user.email: ${BLUE}$GIT_USER_EMAIL${RESET}\n"
 git config --global user.email "$GIT_USER_EMAIL"
 
-echo -e "${GREEN}✓ Git config setup completed successfully${RESET}"
+printf "${GREEN}✓ Git config setup completed successfully${RESET}\n"

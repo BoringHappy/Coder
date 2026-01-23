@@ -7,17 +7,17 @@ RED='\033[1;31m'
 RESET='\033[0m'
 
 if [ -z "$GITHUB_TOKEN" ]; then
-    echo -e "${RED}Error: GITHUB_TOKEN environment variable is required${RESET}"
+    printf "${RED}Error: GITHUB_TOKEN environment variable is required${RESET}\n"
     exit 1
 fi
 
-echo -e "${YELLOW}Setting up GitHub CLI authentication...${RESET}"
+printf "${YELLOW}Setting up GitHub CLI authentication...${RESET}\n"
 
 TOKEN="$GITHUB_TOKEN"
 unset GITHUB_TOKEN
 echo "$TOKEN" | gh auth login --with-token
 
-echo -e "${YELLOW}Setting up git credential helper...${RESET}"
+printf "${YELLOW}Setting up git credential helper...${RESET}\n"
 gh auth setup-git
 
-echo -e "${GREEN}✓ GitHub CLI authentication completed successfully${RESET}"
+printf "${GREEN}✓ GitHub CLI authentication completed successfully${RESET}\n"

@@ -108,6 +108,7 @@ Built-in Claude Code skills to streamline PR workflows:
 |-------|---------|-------------|
 | Update PR | `/update-pr` | Updates PR title and summary based on changes. Use `--summary-only` to skip title update |
 | Fix PR Comments | `/fix-pr-comments` | Addresses PR review feedback, commits fixes, and replies to comments |
+| Git Commit | `/git-commit` | Stages all changes, commits with a meaningful message, and pushes to remote |
 
 ## Best Practices
 

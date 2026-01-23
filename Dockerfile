@@ -33,6 +33,9 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 # Set ys theme in .zshrc
 RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 
+# Add agent-browser wrapper function to use proxy from environment variable when set
+RUN echo 'agent-browser() { if [ -n "$HTTPS_PROXY" ]; then command agent-browser --proxy "$HTTPS_PROXY" "$@"; else command agent-browser "$@"; fi; }' >> /home/agent/.zshrc
+
 # Set zsh as default shell
 USER root
 RUN chsh -s $(which zsh) agent

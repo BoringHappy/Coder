@@ -21,8 +21,11 @@ RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 USER root
 RUN chsh -s $(which zsh) agent
 
-# Copy skills directory
+# Copy skills directory and move to .claude/skills
 COPY skills /usr/local/share/skills
+RUN mkdir -p /home/agent/.claude/skills && \
+    mv /usr/local/share/skills/* /home/agent/.claude/skills/ && \
+    rmdir /usr/local/share/skills
 
 # Copy setup scripts
 COPY setup /usr/local/bin/setup

@@ -1,7 +1,6 @@
 ---
 name: fix-pr-comments
 description: Reads comments from a GitHub pull request, fixes the issues mentioned in the comments, commits the changes, and replies to the comments. Use when the user wants to address PR feedback or fix issues mentioned in code reviews.
-disable-model-invocation: true
 ---
 
 # Fix PR Comments

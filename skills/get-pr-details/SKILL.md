@@ -1,7 +1,6 @@
 ---
 name: get-pr-details
 description: Gets details of a GitHub pull request including title, description, and file changes. Use when the user wants to view PR information.
-disable-model-invocation: true
 context: fork
 ---
 

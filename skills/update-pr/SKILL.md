@@ -1,7 +1,6 @@
 ---
 name: update-pr
 description: Updates the summary/description and optionally the title of a GitHub pull request. Use `/update-pr` to update both title and summary, or `/update-pr --summary-only` to update only the summary.
-disable-model-invocation: true
 context: fork
 ---
 

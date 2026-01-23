@@ -27,7 +27,7 @@ define docker_run
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
 	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
 	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
-	docker run --name $(CONTAINER_NAME) $(1) \
+	docker run --rm --name $(CONTAINER_NAME) $(1) \
 		$(NETWORK_FLAG) \
 		-it \
 		-v $(PWD)/.claude_in_docker:/home/agent/.claude \
@@ -49,15 +49,9 @@ endef
 # Helper to run or attach to container
 # Usage: $(call run_or_attach,<image>,<extra_flags>)
 define run_or_attach
-	@if docker ps -a --format '{{.Names}}' | grep -q "^$(CONTAINER_NAME)$$"; then \
-		echo "Container $(CONTAINER_NAME) already exists."; \
-		if docker ps --format '{{.Names}}' | grep -q "^$(CONTAINER_NAME)$$"; then \
-			echo "Container is running. Attaching..."; \
-			docker exec -it $(CONTAINER_NAME) zsh; \
-		else \
-			echo "Container is stopped. Starting and attaching..."; \
-			docker start -ai $(CONTAINER_NAME); \
-		fi \
+	@if docker ps --format '{{.Names}}' | grep -q "^$(CONTAINER_NAME)$$"; then \
+		echo "Container $(CONTAINER_NAME) is running. Attaching..."; \
+		docker exec -it $(CONTAINER_NAME) zsh; \
 	else \
 		echo "Creating new container $(CONTAINER_NAME)..."; \
 		$(call docker_run,$(2),$(1)); \

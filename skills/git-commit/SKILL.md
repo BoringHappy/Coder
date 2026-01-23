@@ -1,7 +1,6 @@
 ---
 name: git-commit
 description: Stages all changes, creates a commit with a meaningful message, and pushes to the remote. Use when the user wants to commit and push their work.
-disable-model-invocation: true
 context: fork
 ---
 

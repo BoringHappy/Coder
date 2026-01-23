@@ -22,16 +22,17 @@ RUN sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 USER root
 RUN chsh -s $(which zsh) agent
 
-# Copy skills directory to .claude/skills
-COPY skills /home/agent/.claude/skills
-
 # Copy setup scripts
 COPY setup /usr/local/bin/setup
 RUN chmod +x /usr/local/bin/setup/setup.sh \
     && chmod +x /usr/local/bin/setup/shell/*.sh \
     && chmod +x /usr/local/bin/setup/python/*.py
 
+# Switch to agent user for remaining operations
 USER agent
+
+# Copy skills directory to .claude/skills
+COPY skills /home/agent/.claude/skills
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["claude", "--dangerously-skip-permissions", "--append-system-prompt", "/usr/local/bin/setup/prompt/system_prompt.txt"]

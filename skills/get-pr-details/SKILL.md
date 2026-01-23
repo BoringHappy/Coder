@@ -1,12 +1,12 @@
 ---
 name: get-pr-details
-description: Gets details of a GitHub pull request including title, description, and file changes. Use when the user wants to view PR information.
+description: Gets details of a GitHub pull request including title, description, file changes, and review comments. Use when the user wants to view PR information.
 context: fork
 ---
 
 # Get PR Details
 
-Retrieves and displays pull request information including title, description, and changed files.
+Retrieves and displays pull request information including title, description, changed files, and review comments.
 
 ## PR Information
 
@@ -22,6 +22,12 @@ Description:
 Changed files:
 !`gh pr view --json files -q '.files[].path' | cat`
 
+Review comments:
+!`gh pr view --json reviews -q '.reviews[] | "**\(.author.login)** (\(.state)) - \(.submittedAt):\n\(.body)\n"' | cat`
+
+PR comments:
+!`gh pr view --json comments -q '.comments[] | "**\(.author.login)** - \(.createdAt):\n\(.body)\n"' | cat`
+
 ## Instructions
 
 **IMPORTANT: You MUST output a summary to the user.** After gathering the PR information above, display a formatted summary that includes:
@@ -30,5 +36,7 @@ Changed files:
 2. **Branch** - Source branch → target branch
 3. **Description** - The PR description/body (summarized if lengthy)
 4. **Changed Files** - List of files modified in this PR
+5. **Review Comments** - Summary of review feedback (if any)
+6. **PR Comments** - Summary of general comments (if any)
 
 Format the output clearly using markdown so the user can see the PR details at a glance. This summary should always be visible in your response to the user.

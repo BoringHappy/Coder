@@ -50,11 +50,11 @@ endef
 # Usage: $(call run_or_attach,<image>,<extra_flags>)
 define run_or_attach
 	@if docker ps --format '{{.Names}}' | grep -q "^$(CONTAINER_NAME)$$"; then \
-		echo -e "\033[0;32mContainer $(CONTAINER_NAME) is running.\033[0m"; \
-		echo -e "\033[0;36mAttaching zsh...\033[0m"; \
+		echo "\033[0;32mContainer $(CONTAINER_NAME) is running.\033[0m"; \
+		echo "\033[0;36mAttaching zsh...\033[0m"; \
 		docker exec -it $(CONTAINER_NAME) zsh; \
 	else \
-		echo -e "\033[0;33mCreating new container $(CONTAINER_NAME)...\033[0m"; \
+		echo "\033[0;33mCreating new container $(CONTAINER_NAME)...\033[0m"; \
 		$(call docker_run,$(2),$(1)); \
 	fi
 endef

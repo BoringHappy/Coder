@@ -34,10 +34,6 @@ RUN chmod +x /usr/local/bin/setup/setup.sh \
     && chmod +x /usr/local/bin/setup/shell/*.sh \
     && chmod +x /usr/local/bin/setup/python/*.py
 
-# Copy managed-settings.json to /etc/claude-code/
-RUN mkdir -p /etc/claude-code \
-    && cp /usr/local/bin/setup/managed-settings.json /etc/claude-code/managed-settings.json
-
 USER agent
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]

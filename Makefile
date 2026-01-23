@@ -6,6 +6,14 @@ CODEMATE_IMAGE ?=
 BASE_IMAGE ?= docker/sandbox-templates:claude-code
 LOCAL_IMAGE_TAG ?= codemate:local
 
+# Detect OS for network flag (--network host not supported on macOS)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    NETWORK_FLAG :=
+else
+    NETWORK_FLAG := --network host
+endif
+
 # Extract repo name from git URL
 REPO_NAME := $(shell echo $(GIT_REPO_URL) | sed 's/\.git$$//' | sed 's|.*/||')
 
@@ -19,7 +27,7 @@ run:
 	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
 	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
 	docker run --rm --pull always \
-		--network host \
+		$(NETWORK_FLAG) \
 		-it \
 		-v $(PWD)/.claude_in_docker:/home/agent/.claude \
 		-v $(PWD)/.claude_in_docker.json:/home/agent/.claude.json \
@@ -47,7 +55,7 @@ run-local:
 	[ -d $(PWD)/.claude_in_docker ] || mkdir -p $(PWD)/.claude_in_docker && \
 	[ -f $(PWD)/.claude_in_docker.json ] || echo '{}' > $(PWD)/.claude_in_docker.json && \
 	docker run --rm \
-		--network host \
+		$(NETWORK_FLAG) \
 		-it \
 		-v $(PWD)/.claude_in_docker:/home/agent/.claude \
 		-v $(PWD)/.claude_in_docker.json:/home/agent/.claude.json \

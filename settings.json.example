@@ -1,7 +1,7 @@
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "<fill yours token>",
-    "ANTHROPIC_BASE_URL": "<fill yours token>",
+    "ANTHROPIC_BASE_URL": "fill your base_url",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
   },
   "attribution": {
@@ -14,27 +14,5 @@
   },
   "theme": "dark",
   "dangerouslyDisablePermissions": true,
-  "defaultMode": "bypassPermissions",
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "prompt": "gh pr view --json title,body,files --jq '{title: .title, body: .body, files: [.files[].path]}' | cat"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "If there are uncommitted changes, run git-commit skill to stage, commit, and push them."
-          }
-        ]
-      }
-    ]
-  }
+  "defaultMode": "bypassPermissions"
 }

@@ -4,6 +4,15 @@ import subprocess
 import sys
 
 
+# Color codes
+YELLOW = '\033[1;33m'
+GREEN = '\033[1;32m'
+RED = '\033[1;31m'
+BLUE = '\033[1;34m'
+MAGENTA = '\033[1;35m'
+RESET = '\033[0m'
+
+
 def run(cmd, check=True):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     if check and result.returncode != 0:
@@ -45,10 +54,10 @@ def main():
     pr_number = os.getenv("PR_NUMBER", "")
 
     if not branch_name and not pr_number:
-        print("Skipping git PR setup: GIT_REPO_URL or BRANCH_NAME/PR_NUMBER not set")
+        print(f"{RED}Skipping git PR setup: GIT_REPO_URL or BRANCH_NAME/PR_NUMBER not set{RESET}")
         sys.exit(0)
 
-    print("Setting up git repository...")
+    print(f"{YELLOW}Setting up git repository...{RESET}")
 
     # Extract repo name from git URL
     repo_name = get_repo_name_from_url(git_repo_url)
@@ -58,17 +67,17 @@ def main():
     run(f"sudo chown -R agent:agent {workspace}", check=False)
 
     if not os.path.exists(f"{workspace}/.git"):
-        print(f"Cloning repository: {git_repo_url}")
+        print(f"  Cloning repository: {BLUE}{git_repo_url}{RESET}")
         os.chdir("/home/agent")
         run(f"git clone {git_repo_url} {repo_name}")
         os.chdir(workspace)
     else:
-        print("Using existing repository")
+        print(f"  Using existing repository")
         os.chdir(workspace)
         run("git fetch origin")
 
     if pr_number:
-        print(f"Getting branch name from PR #{pr_number}")
+        print(f"  Getting branch name from PR {MAGENTA}#{pr_number}{RESET}")
         run(f"gh pr checkout {pr_number}")
         result = run(f"gh pr view {pr_number} --json url -q .url")
         pr_url = result.stdout.strip()
@@ -77,7 +86,7 @@ def main():
             f"git show-ref --verify --quiet refs/heads/{branch_name}", check=False
         )
         if result.returncode == 0:
-            print(f"Branch {branch_name} exists locally, switching to it")
+            print(f"  Branch {BLUE}{branch_name}{RESET} exists locally, switching to it")
             run(f"git checkout {branch_name}")
             run(f"git pull origin {branch_name}", check=False)
             result = run(
@@ -90,7 +99,7 @@ def main():
                 check=False,
             )
             if result.returncode == 0:
-                print(f"Branch {branch_name} exists remotely, checking it out")
+                print(f"  Branch {BLUE}{branch_name}{RESET} exists remotely, checking it out")
                 run(f"git checkout -b {branch_name} origin/{branch_name}")
                 result = run(
                     f"gh pr list --head {branch_name} --json url -q '.[0].url'",
@@ -98,20 +107,20 @@ def main():
                 )
                 pr_url = result.stdout.strip() if result.returncode == 0 else ""
             else:
-                print(f"Creating new branch: {branch_name}")
+                print(f"  Creating new branch: {BLUE}{branch_name}{RESET}")
                 run(f"git checkout -b {branch_name}")
                 run(f"git commit --allow-empty -m 'Initial commit for {branch_name}'")
                 run(f"git push -u origin {branch_name}")
 
-                print("Creating pull request")
+                print(f"  {MAGENTA}Creating pull request{RESET}")
                 pr_body = get_pr_template(workspace)
                 title = pr_title if pr_title else branch_name.replace("-", " ")
                 result = run(f"gh pr create --title '{title}' --body '{pr_body}'")
                 pr_url = result.stdout.strip()
 
-    print("Git setup completed successfully")
+    print(f"{GREEN}✓ Git setup completed successfully{RESET}")
     if pr_url:
-        print(f"PR URL: {pr_url}")
+        print(f"  PR URL: {BLUE}{pr_url}{RESET}")
 
 
 if __name__ == "__main__":

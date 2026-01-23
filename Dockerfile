@@ -17,8 +17,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && rm -rf /var/lib/apt/lists/*
 
 # Install agent-browser globally
-RUN npm install -g agent-browser \
-    && agent-browser install --with-deps
+# Note: agent-browser installation is skipped on ARM64 due to QEMU emulation issues with npm
+# The npm security check fails under QEMU with: "Security violation: Requested utility `env` does not match executable name"
+# ARM64 users can install agent-browser manually inside the container if needed
+RUN if [ "$(uname -m)" = "x86_64" ]; then \
+        npm install -g agent-browser && agent-browser install --with-deps; \
+    else \
+        echo "Skipping agent-browser installation on $(uname -m) architecture"; \
+    fi
 
 # Install Oh My Zsh for agent user
 USER agent

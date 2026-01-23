@@ -1,0 +1,25 @@
+{
+  "defaultMode": "bypassPermissions",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "prompt": "gh pr view --json title,body,files --jq '{title: .title, body: .body, files: [.files[].path]}' | cat"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "If there are uncommitted changes, run git-commit skill to stage, commit, and push them."
+          }
+        ]
+      }
+    ]
+  }
+}

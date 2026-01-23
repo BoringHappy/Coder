@@ -16,12 +16,13 @@ run:
 	export GITHUB_TOKEN="$$(gh auth token)" && \
 	export GIT_USER_NAME="$$(git config user.name)" && \
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
-	[ -f ~/.claude_in_docker.json ] || echo '{}' > ~/.claude_in_docker.json && \
+	[ -f ./.claude_in_docker.json ] || echo '{}' > ./.claude_in_docker.json && \
 	docker run --rm --pull always \
 		--network host \
 		-it \
-		-v ~/.claude_in_docker:/home/agent/.claude \
-		-v ~/.claude_in_docker.json:/home/agent/.claude.json \
+		-v ./.claude_in_docker:/home/agent/.claude \
+		-v ./.claude_in_docker.json:/home/agent/.claude.json \
+		-v $(PWD)/skills:/home/agent/.claude/skills \
 		-e GIT_REPO_URL=$(GIT_REPO_URL) \
 		-e BRANCH_NAME=$(BRANCH_NAME) \
 		-e PR_NUMBER=$(PR_NUMBER) \
@@ -41,12 +42,13 @@ run-local:
 	export GITHUB_TOKEN="$$(gh auth token)" && \
 	export GIT_USER_NAME="$$(git config user.name)" && \
 	export GIT_USER_EMAIL="$$(git config user.email)" && \
-	[ -f ~/.claude_in_docker.json ] || echo '{}' > ~/.claude_in_docker.json && \
+	[ -f ./.claude_in_docker.json ] || echo '{}' > ./.claude_in_docker.json && \
 	docker run --rm \
 		--network host \
 		-it \
-		-v ~/.claude_in_docker:/home/agent/.claude \
-		-v ~/.claude_in_docker.json:/home/agent/.claude.json \
+		-v ./.claude_in_docker:/home/agent/.claude \
+		-v ./.claude_in_docker.json:/home/agent/.claude.json \
+		-v $(PWD)/skills:/home/agent/.claude/skills \
 		-e GIT_REPO_URL=$(GIT_REPO_URL) \
 		-e BRANCH_NAME=$(BRANCH_NAME) \
 		-e PR_NUMBER=$(PR_NUMBER) \

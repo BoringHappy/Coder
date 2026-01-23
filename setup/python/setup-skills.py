@@ -11,17 +11,15 @@ def main():
         return
 
     print("Setting up skills...")
-    skills_dest.mkdir(parents=True, exist_ok=True)
 
-    for src_file in skills_src.rglob("*"):
-        if src_file.is_file():
-            rel_path = src_file.relative_to(skills_src)
-            dest_file = skills_dest / rel_path
+    # Remove existing skills directory if it exists
+    if skills_dest.exists():
+        print(f"Removing existing skills directory: {skills_dest}")
+        shutil.rmtree(skills_dest)
 
-            if not dest_file.exists():
-                dest_file.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src_file, dest_file)
-                print(f"Copied skill: {rel_path}")
+    # Copy the entire skills directory
+    print(f"Copying skills from {skills_src} to {skills_dest}")
+    shutil.copytree(skills_src, skills_dest)
 
     print("Setting up skills Done...")
 

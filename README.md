@@ -116,6 +116,23 @@ Built-in Claude Code skills to streamline PR workflows:
 | Update PR | `/update-pr` | Updates PR title and summary based on changes. Use `--summary-only` to skip title update |
 | Fix PR Comments | `/fix-pr-comments` | Addresses PR review feedback, commits fixes, and replies to comments |
 | Git Commit | `/git-commit` | Stages all changes, commits with a meaningful message, and pushes to remote |
+| Get PR Details | `/get-pr-details` | Gets details of a GitHub pull request including title, description, file changes, and review comments |
+| Agent Browser | `/agent-browser` | Automates browser interactions for web testing, form filling, screenshots, and data extraction |
+| Skill Creator | `/skill-creator` | Guide for creating effective skills with templates, validation tools, and documentation |
+
+### External Skills
+
+The **agent-browser** and **skill-creator** skills were imported from external sources:
+
+- **agent-browser**: Source: [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
+  ```bash
+  npx skills add https://github.com/vercel-labs/agent-browser --skill agent-browser
+  ```
+
+- **skill-creator**: Source: [anthropics/skills](https://github.com/anthropics/skills)
+  ```bash
+  npx skills add https://github.com/anthropics/skills --skill skill-creator
+  ```
 
 ## Best Practices
 

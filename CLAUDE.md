@@ -6,20 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CodeMate is a Docker-based environment for running Claude Code with automated Git/PR setup. It runs Claude with `--dangerously-skip-permissions` in an isolated container, enabling AI pair programming without constant approval prompts.
 
-## Build Commands
+## Running CodeMate
 
 ```bash
-make build                              # Build local Docker image
-make run BRANCH_NAME=feature/xyz        # Run with remote image on a branch
-make run PR_NUMBER=123                  # Run with remote image on existing PR
-make run-local BRANCH_NAME=feature/xyz  # Run with locally built image
+# Run with branch name (auto-detects repo from: --repo > .env > current directory's git remote)
+./start.sh --branch feature/your-branch
+
+# Run with explicit repo URL
+./start.sh --repo https://github.com/your-org/your-repo.git --branch feature/xyz
+
+# Run with existing PR
+./start.sh --pr 123
+
+# Run with custom volume mounts
+./start.sh --branch feature/xyz --mount /local/path:/container/path
 ```
 
 Parameters:
-- `GIT_REPO_URL` - Repository URL (defaults to current repo's remote origin)
-- `BRANCH_NAME` - Branch to work on
-- `PR_NUMBER` - Existing PR number (alternative to BRANCH_NAME)
-- `PR_TITLE` - PR title (optional, defaults to branch name)
+- `--repo` - Repository URL (optional, auto-detects from .env or git remote)
+- `--branch` - Branch to work on
+- `--pr` - Existing PR number (alternative to --branch)
+- `--mount` - Additional volume mounts (can be specified multiple times)
 
 ## Architecture
 
@@ -44,7 +51,7 @@ Available skills:
 ### Key Files
 
 - `Dockerfile` - Container definition, uses `docker/sandbox-templates:claude-code` base
-- `Makefile` - Build and run targets
+- `start.sh` - Standalone script to run CodeMate with configuration management
 - `setup/python/setup-repo.py` - Main repo/PR setup logic, reads PR template from `.github/PULL_REQUEST_TEMPLATE.md`
 
 ## Development Notes

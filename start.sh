@@ -17,7 +17,7 @@ GIT_REPO_URL="${GIT_REPO_URL:-$(git config --get remote.origin.url 2>/dev/null |
 BRANCH_NAME="${BRANCH_NAME:-}"
 PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
-CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main}"
+CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
 
 # Function to print colored messages
 print_info() {
@@ -353,6 +353,7 @@ Options:
   --pr-title TITLE     PR title (optional)
   --repo URL           Git repository URL
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
+  --image IMAGE        Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
   --help               Show this help message
 
 Environment Variables:
@@ -363,6 +364,7 @@ Environment Variables:
   GITHUB_TOKEN         GitHub personal access token
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
+  CODEMATE_IMAGE       Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
 
 Examples:
   # First time setup
@@ -383,6 +385,9 @@ Examples:
   # Run with custom volume mounts
   $0 --branch feature/xyz --mount /local/path:/container/path
   $0 --branch feature/xyz --mount ~/data:/data --mount ~/config:/config
+
+  # Run with custom image
+  $0 --branch feature/xyz --image ghcr.io/boringhappy/codemate:v1.0.0
 
 EOF
 }
@@ -421,6 +426,10 @@ main() {
                 ;;
             --mount)
                 custom_mounts+=("$2")
+                shift 2
+                ;;
+            --image)
+                CODEMATE_IMAGE="$2"
                 shift 2
                 ;;
             --help)

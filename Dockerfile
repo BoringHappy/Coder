@@ -29,6 +29,14 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 RUN npx playwright install chromium \
     && echo 'agent-browser() { if [ -n "$HTTPS_PROXY" ]; then command agent-browser --proxy "$HTTPS_PROXY" "$@"; else command agent-browser "$@"; fi; }' >> /home/agent/.zshrc
 
+# Install Rust and cargo
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && echo 'source $HOME/.cargo/env' >> /home/agent/.zshrc
+
+# Install uv (fast Python package installer)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/agent/.zshrc
+
 # Set zsh as default shell, copy setup scripts, and set permissions
 USER root
 RUN chsh -s $(which zsh) agent

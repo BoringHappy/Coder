@@ -55,12 +55,51 @@ chmod +x start.sh
 
 # Run with existing PR
 ./start.sh --pr 123
+
+# Run with custom volume mounts
+./start.sh --branch feature/xyz --mount /local/path:/container/path
+./start.sh --branch feature/xyz --mount ~/data:/data --mount ~/config:/config
 ```
 
 The script will:
 1. Prompt you to create configuration files if they don't exist
 2. Create `.claude_in_docker/`, `.claude_in_docker.json`, `settings.json`, and `.env` in your current directory
 3. Run the CodeMate container with your configuration
+
+##### Custom Volume Mounts
+
+The `--mount` option allows you to mount additional directories or files into the container. This is useful for:
+
+- **Sharing data**: Mount datasets or files that Claude needs to access
+- **Custom configurations**: Mount additional config files or credentials
+- **Persistent storage**: Mount directories for output files or logs
+- **Development tools**: Mount local tools or scripts
+
+**Syntax**: `--mount <host-path>:<container-path>`
+
+**Examples**:
+
+```bash
+# Mount a data directory
+./start.sh --branch feature/xyz --mount ~/datasets:/data
+
+# Mount multiple directories
+./start.sh --branch feature/xyz \
+  --mount ~/datasets:/data \
+  --mount ~/configs:/configs
+
+# Mount a specific file
+./start.sh --branch feature/xyz --mount ~/.aws/credentials:/home/agent/.aws/credentials
+
+# Mount with absolute paths
+./start.sh --branch feature/xyz --mount /var/log/app:/logs
+```
+
+**Notes**:
+- Paths can be absolute or relative (e.g., `~/` expands to your home directory)
+- The container path should typically be under `/home/agent/` for proper permissions
+- Multiple `--mount` options can be specified in a single command
+- Mounted directories must exist on the host before running the container
 
 #### Using Make
 
@@ -146,6 +185,20 @@ Built-in Claude Code skills to streamline PR workflows:
 | Get PR Details | `/get-pr-details` | Gets details of a GitHub pull request including title, description, file changes, and review comments |
 | Agent Browser | `/agent-browser` | Automates browser interactions for web testing, form filling, screenshots, and data extraction |
 | Skill Creator | `/skill-creator` | Guide for creating effective skills with templates, validation tools, and documentation |
+
+### Custom Skills
+
+You can override the default skills by mounting your own skills directory:
+
+```bash
+# Create a custom skills directory in your project
+mkdir -p skills/my-custom-skill
+
+# Mount it when running CodeMate
+./start.sh --branch feature/xyz --mount ./skills:/home/agent/.claude/skills
+```
+
+When a custom skills directory is mounted, the default skills will not be copied, allowing you to use your own skill set. You can also copy the default skills from the repository and modify them as needed.
 
 ### External Skills
 

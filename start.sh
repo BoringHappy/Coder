@@ -1,0 +1,431 @@
+#!/bin/bash
+
+# CodeMate Start Script
+# This script sets up and runs CodeMate in a Docker container
+
+set -e
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Default values
+GIT_REPO_URL="${GIT_REPO_URL:-$(git config --get remote.origin.url 2>/dev/null || echo '')}"
+BRANCH_NAME="${BRANCH_NAME:-}"
+PR_NUMBER="${PR_NUMBER:-}"
+PR_TITLE="${PR_TITLE:-}"
+CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main}"
+LOCAL_IMAGE_TAG="codemate:local"
+USE_LOCAL_IMAGE="${USE_LOCAL_IMAGE:-false}"
+
+# Function to print colored messages
+print_info() {
+    printf "${BLUE}ℹ ${NC}%s\n" "$1"
+}
+
+print_success() {
+    printf "${GREEN}✓${NC} %s\n" "$1"
+}
+
+print_warning() {
+    printf "${YELLOW}⚠${NC} %s\n" "$1"
+}
+
+print_error() {
+    printf "${RED}✗${NC} %s\n" "$1"
+}
+
+# Function to ask yes/no question
+ask_yes_no() {
+    local prompt="$1"
+    local response
+    while true; do
+        printf "${YELLOW}?${NC} %s (y/n): " "$prompt"
+        read -r response
+        case "$response" in
+            [Yy]* ) return 0;;
+            [Nn]* ) return 1;;
+            * ) echo "Please answer y or n.";;
+        esac
+    done
+}
+
+# Function to create .env file
+create_env_file() {
+    local env_file="$1"
+    cat > "$env_file" << 'EOF'
+# CodeMate Environment Configuration
+
+# Anthropic API Key (Required)
+# Get your API key from: https://console.anthropic.com/
+ANTHROPIC_API_KEY=
+
+# Optional: Custom Anthropic API base URL
+# ANTHROPIC_BASE_URL=
+
+# Optional: Git configuration (will use git config if not set)
+# GIT_USER_NAME=
+# GIT_USER_EMAIL=
+
+# Optional: Default repository URL
+# GIT_REPO_URL=
+
+# Optional: Proxy configuration for agent-browser skill
+# PROXY_URL=
+EOF
+    print_success "Created $env_file"
+}
+
+# Function to create settings.json
+create_settings_json() {
+    local settings_file="$1"
+    cat > "$settings_file" << 'EOF'
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "<fill your token>",
+    "ANTHROPIC_BASE_URL": "fill your base_url",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "theme": "dark",
+  "dangerouslyDisablePermissions": true,
+  "defaultMode": "bypassPermissions"
+}
+EOF
+    print_success "Created $settings_file"
+}
+
+# Function to create .claude_in_docker.json
+create_claude_json() {
+    local claude_json="$1"
+    echo '{}' > "$claude_json"
+    print_success "Created $claude_json"
+}
+
+# Function to setup CodeMate files
+setup_codemate_files() {
+    local current_dir="$(pwd)"
+
+    print_info "Setting up CodeMate configuration files in: $current_dir"
+    echo ""
+
+    # Create .claude_in_docker directory
+    if [ ! -d "$current_dir/.claude_in_docker" ]; then
+        mkdir -p "$current_dir/.claude_in_docker"
+        print_success "Created .claude_in_docker directory"
+    else
+        print_warning ".claude_in_docker directory already exists"
+    fi
+
+    # Create .claude_in_docker.json
+    if [ ! -f "$current_dir/.claude_in_docker.json" ]; then
+        create_claude_json "$current_dir/.claude_in_docker.json"
+    else
+        print_warning ".claude_in_docker.json already exists"
+    fi
+
+    # Create settings.json
+    if [ ! -f "$current_dir/settings.json" ]; then
+        create_settings_json "$current_dir/settings.json"
+    else
+        print_warning "settings.json already exists"
+    fi
+
+    # Create .env file
+    if [ ! -f "$current_dir/.env" ]; then
+        create_env_file "$current_dir/.env"
+    else
+        print_warning ".env already exists"
+    fi
+
+    echo ""
+    print_success "Setup complete!"
+    echo ""
+    print_info "Next steps:"
+    echo "  1. Edit .env and add your ANTHROPIC_API_KEY"
+    echo "  2. Edit settings.json and configure ANTHROPIC_AUTH_TOKEN"
+    echo "  3. Run this script again to start CodeMate"
+    echo ""
+}
+
+# Function to check prerequisites
+check_prerequisites() {
+    local missing_deps=()
+
+    # Check Docker
+    if ! command -v docker &> /dev/null; then
+        missing_deps+=("docker")
+    fi
+
+    # Check gh CLI
+    if ! command -v gh &> /dev/null; then
+        missing_deps+=("gh (GitHub CLI)")
+    fi
+
+    # Check git
+    if ! command -v git &> /dev/null; then
+        missing_deps+=("git")
+    fi
+
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        print_error "Missing required dependencies:"
+        for dep in "${missing_deps[@]}"; do
+            echo "  - $dep"
+        done
+        echo ""
+        echo "Please install the missing dependencies and try again."
+        exit 1
+    fi
+
+    # Check if gh is authenticated
+    if ! gh auth status &> /dev/null; then
+        print_error "GitHub CLI is not authenticated"
+        echo "Please run: gh auth login"
+        exit 1
+    fi
+}
+
+# Function to run CodeMate container
+run_codemate() {
+    local current_dir="$(pwd)"
+
+    # Source .env file if it exists
+    if [ -f "$current_dir/.env" ]; then
+        set -a
+        source "$current_dir/.env"
+        set +a
+    fi
+
+    # Get GitHub token
+    GITHUB_TOKEN=$(gh auth token)
+    if [ -z "$GITHUB_TOKEN" ]; then
+        print_error "Failed to get GitHub token"
+        exit 1
+    fi
+
+    # Get git user info
+    GIT_USER_NAME="${GIT_USER_NAME:-$(git config user.name)}"
+    GIT_USER_EMAIL="${GIT_USER_EMAIL:-$(git config user.email)}"
+
+    if [ -z "$GIT_USER_NAME" ] || [ -z "$GIT_USER_EMAIL" ]; then
+        print_error "Git user name or email not configured"
+        echo "Please set them in .env or run:"
+        echo "  git config --global user.name \"Your Name\""
+        echo "  git config --global user.email \"your.email@example.com\""
+        exit 1
+    fi
+
+    # Determine container name
+    local branch_for_name="${BRANCH_NAME:-main}"
+    CONTAINER_NAME="codemate-$(echo "$branch_for_name" | sed 's/[^a-zA-Z0-9_-]/-/g')"
+
+    # Extract repo name from git URL
+    REPO_NAME=$(echo "$GIT_REPO_URL" | sed 's/\.git$//' | sed 's|.*/||')
+
+    # Detect OS for network flag
+    NETWORK_FLAG=""
+    if [ "$(uname -s)" != "Darwin" ]; then
+        NETWORK_FLAG="--network host"
+    fi
+
+    # Determine which image to use
+    local image="$CODEMATE_IMAGE"
+    local pull_flag="--pull always"
+    if [ "$USE_LOCAL_IMAGE" = "true" ]; then
+        image="$LOCAL_IMAGE_TAG"
+        pull_flag=""
+    fi
+
+    # Check if container is already running
+    if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+        print_success "Container $CONTAINER_NAME is running"
+        print_info "Attaching zsh..."
+        docker exec -it "$CONTAINER_NAME" zsh
+        return
+    fi
+
+    # Create new container
+    print_info "Creating new container $CONTAINER_NAME..."
+
+    # Build volume mounts
+    local volume_mounts=(
+        -v "$current_dir/.claude_in_docker:/home/agent/.claude"
+        -v "$current_dir/.claude_in_docker.json:/home/agent/.claude.json"
+        -v "$current_dir/settings.json:/home/agent/.claude/settings.json"
+    )
+
+    # Mount skills directory if it exists in current directory
+    if [ -d "$current_dir/skills" ]; then
+        volume_mounts+=(-v "$current_dir/skills:/home/agent/.claude/skills")
+        print_info "Mounting local skills directory"
+    fi
+
+    docker run --rm --name "$CONTAINER_NAME" \
+        $pull_flag \
+        $NETWORK_FLAG \
+        -it \
+        "${volume_mounts[@]}" \
+        -e "GIT_REPO_URL=$GIT_REPO_URL" \
+        -e "BRANCH_NAME=$BRANCH_NAME" \
+        -e "PR_NUMBER=$PR_NUMBER" \
+        -e "PR_TITLE=$PR_TITLE" \
+        -e "GITHUB_TOKEN=$GITHUB_TOKEN" \
+        -e "GIT_USER_NAME=$GIT_USER_NAME" \
+        -e "GIT_USER_EMAIL=$GIT_USER_EMAIL" \
+        -e "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" \
+        ${ANTHROPIC_BASE_URL:+-e "ANTHROPIC_BASE_URL=$ANTHROPIC_BASE_URL"} \
+        ${PROXY_URL:+-e "PROXY_URL=$PROXY_URL"} \
+        -w "/home/agent/$REPO_NAME" \
+        "$image"
+}
+
+# Function to show usage
+show_usage() {
+    cat << EOF
+CodeMate - Docker-based Claude Code environment
+
+Usage: $0 [OPTIONS]
+
+Options:
+  --setup              Run setup to create configuration files
+  --branch NAME        Branch name to work on
+  --pr NUMBER          Existing PR number to work on
+  --pr-title TITLE     PR title (optional)
+  --repo URL           Git repository URL
+  --local              Use locally built image instead of remote
+  --help               Show this help message
+
+Environment Variables:
+  GIT_REPO_URL         Repository URL (defaults to current repo's remote)
+  BRANCH_NAME          Branch to work on
+  PR_NUMBER            Existing PR number
+  PR_TITLE             PR title
+  ANTHROPIC_API_KEY    Anthropic API key (required)
+  GIT_USER_NAME        Git commit author name
+  GIT_USER_EMAIL       Git commit author email
+
+Examples:
+  # First time setup
+  $0 --setup
+
+  # Run with branch name
+  $0 --branch feature/my-feature
+
+  # Run with existing PR
+  $0 --pr 123
+
+  # Run with custom repo
+  $0 --repo https://github.com/user/repo.git --branch feature/xyz
+
+  # Use local image
+  $0 --local --branch feature/xyz
+
+EOF
+}
+
+# Main script logic
+main() {
+    local force_setup=false
+    local current_dir="$(pwd)"
+
+    # Parse command line arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --setup)
+                force_setup=true
+                shift
+                ;;
+            --branch)
+                BRANCH_NAME="$2"
+                shift 2
+                ;;
+            --pr)
+                PR_NUMBER="$2"
+                shift 2
+                ;;
+            --pr-title)
+                PR_TITLE="$2"
+                shift 2
+                ;;
+            --repo)
+                GIT_REPO_URL="$2"
+                shift 2
+                ;;
+            --local)
+                USE_LOCAL_IMAGE=true
+                shift
+                ;;
+            --help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+
+    # Check if configuration files exist
+    local needs_setup=false
+    if [ ! -d "$current_dir/.claude_in_docker" ] || \
+       [ ! -f "$current_dir/.claude_in_docker.json" ] || \
+       [ ! -f "$current_dir/settings.json" ] || \
+       [ ! -f "$current_dir/.env" ]; then
+        needs_setup=true
+    fi
+
+    # If setup is needed or forced, ask user
+    if [ "$force_setup" = true ] || [ "$needs_setup" = true ]; then
+        echo ""
+        print_info "CodeMate Setup"
+        echo ""
+
+        if [ "$needs_setup" = true ]; then
+            print_warning "Configuration files not found in current directory"
+        fi
+
+        if ask_yes_no "Create CodeMate configuration files in $(pwd)?"; then
+            setup_codemate_files
+            exit 0
+        else
+            print_info "Setup cancelled"
+            exit 0
+        fi
+    fi
+
+    # Check prerequisites
+    check_prerequisites
+
+    # Validate required parameters
+    if [ -z "$BRANCH_NAME" ] && [ -z "$PR_NUMBER" ]; then
+        print_error "Either --branch or --pr must be specified"
+        echo ""
+        show_usage
+        exit 1
+    fi
+
+    if [ -z "$GIT_REPO_URL" ]; then
+        print_error "GIT_REPO_URL not set"
+        echo "Please set it in .env or use --repo option"
+        exit 1
+    fi
+
+    # Run CodeMate
+    run_codemate
+}
+
+# Run main function
+main "$@"
+

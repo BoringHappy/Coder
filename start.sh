@@ -152,9 +152,11 @@ setup_codemate_files() {
     print_success "Setup complete!"
     echo ""
     print_info "Next steps:"
-    echo "  1. Edit .env and add your ANTHROPIC_API_KEY"
-    echo "  2. Edit settings.json and configure ANTHROPIC_AUTH_TOKEN"
-    echo "  3. Run this script again to start CodeMate"
+    echo "  1. Edit settings.json to add necessary config"
+    echo "  2. Run: ./start.sh --repo <repo-url> --branch <branch-name>"
+    echo ""
+    echo "Example:"
+    echo "  ./start.sh --repo https://github.com/user/repo.git --branch feature/my-feature"
     echo ""
 }
 
@@ -193,6 +195,22 @@ check_prerequisites() {
         echo "Please run: gh auth login"
         exit 1
     fi
+
+    # Check Docker environment
+    print_info "Checking Docker environment..."
+    if ! docker info &> /dev/null; then
+        print_error "Docker is not running or not accessible"
+        echo ""
+        echo "Possible solutions:"
+        echo "  - Start Docker Desktop (macOS/Windows)"
+        echo "  - Start Docker daemon: sudo systemctl start docker (Linux)"
+        echo "  - Check Docker permissions: sudo usermod -aG docker \$USER (Linux)"
+        echo "  - If using Colima: colima start"
+        echo ""
+        echo "After fixing, you may need to log out and back in for group changes to take effect."
+        exit 1
+    fi
+    print_success "Docker is running"
 }
 
 # Function to run CodeMate container
@@ -394,6 +412,12 @@ main() {
 
         if [ "$needs_setup" = true ]; then
             print_warning "Configuration files not found in current directory"
+            echo "The following will be created:"
+            echo "  1. .claude_in_docker/ directory"
+            echo "  2. .claude_in_docker.json file"
+            echo "  3. settings.json file"
+            echo "  4. .env file"
+            echo ""
         fi
 
         if ask_yes_no "Create CodeMate configuration files in $(pwd)?"; then

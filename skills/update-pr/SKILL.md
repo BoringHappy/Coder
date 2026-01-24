@@ -18,26 +18,21 @@ $ARGUMENTS
 
 ## What it does
 
-1. **Fetches PR information**: Gets the current PR title, description, and metadata
-2. **Analyzes changes**: Reviews the diff to understand what was modified
-3. **Checks for template**: Looks for pull_request_template.md to follow the project's format
-4. **Generates improved summary**: Creates a better description based on the actual changes
-5. **Generates improved title**: Creates a concise, descriptive title based on the changes (unless `--summary-only` is specified)
-6. **Updates the PR**: Uses `gh api` REST API to update the PR
+1. **Fetches PR information**: Uses `/get-pr-details` skill to get the current PR title, description, diff, and metadata
+2. **Checks for template**: Looks for pull_request_template.md to follow the project's format
+3. **Generates improved summary**: Creates a better description based on the actual changes
+4. **Generates improved title**: Creates a concise, descriptive title based on the changes (unless `--summary-only` is specified)
+5. **Updates the PR**: Uses `gh api` REST API to update the PR
 
 ## Current PR Information
 
-Current title:
-!`gh pr view --json title -q .title`
+**IMPORTANT**: Before proceeding, you MUST use the `/get-pr-details` skill to fetch the current PR information including:
+- Current PR title
+- Current PR description/body
+- PR diff showing all changes
+- List of files changed
 
-Current description:
-!`gh pr view --json body -q .body`
-
-PR diff:
-!`gh pr diff`
-
-Files changed:
-!`gh pr diff --name-only`
+This provides the necessary context to generate an improved summary and title.
 
 ## Template Format
 

@@ -107,41 +107,25 @@ The `--mount` option allows you to mount additional directories or files into th
 - Multiple `--mount` options can be specified in a single command
 - Mounted directories must exist on the host before running the container
 
-#### Using Make
-
-Alternative method using Make from the CodeMate repository (for development only):
-
-```bash
-# Run with current repo (auto-detects remote origin)
-make run BRANCH_NAME=feature/your-branch
-
-# Or specify a different repo
-make run GIT_REPO_URL=https://github.com/your-org/your-repo.git BRANCH_NAME=feature/your-branch
-
-# Work on existing PR
-make run PR_NUMBER=123
-
-# Custom PR title (optional - defaults to branch name)
-make run BRANCH_NAME=add-new-feature PR_TITLE="Add new feature"
-```
-
 #### Building and Running Locally
 
 ```bash
 # Build local image
-make build
+docker build -t codemate:local .
 
 # Run with local image
-make run-local BRANCH_NAME=feature/your-branch
+docker run -it --rm \
+  -v "$(PWD)/.claude_in_docker:/home/agent/.claude" \
+  -v "$(PWD)/.claude_in_docker.json:/home/agent/.claude.json" \
+  -v "$(PWD)/settings.json:/home/agent/.claude/settings.json" \
+  -e GIT_REPO_URL=https://github.com/your-org/your-repo.git \
+  -e BRANCH_NAME=feature/your-branch \
+  -e GITHUB_TOKEN=$(gh auth token) \
+  -e GIT_USER_NAME="$(git config user.name)" \
+  -e GIT_USER_EMAIL="$(git config user.email)" \
+  -w /home/agent/your-repo \
+  codemate:local
 ```
-
-Available parameters:
-- `GIT_REPO_URL` - Repository URL (defaults to current repo's remote origin)
-- `BRANCH_NAME` - Branch to work on
-- `PR_NUMBER` - Existing PR number (alternative to BRANCH_NAME)
-- `PR_TITLE` - PR title (optional, defaults to branch name with title case)
-
-You can also use a `.env` file for additional environment variables.
 
 #### Docker Run
 ```bash
@@ -248,23 +232,7 @@ GIT_USER_NAME=your_name
 GIT_USER_EMAIL=your_email@example.com
 ```
 
-Then run with: `make run BRANCH_NAME=feature/xyz`
-
-### Add a `CLAUDE.md` File
-
-Include a `CLAUDE.md` in your repository root to provide Claude with project-specific context:
-
-```markdown
-# Project Guidelines
-
-## Build Commands
-- `make build` - Build the project
-- `make test` - Run tests
-
-## Code Style
-- Use conventional commits
-- Follow existing patterns
-```
+Then run with: `./start.sh --branch feature/xyz`
 
 ### Security Recommendations
 

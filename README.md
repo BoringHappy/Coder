@@ -96,7 +96,7 @@ On startup, the container:
 1. Clones/updates repository to `/home/agent/<repo-name>`
 2. Checks out specified branch or PR
 3. Creates PR if working on new branch
-4. Starts Claude Code
+4. Starts Claude Code with `--dangerously-skip-permissions` flag
 
 ## Skills
 

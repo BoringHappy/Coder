@@ -1,27 +1,64 @@
-ARG BASE_IMAGE=docker/sandbox-templates:claude-code
+# Build from source - Ubuntu 25.10 (Questing)
+ARG BASE_IMAGE=ubuntu:questing
 FROM ${BASE_IMAGE}
 
-# Install zsh and dependencies
-USER root
+# Environment variables
+ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
+ENV PATH=/home/agent/.local/bin:/usr/local/share/npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-RUN apt-get update && apt-get install -y \
-    zsh \
-    git \
-    curl \
-    tree \
-    && rm -rf /var/lib/apt/lists/*
+# Create non-root user and configure system
+RUN set -ex \
+    && userdel ubuntu || true \
+    && useradd --create-home --uid 1000 --shell /bin/bash agent \
+    && usermod -aG sudo agent \
+    && mkdir -p /etc/sudoers.d \
+    && chmod 0755 /etc/sudoers.d \
+    && echo "agent ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/agent \
+    && echo "Defaults:%sudo env_keep += \"http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY SSL_CERT_FILE NODE_EXTRA_CA_CERTS REQUESTS_CA_BUNDLE\"" > /etc/sudoers.d/proxyconfig \
+    && chown -R agent:agent /home/agent \
+    && mkdir -p /usr/local/share/npm-global \
+    && chown -R agent:agent /usr/local/share/npm-global
 
-# Install Node.js and agent-browser in one layer (required for agent-browser)
-RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-    && apt-get install -y nodejs \
+# Install CLI tools, development packages, Node.js LTS, and agent-browser
+RUN set -euxo pipefail \
+    && apt-get update \
+    && apt-get install -yy --no-install-recommends ca-certificates curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && apt-get install -yy --no-install-recommends \
+        bc \
+        dnsutils \
+        gh \
+        git \
+        golang \
+        jq \
+        less \
+        lsof \
+        make \
+        man-db \
+        nodejs \
+        procps \
+        psmisc \
+        python3 \
+        python3-pip \
+        ripgrep \
+        rsync \
+        socat \
+        sudo \
+        tree \
+        unzip \
+        zsh \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
+    && chsh -s $(which zsh) agent \
     && npm install -g agent-browser \
     && agent-browser install --with-deps \
     && npm cache clean --force \
     && npx playwright install-deps chromium
 
-# Configure Oh My Zsh for agent user
+# Switch to agent user for user-specific installations
 USER agent
+
+# Install Oh My Zsh
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
     && sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 
@@ -29,25 +66,18 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 RUN npx playwright install chromium \
     && echo 'agent-browser() { if [ -n "$HTTPS_PROXY" ]; then command agent-browser --proxy "$HTTPS_PROXY" "$@"; else command agent-browser "$@"; fi; }' >> /home/agent/.zshrc
 
-# Install Rust and cargo
+# Install Rust, cargo, and uv
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-    && echo 'source $HOME/.cargo/env' >> /home/agent/.zshrc
-
-# Install uv (fast Python package installer)
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && echo 'source $HOME/.cargo/env' >> /home/agent/.zshrc \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/agent/.zshrc
 
-# Set zsh as default shell, copy setup scripts, and set permissions
-USER root
-RUN chsh -s $(which zsh) agent
-COPY setup /usr/local/bin/setup
-COPY skills /usr/local/bin/setup/skills
-RUN chmod +x /usr/local/bin/setup/setup.sh \
-    && chmod +x /usr/local/bin/setup/shell/*.sh \
-    && chmod +x /usr/local/bin/setup/python/*.py
+# Install Claude Code
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Switch to agent user for remaining operations
-USER agent
+# Copy setup scripts and set permissions
+COPY --chmod=755 setup /usr/local/bin/setup
+COPY --chmod=755 skills /usr/local/bin/setup/skills
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["sh", "-c", "claude --dangerously-skip-permissions --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]

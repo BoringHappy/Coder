@@ -46,11 +46,11 @@ RUN chmod +x /usr/local/bin/setup/setup.sh \
     && chmod +x /usr/local/bin/setup/shell/*.sh \
     && chmod +x /usr/local/bin/setup/python/*.py
 
+# Copy skills directory to setup location (will be conditionally copied to .claude/skills by setup.sh)
+COPY skills /usr/local/bin/setup/skills
+
 # Switch to agent user for remaining operations
 USER agent
-
-# Copy skills directory to .claude/skills
-COPY skills /home/agent/.claude/skills
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["sh", "-c", "claude --dangerously-skip-permissions --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]

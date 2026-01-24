@@ -200,6 +200,7 @@ check_prerequisites() {
 # Function to run CodeMate container
 run_codemate() {
     local current_dir="$(pwd)"
+    local custom_mounts=("$@")
 
     # Source .env file if it exists
     if [ -f "$current_dir/.env" ]; then
@@ -266,6 +267,14 @@ run_codemate() {
         print_info "Mounting local skills directory"
     fi
 
+    # Add custom volume mounts
+    for mount in "${custom_mounts[@]}"; do
+        if [ -n "$mount" ]; then
+            volume_mounts+=(-v "$mount")
+            print_info "Adding custom mount: $mount"
+        fi
+    done
+
     docker run --rm --name "$CONTAINER_NAME" \
         --pull always \
         $NETWORK_FLAG \
@@ -295,6 +304,7 @@ Options:
   --pr NUMBER          Existing PR number to work on
   --pr-title TITLE     PR title (optional)
   --repo URL           Git repository URL
+  --mount PATH:PATH    Custom volume mount (can be used multiple times)
   --help               Show this help message
 
 Environment Variables:
@@ -319,6 +329,10 @@ Examples:
   # Run with existing PR
   $0 --pr 123
 
+  # Run with custom volume mounts
+  $0 --branch feature/xyz --mount /local/path:/container/path
+  $0 --branch feature/xyz --mount ~/data:/data --mount ~/config:/config
+
 EOF
 }
 
@@ -326,6 +340,7 @@ EOF
 main() {
     local force_setup=false
     local current_dir="$(pwd)"
+    local custom_mounts=()
 
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
@@ -348,6 +363,10 @@ main() {
                 ;;
             --repo)
                 GIT_REPO_URL="$2"
+                shift 2
+                ;;
+            --mount)
+                custom_mounts+=("$2")
                 shift 2
                 ;;
             --help)
@@ -409,12 +428,17 @@ main() {
 
     if [ -z "$GIT_REPO_URL" ]; then
         print_error "GIT_REPO_URL not set"
-        echo "Please set it in .env or use --repo option"
+        echo ""
+        echo "The repository URL can be provided in three ways (in priority order):"
+        echo "  1. Use --repo option: ./start.sh --repo https://github.com/user/repo.git --branch xyz"
+        echo "  2. Set GIT_REPO_URL in .env file"
+        echo "  3. Run from a git repository directory (auto-detects remote origin)"
+        echo ""
         exit 1
     fi
 
     # Run CodeMate
-    run_codemate
+    run_codemate "${custom_mounts[@]}"
 }
 
 # Run main function

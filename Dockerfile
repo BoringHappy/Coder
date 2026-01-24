@@ -20,10 +20,12 @@ RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && npm cache clean --force \
     && npx playwright install-deps chromium
 
-# Install Playwright browsers and configure Oh My Zsh for agent user
+# Install Playwright browsers for agent user
 USER agent
-RUN npx playwright install chromium \
-    && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
+RUN npx playwright install chromium
+
+# Configure Oh My Zsh for agent user
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
     && sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc \
     && echo 'agent-browser() { if [ -n "$HTTPS_PROXY" ]; then command agent-browser --proxy "$HTTPS_PROXY" "$@"; else command agent-browser "$@"; fi; }' >> /home/agent/.zshrc
 

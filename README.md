@@ -84,9 +84,9 @@ Use `--mount <host-path>:<container-path>` to mount additional directories or fi
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GIT_REPO_URL` | No | Repository URL (defaults to current repo's remote) |
-| `GITHUB_TOKEN` | Yes | GitHub personal access token |
-| `GIT_USER_NAME` | Yes | Git commit author name |
-| `GIT_USER_EMAIL` | Yes | Git commit author email |
+| `GITHUB_TOKEN` | Auto | GitHub personal access token (defaults to `gh auth token` if not provided) |
+| `GIT_USER_NAME` | Auto | Git commit author name (defaults to `git config user.name` if not provided) |
+| `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
 | `BRANCH_NAME` | No | Branch to work on |
 | `PR_NUMBER` | No | Existing PR number (alternative to BRANCH_NAME) |
 | `PR_TITLE` | No | PR title (defaults to branch name with title case) |
@@ -141,7 +141,7 @@ To update or customize these skills, use the Custom Skills approach described ab
 
 ### Add a Pull Request Template
 
-Create `.github/pull_request_template.md` in your target repository to standardize PR descriptions:
+Create `.github/PULL_REQUEST_TEMPLATE.md` in your target repository to standardize PR descriptions:
 
 ```markdown
 ## Summary

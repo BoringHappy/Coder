@@ -35,7 +35,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 
 # Install uv (fast Python package installer)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && echo 'source $HOME/.cargo/env' >> /home/agent/.zshrc
+    && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/agent/.zshrc
 
 # Set zsh as default shell, copy setup scripts, and set permissions
 USER root

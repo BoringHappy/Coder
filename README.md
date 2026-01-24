@@ -87,9 +87,6 @@ Use `--mount <host-path>:<container-path>` to mount additional directories or fi
 | `GITHUB_TOKEN` | Auto | GitHub personal access token (defaults to `gh auth token` if not provided) |
 | `GIT_USER_NAME` | Auto | Git commit author name (defaults to `git config user.name` if not provided) |
 | `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
-| `BRANCH_NAME` | No | Branch to work on |
-| `PR_NUMBER` | No | Existing PR number (alternative to BRANCH_NAME) |
-| `PR_TITLE` | No | PR title (defaults to branch name with title case) |
 | `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:main`) |
 
 

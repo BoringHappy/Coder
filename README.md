@@ -24,7 +24,9 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 
 - Docker
 - GitHub CLI (`gh`) authenticated
-- `.env` file with `ANTHROPIC_API_KEY` configured (see `.env.example`)
+- Anthropic API key
+
+Run `./start.sh --setup` to create the required configuration files (`.env`, `settings.json`, etc.)
 
 #### Mac Users
 
@@ -75,21 +77,9 @@ The script will:
 
 Use `--mount <host-path>:<container-path>` to mount additional directories or files. Useful for sharing data, configurations, or credentials with the container. Multiple `--mount` options can be specified.
 
-#### Docker Run
-```bash
-docker run -it --rm \
-  -v ~/.claude_in_docker:/home/agent/.claude \
-  -e GIT_REPO_URL=https://github.com/your-org/your-repo.git \
-  -e PR_TITLE="Work on feature/your-branch" \
-  -e BRANCH_NAME=feature/your-branch \
-  -e GITHUB_TOKEN=your_github_token \
-  -e GIT_USER_NAME=your_name \
-  -e GIT_USER_EMAIL=your_email@example.com \
-  -w /home/agent/workspace \
-  ghcr.io/boringhappy/codemate:main
-```
-
 ## Environment Variables
+
+> **Note:** When using `start.sh`, these variables are handled automatically through the setup process. This reference is primarily for advanced Docker usage or troubleshooting.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -140,17 +130,12 @@ When a custom skills directory is mounted, the default skills will not be copied
 
 ### External Skills
 
-The **agent-browser** and **skill-creator** skills were imported from external sources:
+The following skills are **pre-installed** in CodeMate and ready to use. The commands below show their original sources for reference:
 
-- **agent-browser**: Source: [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
-  ```bash
-  npx skills add https://github.com/vercel-labs/agent-browser --skill agent-browser
-  ```
+- **agent-browser**: Imported from [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
+- **skill-creator**: Imported from [anthropics/skills](https://github.com/anthropics/skills)
 
-- **skill-creator**: Source: [anthropics/skills](https://github.com/anthropics/skills)
-  ```bash
-  npx skills add https://github.com/anthropics/skills --skill skill-creator
-  ```
+To update or customize these skills, use the Custom Skills approach described above by mounting your own skills directory.
 
 ## Best Practices
 

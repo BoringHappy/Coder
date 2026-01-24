@@ -115,12 +115,15 @@ docker build -t codemate:local .
 
 # Run with local image
 docker run -it --rm \
-  -v ~/.claude_in_docker:/home/agent/.claude \
+  -v "$(PWD)/.claude_in_docker:/home/agent/.claude" \
+  -v "$(PWD)/.claude_in_docker.json:/home/agent/.claude.json" \
+  -v "$(PWD)/settings.json:/home/agent/.claude/settings.json" \
   -e GIT_REPO_URL=https://github.com/your-org/your-repo.git \
   -e BRANCH_NAME=feature/your-branch \
   -e GITHUB_TOKEN=$(gh auth token) \
   -e GIT_USER_NAME="$(git config user.name)" \
   -e GIT_USER_EMAIL="$(git config user.email)" \
+  -w /home/agent/your-repo \
   codemate:local
 ```
 
@@ -230,22 +233,6 @@ GIT_USER_EMAIL=your_email@example.com
 ```
 
 Then run with: `./start.sh --branch feature/xyz`
-
-### Add a `CLAUDE.md` File
-
-Include a `CLAUDE.md` in your repository root to provide Claude with project-specific context:
-
-```markdown
-# Project Guidelines
-
-## Running Commands
-- `./start.sh --branch feature/xyz` - Start CodeMate on a branch
-- `npm test` - Run tests
-
-## Code Style
-- Use conventional commits
-- Follow existing patterns
-```
 
 ### Security Recommendations
 

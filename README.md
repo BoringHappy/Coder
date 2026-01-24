@@ -35,9 +35,36 @@ On macOS, you need a Docker runtime since Docker doesn't run natively. Choose on
 
 ### Usage
 
-#### Using Make (Recommended)
+#### Using start.sh (Recommended)
 
-The easiest way to run - automatically uses your local git config and GitHub CLI token:
+The easiest way to run CodeMate from any directory:
+
+```bash
+# Download the start.sh script
+curl -O https://raw.githubusercontent.com/BoringHappy/CodeMate/main/start.sh
+chmod +x start.sh
+
+# First time setup - creates configuration files in current directory
+./start.sh --setup
+
+# Run with custom repo (requires GIT_REPO_URL set in .env)
+./start.sh --repo https://github.com/your-org/your-repo.git --branch feature/xyz
+
+# Run with branch name (uses GIT_REPO_URL from .env)
+./start.sh --branch feature/your-branch
+
+# Run with existing PR
+./start.sh --pr 123
+```
+
+The script will:
+1. Prompt you to create configuration files if they don't exist
+2. Create `.claude_in_docker/`, `.claude_in_docker.json`, `settings.json`, and `.env` in your current directory
+3. Run the CodeMate container with your configuration
+
+#### Using Make
+
+Alternative method using Make from the CodeMate repository (for development only):
 
 ```bash
 # Run with current repo (auto-detects remote origin)

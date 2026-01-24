@@ -428,7 +428,12 @@ main() {
 
     if [ -z "$GIT_REPO_URL" ]; then
         print_error "GIT_REPO_URL not set"
-        echo "Please set it in .env or use --repo option"
+        echo ""
+        echo "The repository URL can be provided in three ways (in priority order):"
+        echo "  1. Use --repo option: ./start.sh --repo https://github.com/user/repo.git --branch xyz"
+        echo "  2. Set GIT_REPO_URL in .env file"
+        echo "  3. Run from a git repository directory (auto-detects remote origin)"
+        echo ""
         exit 1
     fi
 

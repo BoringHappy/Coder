@@ -47,10 +47,10 @@ chmod +x start.sh
 # First time setup - creates configuration files in current directory
 ./start.sh --setup
 
-# Run with custom repo (requires GIT_REPO_URL set in .env)
+# Run with explicit repo URL
 ./start.sh --repo https://github.com/your-org/your-repo.git --branch feature/xyz
 
-# Run with branch name (uses GIT_REPO_URL from .env)
+# Run with branch name (auto-detects repo from: --repo > .env > current directory's git remote)
 ./start.sh --branch feature/your-branch
 
 # Run with existing PR
@@ -65,6 +65,12 @@ The script will:
 1. Prompt you to create configuration files if they don't exist
 2. Create `.claude_in_docker/`, `.claude_in_docker.json`, `settings.json`, and `.env` in your current directory
 3. Run the CodeMate container with your configuration
+
+**Repository URL Resolution**: The script determines the repository URL in this priority order:
+1. `--repo` command-line argument (highest priority)
+2. `GIT_REPO_URL` environment variable or `.env` file
+3. Current directory's git remote origin URL (auto-detected)
+4. If none are available, an error is raised
 
 ##### Custom Volume Mounts
 

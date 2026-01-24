@@ -40,20 +40,21 @@ On macOS, you need a Docker runtime since Docker doesn't run natively. Choose on
 The easiest way to run CodeMate from any directory:
 
 ```bash
+# Download the start.sh script
+curl -O https://raw.githubusercontent.com/BoringHappy/CodeMate/main/start.sh
+chmod +x start.sh
+
 # First time setup - creates configuration files in current directory
 ./start.sh --setup
 
-# Run with branch name
+# Run with custom repo (requires GIT_REPO_URL set in .env)
+./start.sh --repo https://github.com/your-org/your-repo.git --branch feature/xyz
+
+# Run with branch name (uses GIT_REPO_URL from .env)
 ./start.sh --branch feature/your-branch
 
 # Run with existing PR
 ./start.sh --pr 123
-
-# Run with custom repo
-./start.sh --repo https://github.com/your-org/your-repo.git --branch feature/xyz
-
-# Use locally built image
-./start.sh --local --branch feature/xyz
 ```
 
 The script will:
@@ -63,7 +64,7 @@ The script will:
 
 #### Using Make
 
-Alternative method using Make from the CodeMate repository:
+Alternative method using Make from the CodeMate repository (for development only):
 
 ```bash
 # Run with current repo (auto-detects remote origin)

@@ -18,8 +18,6 @@ BRANCH_NAME="${BRANCH_NAME:-}"
 PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
 CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:main}"
-LOCAL_IMAGE_TAG="codemate:local"
-USE_LOCAL_IMAGE="${USE_LOCAL_IMAGE:-false}"
 
 # Function to print colored messages
 print_info() {
@@ -59,22 +57,8 @@ create_env_file() {
     cat > "$env_file" << 'EOF'
 # CodeMate Environment Configuration
 
-# Anthropic API Key (Required)
-# Get your API key from: https://console.anthropic.com/
-ANTHROPIC_API_KEY=
-
-# Optional: Custom Anthropic API base URL
-# ANTHROPIC_BASE_URL=
-
-# Optional: Git configuration (will use git config if not set)
-# GIT_USER_NAME=
-# GIT_USER_EMAIL=
-
 # Optional: Default repository URL
 # GIT_REPO_URL=
-
-# Optional: Proxy configuration for agent-browser skill
-# PROXY_URL=
 EOF
     print_success "Created $env_file"
 }
@@ -86,7 +70,7 @@ create_settings_json() {
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "<fill your token>",
-    "ANTHROPIC_BASE_URL": "fill your base_url",
+    "ANTHROPIC_BASE_URL": "<fill your base_url>",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
   "attribution": {
@@ -189,10 +173,10 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Check if gh is authenticated
-    if ! gh auth status &> /dev/null; then
+    # Check if gh is authenticated (only if GITHUB_TOKEN not in .env)
+    if [ -z "$GITHUB_TOKEN" ] && ! gh auth status &> /dev/null; then
         print_error "GitHub CLI is not authenticated"
-        echo "Please run: gh auth login"
+        echo "Please run: gh auth login or set GITHUB_TOKEN"
         exit 1
     fi
 
@@ -224,11 +208,13 @@ run_codemate() {
         set +a
     fi
 
-    # Get GitHub token
-    GITHUB_TOKEN=$(gh auth token)
+    # Get GitHub token from gh CLI if not already set in .env
     if [ -z "$GITHUB_TOKEN" ]; then
-        print_error "Failed to get GitHub token"
-        exit 1
+        GITHUB_TOKEN=$(gh auth token 2>/dev/null)
+        if [ -z "$GITHUB_TOKEN" ]; then
+            print_error "Failed to get GitHub token or gh is not authenticated"
+            exit 1
+        fi
     fi
 
     # Get git user info
@@ -238,8 +224,8 @@ run_codemate() {
     if [ -z "$GIT_USER_NAME" ] || [ -z "$GIT_USER_EMAIL" ]; then
         print_error "Git user name or email not configured"
         echo "Please set them in .env or run:"
-        echo "  git config --global user.name \"Your Name\""
-        echo "  git config --global user.email \"your.email@example.com\""
+        printf "  ${BLUE}git config --global user.name \"Your Name\"${NC}\n"
+        printf "  ${BLUE}git config --global user.email \"your.email@example.com\"${NC}\n"
         exit 1
     fi
 
@@ -254,14 +240,6 @@ run_codemate() {
     NETWORK_FLAG=""
     if [ "$(uname -s)" != "Darwin" ]; then
         NETWORK_FLAG="--network host"
-    fi
-
-    # Determine which image to use
-    local image="$CODEMATE_IMAGE"
-    local pull_flag="--pull always"
-    if [ "$USE_LOCAL_IMAGE" = "true" ]; then
-        image="$LOCAL_IMAGE_TAG"
-        pull_flag=""
     fi
 
     # Check if container is already running
@@ -289,7 +267,7 @@ run_codemate() {
     fi
 
     docker run --rm --name "$CONTAINER_NAME" \
-        $pull_flag \
+        --pull always \
         $NETWORK_FLAG \
         -it \
         "${volume_mounts[@]}" \
@@ -300,11 +278,8 @@ run_codemate() {
         -e "GITHUB_TOKEN=$GITHUB_TOKEN" \
         -e "GIT_USER_NAME=$GIT_USER_NAME" \
         -e "GIT_USER_EMAIL=$GIT_USER_EMAIL" \
-        -e "ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY" \
-        ${ANTHROPIC_BASE_URL:+-e "ANTHROPIC_BASE_URL=$ANTHROPIC_BASE_URL"} \
-        ${PROXY_URL:+-e "PROXY_URL=$PROXY_URL"} \
         -w "/home/agent/$REPO_NAME" \
-        "$image"
+        "$CODEMATE_IMAGE"
 }
 
 # Function to show usage
@@ -320,7 +295,6 @@ Options:
   --pr NUMBER          Existing PR number to work on
   --pr-title TITLE     PR title (optional)
   --repo URL           Git repository URL
-  --local              Use locally built image instead of remote
   --help               Show this help message
 
 Environment Variables:
@@ -328,7 +302,7 @@ Environment Variables:
   BRANCH_NAME          Branch to work on
   PR_NUMBER            Existing PR number
   PR_TITLE             PR title
-  ANTHROPIC_API_KEY    Anthropic API key (required)
+  GITHUB_TOKEN         GitHub personal access token
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
 
@@ -336,17 +310,14 @@ Examples:
   # First time setup
   $0 --setup
 
+  # Run with custom repo
+  $0 --repo https://github.com/user/repo.git --branch feature/xyz
+
   # Run with branch name
   $0 --branch feature/my-feature
 
   # Run with existing PR
   $0 --pr 123
-
-  # Run with custom repo
-  $0 --repo https://github.com/user/repo.git --branch feature/xyz
-
-  # Use local image
-  $0 --local --branch feature/xyz
 
 EOF
 }
@@ -378,10 +349,6 @@ main() {
             --repo)
                 GIT_REPO_URL="$2"
                 shift 2
-                ;;
-            --local)
-                USE_LOCAL_IMAGE=true
-                shift
                 ;;
             --help)
                 show_usage

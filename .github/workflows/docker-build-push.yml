@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - optimize-docker-image
     tags:
       - 'v*'
   workflow_dispatch:

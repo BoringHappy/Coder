@@ -56,9 +56,8 @@ chmod +x start.sh
 # Run with existing PR
 ./start.sh --pr 123
 
-# Run with custom volume mounts
-./start.sh --branch feature/xyz --mount /local/path:/container/path
-./start.sh --branch feature/xyz --mount ~/data:/data --mount ~/config:/config
+# Run with custom volume mounts (optional)
+./start.sh --branch feature/xyz --mount ~/data:/data
 ```
 
 The script will:
@@ -74,58 +73,7 @@ The script will:
 
 ##### Custom Volume Mounts
 
-The `--mount` option allows you to mount additional directories or files into the container. This is useful for:
-
-- **Sharing data**: Mount datasets or files that Claude needs to access
-- **Custom configurations**: Mount additional config files or credentials
-- **Persistent storage**: Mount directories for output files or logs
-- **Development tools**: Mount local tools or scripts
-
-**Syntax**: `--mount <host-path>:<container-path>`
-
-**Examples**:
-
-```bash
-# Mount a data directory
-./start.sh --branch feature/xyz --mount ~/datasets:/data
-
-# Mount multiple directories
-./start.sh --branch feature/xyz \
-  --mount ~/datasets:/data \
-  --mount ~/configs:/configs
-
-# Mount a specific file
-./start.sh --branch feature/xyz --mount ~/.aws/credentials:/home/agent/.aws/credentials
-
-# Mount with absolute paths
-./start.sh --branch feature/xyz --mount /var/log/app:/logs
-```
-
-**Notes**:
-- Paths can be absolute or relative (e.g., `~/` expands to your home directory)
-- The container path should typically be under `/home/agent/` for proper permissions
-- Multiple `--mount` options can be specified in a single command
-- Mounted directories must exist on the host before running the container
-
-#### Building and Running Locally
-
-```bash
-# Build local image
-docker build -t codemate:local .
-
-# Run with local image
-docker run -it --rm \
-  -v "$(PWD)/.claude_in_docker:/home/agent/.claude" \
-  -v "$(PWD)/.claude_in_docker.json:/home/agent/.claude.json" \
-  -v "$(PWD)/settings.json:/home/agent/.claude/settings.json" \
-  -e GIT_REPO_URL=https://github.com/your-org/your-repo.git \
-  -e BRANCH_NAME=feature/your-branch \
-  -e GITHUB_TOKEN=$(gh auth token) \
-  -e GIT_USER_NAME="$(git config user.name)" \
-  -e GIT_USER_EMAIL="$(git config user.email)" \
-  -w /home/agent/your-repo \
-  codemate:local
-```
+Use `--mount <host-path>:<container-path>` to mount additional directories or files. Useful for sharing data, configurations, or credentials with the container. Multiple `--mount` options can be specified.
 
 #### Docker Run
 ```bash

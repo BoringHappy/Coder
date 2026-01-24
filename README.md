@@ -13,7 +13,7 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 ## Features
 
 - Automated repository cloning and PR management
-- Pre-installed: Go, Node.js, Python, Rust
+- Pre-installed: Go, Node.js, Python, Rust, uv
 - zsh with Oh My Zsh
 - Persistent Claude configuration
 - Built-in Claude Code skills for PR workflow automation

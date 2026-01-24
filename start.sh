@@ -96,6 +96,53 @@ create_claude_json() {
     print_success "Created $claude_json"
 }
 
+# Function to update start.sh script
+update_script() {
+    local script_path="$0"
+    local temp_file="/tmp/start.sh.tmp"
+    local repo_url="https://raw.githubusercontent.com/BoringHappy/CodeMate/main/start.sh"
+
+    print_info "Updating start.sh from repository..."
+
+    # Download the latest version
+    if command -v curl &> /dev/null; then
+        if ! curl -fsSL "$repo_url" -o "$temp_file"; then
+            print_error "Failed to download update"
+            exit 1
+        fi
+    elif command -v wget &> /dev/null; then
+        if ! wget -q "$repo_url" -O "$temp_file"; then
+            print_error "Failed to download update"
+            exit 1
+        fi
+    else
+        print_error "Neither curl nor wget is available"
+        exit 1
+    fi
+
+    # Verify the downloaded file is not empty
+    if [ ! -s "$temp_file" ]; then
+        print_error "Downloaded file is empty"
+        rm -f "$temp_file"
+        exit 1
+    fi
+
+    # Replace the current script
+    if ! mv "$temp_file" "$script_path"; then
+        print_error "Failed to replace script"
+        rm -f "$temp_file"
+        exit 1
+    fi
+
+    # Make it executable
+    chmod +x "$script_path"
+
+    print_success "start.sh has been updated successfully!"
+    echo ""
+    print_info "Please run the script again to use the new version"
+    exit 0
+}
+
 # Function to setup CodeMate files
 setup_codemate_files() {
     local current_dir="$(pwd)"
@@ -300,6 +347,7 @@ Usage: $0 [OPTIONS]
 
 Options:
   --setup              Run setup to create configuration files
+  --update             Update start.sh to the latest version from repository
   --branch NAME        Branch name to work on
   --pr NUMBER          Existing PR number to work on
   --pr-title TITLE     PR title (optional)
@@ -319,6 +367,9 @@ Environment Variables:
 Examples:
   # First time setup
   $0 --setup
+
+  # Update start.sh to latest version
+  $0 --update
 
   # Run with custom repo
   $0 --repo https://github.com/user/repo.git --branch feature/xyz
@@ -348,6 +399,9 @@ main() {
             --setup)
                 force_setup=true
                 shift
+                ;;
+            --update)
+                update_script
                 ;;
             --branch)
                 BRANCH_NAME="$2"

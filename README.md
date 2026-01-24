@@ -152,18 +152,6 @@ Create `.github/PULL_REQUEST_TEMPLATE.md` in your target repository to standardi
 - [ ] Documentation updated
 ```
 
-### Use a `.env` File
-
-Create a `.env` file in the CodeMate directory for persistent configuration:
-
-```bash
-GIT_REPO_URL=https://github.com/your-org/your-repo.git
-GIT_USER_NAME=your_name
-GIT_USER_EMAIL=your_email@example.com
-```
-
-Then run with: `./start.sh --branch feature/xyz`
-
 ### Security Recommendations
 
 - Run CodeMate only on trusted repositories

@@ -60,6 +60,9 @@ chmod +x start.sh
 
 # Run with custom volume mounts (optional)
 ./start.sh --branch feature/xyz --mount ~/data:/data
+
+# For Chinese users: Use DaoCloud mirror for faster image pulls
+./start.sh --branch feature/xyz --image ghcr.m.daocloud.io/boringhappy/codemate:latest
 ```
 
 The script will:
@@ -87,7 +90,7 @@ Use `--mount <host-path>:<container-path>` to mount additional directories or fi
 | `GITHUB_TOKEN` | Auto | GitHub personal access token (defaults to `gh auth token` if not provided) |
 | `GIT_USER_NAME` | Auto | Git commit author name (defaults to `git config user.name` if not provided) |
 | `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
-| `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:main`) |
+| `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:latest`) |
 
 
 ## How It Works

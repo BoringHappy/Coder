@@ -29,7 +29,7 @@ printf "${YELLOW}Installing plugins...${RESET}\n\n"
 # Add marketplaces
 printf "${CYAN}Adding marketplaces:${RESET}\n"
 add_marketplace "1/2" "vercel-labs/agent-browser" "vercel-labs/agent-browser"
-add_marketplace "2/2" "codemate" "/usr/local/bin/setup/marketplace"
+add_marketplace "2/2" "codemate" "BoringHappy/CodeMatePlugin"
 
 # Install and verify plugins
 printf "\n${CYAN}Installing and verifying plugins:${RESET}\n"

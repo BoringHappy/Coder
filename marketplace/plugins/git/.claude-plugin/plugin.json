@@ -1,8 +1,0 @@
-{
-  "name": "git",
-  "description": "Git workflow management tools for staging, committing, and pushing changes",
-  "version": "1.0.0",
-  "author": {
-    "name": "CodeMate"
-  }
-}

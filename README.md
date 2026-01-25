@@ -170,39 +170,7 @@ On startup, the container:
 
 ## Skills
 
-Built-in Claude Code skills to streamline PR workflows:
-
-| Skill | Command | Description |
-|-------|---------|-------------|
-| Update PR | `/update-pr` | Updates PR title and summary based on changes. Use `--summary-only` to skip title update |
-| Fix PR Comments | `/fix-pr-comments` | Addresses PR review feedback, commits fixes, and replies to comments |
-| Git Commit | `/git-commit` | Stages all changes, commits with a meaningful message, and pushes to remote |
-| Get PR Details | `/get-pr-details` | Gets details of a GitHub pull request including title, description, file changes, and review comments |
-| Agent Browser | `/agent-browser` | Automates browser interactions for web testing, form filling, screenshots, and data extraction |
-| Skill Creator | `/skill-creator` | Guide for creating effective skills with templates, validation tools, and documentation |
-
-### Custom Skills
-
-You can override the default skills by mounting your own skills directory:
-
-```bash
-# Create a custom skills directory in your project
-mkdir -p skills/my-custom-skill
-
-# Mount it when running CodeMate
-./start.sh --branch feature/xyz --mount ./skills:/home/agent/.claude/skills
-```
-
-When a custom skills directory is mounted, the default skills will not be copied, allowing you to use your own skill set. You can also copy the default skills from the repository and modify them as needed.
-
-### External Skills
-
-The following skills are **pre-installed** in CodeMate and ready to use. The commands below show their original sources for reference:
-
-- **agent-browser**: Imported from [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
-- **skill-creator**: Imported from [anthropics/skills](https://github.com/anthropics/skills)
-
-To update or customize these skills, use the Custom Skills approach described above by mounting your own skills directory.
+CodeMate comes with pre-installed skills from the [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) repository and [agent-browser](https://github.com/vercel-labs/agent-browser). These skills are automatically available when you start the container and provide workflow automation for Git, PR management, and browser interactions.
 
 ## CI/CD
 

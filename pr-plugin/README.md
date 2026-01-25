@@ -1,0 +1,100 @@
+# PR Plugin
+
+A Claude Code plugin for managing GitHub Pull Request workflows.
+
+## Overview
+
+This plugin provides skills for creating, updating, and managing pull requests in GitHub repositories. It's designed to work seamlessly with the CodeMate environment.
+
+## Skills
+
+### `/pr-plugin:get-details`
+Fetches and displays comprehensive PR information including:
+- PR title and description
+- Source and target branches
+- Changed files
+- Review comments
+- PR-level comments
+
+**Usage:**
+```
+/pr-plugin:get-details
+```
+
+### `/pr-plugin:commit`
+Stages all changes, creates a commit with a meaningful message, and pushes to the remote branch.
+
+**Usage:**
+```
+/pr-plugin:commit
+```
+
+**Features:**
+- Automatically stages all changes
+- Generates descriptive commit messages following project conventions
+- Pushes to remote with upstream tracking if needed
+
+### `/pr-plugin:fix-comments`
+Automatically addresses feedback from PR review comments.
+
+**Usage:**
+```
+/pr-plugin:fix-comments
+```
+
+**Workflow:**
+1. Fetches all PR comments
+2. Analyzes feedback to understand required changes
+3. Reads and modifies affected files
+4. Commits and pushes changes
+5. Replies to comment threads confirming fixes
+
+### `/pr-plugin:update`
+Updates the PR title and/or description based on the actual changes.
+
+**Usage:**
+```
+/pr-plugin:update                  # Update both title and summary
+/pr-plugin:update --summary-only   # Update only the summary
+```
+
+**Features:**
+- Analyzes PR diff to generate accurate descriptions
+- Follows project's PR template format if available
+- Uses conventional commit style for titles
+
+## Installation
+
+This plugin is automatically loaded in the CodeMate environment via the `--plugin-dir` flag in the Dockerfile.
+
+For manual installation in other environments:
+```bash
+claude --plugin-dir /path/to/pr-plugin
+```
+
+## Requirements
+
+- GitHub CLI (`gh`) installed and authenticated
+- Git repository with remote access
+- Active pull request (for most skills)
+
+## Plugin Structure
+
+```
+pr-plugin/
+├── .claude-plugin/
+│   └── plugin.json          # Plugin manifest
+└── skills/
+    ├── get-details/
+    │   └── SKILL.md
+    ├── commit/
+    │   └── SKILL.md
+    ├── fix-comments/
+    │   └── SKILL.md
+    └── update/
+        └── SKILL.md
+```
+
+## Version
+
+1.0.0

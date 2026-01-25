@@ -1,0 +1,9 @@
+{
+  "name": "pr-plugin",
+  "description": "GitHub Pull Request workflow management plugin with skills for creating, updating, and managing PRs",
+  "version": "1.0.0",
+  "author": {
+    "name": "CodeMate"
+  },
+  "homepage": "https://github.com/your-org/CodeMate"
+}

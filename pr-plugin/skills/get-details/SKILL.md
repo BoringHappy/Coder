@@ -1,5 +1,5 @@
 ---
-name: get-pr-details
+name: get-details
 description: Gets details of a GitHub pull request including title, description, file changes, and review comments. Use when the user wants to view PR information.
 ---
 

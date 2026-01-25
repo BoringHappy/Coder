@@ -75,6 +75,10 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 # Install Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
+# Install agent-browser plugin from Vercel Labs marketplace
+RUN claude plugin marketplace add vercel-labs/agent-browser --scope user \
+    && claude plugin install agent-browser@vercel-labs-agent-browser --scope user
+
 # Copy setup scripts and marketplace
 COPY --chmod=755 setup /usr/local/bin/setup
 COPY --chmod=755 marketplace /usr/local/bin/setup/marketplace

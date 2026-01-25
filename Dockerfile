@@ -82,12 +82,12 @@ COPY --chmod=755 marketplace /usr/local/bin/setup/marketplace
 # Commands are chained with && to ensure fail-fast behavior - if any plugin installation fails, the build will fail
 RUN claude plugin marketplace add vercel-labs/agent-browser \
     && claude plugin marketplace add /usr/local/bin/setup/marketplace \
-    && claude plugin install agent-browser@vercel-labs-agent-browser \
+    && claude plugin install agent-browser@agent-browser \
     && claude plugin install git@codemate \
     && claude plugin install pr@codemate
 
 # Verify plugins are installed correctly (smoke test)
-RUN claude plugin list | grep -q "agent-browser@vercel-labs-agent-browser" || exit 1
+RUN claude plugin list | grep -q "agent-browser@agent-browser" || exit 1
 RUN claude plugin list | grep -q "git@codemate" || exit 1
 RUN claude plugin list | grep -q "pr@codemate" || exit 1
 

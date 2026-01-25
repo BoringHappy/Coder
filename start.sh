@@ -392,9 +392,11 @@ Options:
   --repo URL           Git repository URL
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
   --image IMAGE        Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
+                       Note: Ignored when --build is used
   --build              Build Docker image from local Dockerfile
   -f, --dockerfile PATH  Path to Dockerfile (default: Dockerfile, requires --build)
-  --tag TAG            Image tag for local build (default: codemate:local, requires --build)
+  --tag TAG            Image tag for local build (default: codemate:local)
+                       Note: Only works with --build. To use a pre-built image, use --image instead
   --help               Show this help message
 
 Environment Variables:

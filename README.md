@@ -108,6 +108,7 @@ For development or customization, you can build CodeMate from a local Dockerfile
 - `--build` - Build Docker image from local Dockerfile before running
 - `-f, --dockerfile PATH` - Path to Dockerfile (default: `Dockerfile`)
 - `--tag TAG` - Image tag for local build (default: `codemate:local`)
+  - **Note:** Only works with `--build`. To use a pre-built image, use `--image` instead
 
 When `--build` is used:
 1. The script builds the Docker image from the specified Dockerfile

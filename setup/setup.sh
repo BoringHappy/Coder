@@ -19,19 +19,31 @@ printf "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 bash "$SETUP_DIR/shell/setup-gh.sh"
 
 printf "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
-printf "${CYAN}Setting up skills...${RESET}\n"
+printf "${CYAN}Setting up plugin marketplace...${RESET}\n"
 printf "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
 
-# Create .claude directory if it doesn't exist
-mkdir -p /home/agent/.claude/skills
+# Add the local marketplace and install plugins
+if [ ! -f /home/agent/.claude/settings.json ] || ! grep -q "codemate" /home/agent/.claude/settings.json 2>/dev/null; then
+    printf "${CYAN}Adding CodeMate marketplace...${RESET}\n"
+    mkdir -p /home/agent/.claude
 
-# Check if skills directory is empty or doesn't exist
-if [ -z "$(ls -A /home/agent/.claude/skills 2>/dev/null)" ]; then
-    printf "${CYAN}No skills found in /home/agent/.claude/skills, copying default skills...${RESET}\n"
-    cp -r "$SETUP_DIR/skills/"* /home/agent/.claude/skills/
-    printf "${GREEN}✓ Default skills copied successfully${RESET}\n"
+    # Create or update settings.json with marketplace configuration
+    cat > /home/agent/.claude/settings.json <<'EOF'
+{
+  "extraKnownMarketplaces": {
+    "codemate": {
+      "source": "/usr/local/bin/setup/marketplace"
+    }
+  },
+  "enabledPlugins": {
+    "pr@codemate": true,
+    "external@codemate": true
+  }
+}
+EOF
+    printf "${GREEN}✓ CodeMate marketplace configured${RESET}\n"
 else
-    printf "${GREEN}✓ Skills already present in /home/agent/.claude/skills${RESET}\n"
+    printf "${GREEN}✓ CodeMate marketplace already configured${RESET}\n"
 fi
 
 printf "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"

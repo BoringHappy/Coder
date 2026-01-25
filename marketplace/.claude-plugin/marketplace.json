@@ -1,0 +1,29 @@
+{
+  "name": "codemate",
+  "owner": {
+    "name": "CodeMate",
+    "email": "codemate@example.com"
+  },
+  "metadata": {
+    "description": "CodeMate plugin marketplace for PR workflows and development tools",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "pr",
+      "source": "./plugins/pr",
+      "description": "GitHub Pull Request workflow management with skills for creating, updating, and managing PRs",
+      "version": "1.0.0",
+      "category": "git",
+      "keywords": ["git", "github", "pull-request", "pr", "workflow"]
+    },
+    {
+      "name": "external",
+      "source": "./plugins/external",
+      "description": "External tools and utilities including browser automation and skill creation",
+      "version": "1.0.0",
+      "category": "tools",
+      "keywords": ["browser", "automation", "skills", "development"]
+    }
+  ]
+}

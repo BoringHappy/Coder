@@ -35,20 +35,28 @@ Parameters:
 1. `setup/setup.sh` orchestrates initialization
 2. `setup/shell/setup-git.sh` configures git user from environment variables
 3. `setup/shell/setup-gh.sh` authenticates GitHub CLI with token
-4. `setup/python/setup-repo.py` clones repo, checks out branch/PR, creates PR if needed
-5. Claude Code starts with system prompt from `setup/prompt/system_prompt.txt`
+4. `setup/setup.sh` configures the CodeMate plugin marketplace in `.claude/settings.json`
+5. `setup/python/setup-repo.py` clones repo, checks out branch/PR, creates PR if needed
+6. Claude Code starts with system prompt from `setup/prompt/system_prompt.txt`
 
-### Plugin System
+### Plugin Marketplace
 
-CodeMate uses Claude Code plugins to extend functionality. The PR workflow plugin is automatically loaded at startup.
+CodeMate uses a local plugin marketplace to distribute plugins. The marketplace is automatically configured at startup via `.claude/settings.json`.
 
-**PR Plugin** (`pr/`):
+**Marketplace Structure** (`marketplace/`):
+- `.claude-plugin/marketplace.json` - Marketplace catalog
+- `plugins/pr/` - PR workflow plugin
+- `plugins/external/` - External tools plugin
+
+**Available Plugins:**
+
+**PR Plugin** (`pr@codemate`):
 - `/pr:get-details` - Fetch PR information including comments
 - `/pr:commit` - Stage, commit, and push changes
 - `/pr:fix-comments` - Address PR review feedback
 - `/pr:update` - Update PR title and summary
 
-**Standalone Skills** (`skills/`):
+**External Plugin** (`external@codemate`):
 - `/agent-browser` - Browser automation for web testing and interaction
 - `/skill-creator` - Guide for creating new skills
 

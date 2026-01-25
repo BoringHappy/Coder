@@ -18,6 +18,7 @@ BRANCH_NAME="${BRANCH_NAME:-}"
 PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
 CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
+DISABLE_PLUGIN_UPDATE="${DISABLE_PLUGIN_UPDATE:-false}"
 
 # Function to print colored messages
 print_info() {
@@ -341,6 +342,7 @@ run_codemate() {
         -e "GITHUB_TOKEN=$GITHUB_TOKEN" \
         -e "GIT_USER_NAME=$GIT_USER_NAME" \
         -e "GIT_USER_EMAIL=$GIT_USER_EMAIL" \
+        -e "DISABLE_PLUGIN_UPDATE=$DISABLE_PLUGIN_UPDATE" \
         -e "TMPDIR=/home/agent/.claude/tmp" \
         -w "/home/agent/$REPO_NAME" \
         "$CODEMATE_IMAGE"
@@ -362,6 +364,7 @@ Options:
   --repo URL           Git repository URL
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
   --image IMAGE        Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
+  --disable-plugin-update  Disable automatic plugin updates on container start
   --help               Show this help message
 
 Environment Variables:
@@ -373,6 +376,7 @@ Environment Variables:
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
   CODEMATE_IMAGE       Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
+  DISABLE_PLUGIN_UPDATE  Disable automatic plugin updates (default: false)
 
 Examples:
   # First time setup
@@ -396,6 +400,9 @@ Examples:
 
   # Run with custom image
   $0 --branch feature/xyz --image ghcr.io/boringhappy/codemate:v1.0.0
+
+  # Run with plugin updates disabled
+  $0 --branch feature/xyz --disable-plugin-update
 
 EOF
 }
@@ -439,6 +446,10 @@ main() {
             --image)
                 CODEMATE_IMAGE="$2"
                 shift 2
+                ;;
+            --disable-plugin-update)
+                DISABLE_PLUGIN_UPDATE="true"
+                shift
                 ;;
             --help)
                 show_usage

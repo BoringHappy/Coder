@@ -26,10 +26,20 @@ fi
 
 printf "${YELLOW}Installing plugins...${RESET}\n\n"
 
+# Clone CodeMatePlugin repository
+PLUGIN_REPO_DIR="/tmp/CodeMatePlugin"
+if [ ! -d "$PLUGIN_REPO_DIR" ]; then
+    printf "${CYAN}Cloning CodeMatePlugin repository...${RESET}\\n"
+    git clone https://github.com/BoringHappy/CodeMatePlugin.git "$PLUGIN_REPO_DIR"
+else
+    printf "${CYAN}CodeMatePlugin repository already exists, pulling latest...${RESET}\\n"
+    cd "$PLUGIN_REPO_DIR" && git pull
+fi
+
 # Add marketplaces
 printf "${CYAN}Adding marketplaces:${RESET}\n"
 add_marketplace "1/2" "vercel-labs/agent-browser" "vercel-labs/agent-browser"
-add_marketplace "2/2" "codemate" "/usr/local/bin/setup/marketplace"
+add_marketplace "2/2" "codemate" "$PLUGIN_REPO_DIR"
 
 # Install and verify plugins
 printf "\n${CYAN}Installing and verifying plugins:${RESET}\n"

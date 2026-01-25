@@ -35,13 +35,12 @@ Parameters:
 1. `setup/setup.sh` orchestrates initialization
 2. `setup/shell/setup-git.sh` configures git user from environment variables
 3. `setup/shell/setup-gh.sh` authenticates GitHub CLI with token
-4. `setup/setup.sh` configures the CodeMate plugin marketplace in `.claude/settings.json`
-5. `setup/python/setup-repo.py` clones repo, checks out branch/PR, creates PR if needed
-6. Claude Code starts with system prompt from `setup/prompt/system_prompt.txt`
+4. `setup/python/setup-repo.py` clones repo, checks out branch/PR, creates PR if needed
+5. Claude Code starts with system prompt from `setup/prompt/system_prompt.txt`
 
 ### Plugin Marketplace
 
-CodeMate uses a local plugin marketplace to distribute plugins. The marketplace is automatically configured at startup via `.claude/settings.json`.
+CodeMate uses a local plugin marketplace to distribute plugins. Plugins are installed at build-time in the Dockerfile using the `claude plugin` CLI commands.
 
 **Marketplace Structure** (`marketplace/`):
 - `.claude-plugin/marketplace.json` - Marketplace catalog

@@ -79,6 +79,7 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 COPY --chmod=755 marketplace /usr/local/bin/setup/marketplace
 
 # Install plugins from marketplaces
+# Commands are chained with && to ensure fail-fast behavior - if any plugin installation fails, the build will fail
 RUN claude plugin marketplace add vercel-labs/agent-browser --scope user \
     && claude plugin marketplace add /usr/local/bin/setup/marketplace --scope user \
     && claude plugin install agent-browser@vercel-labs-agent-browser --scope user \

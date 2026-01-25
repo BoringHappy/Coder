@@ -1,8 +1,7 @@
 {
   "name": "codemate",
   "owner": {
-    "name": "CodeMate",
-    "email": "codemate@example.com"
+    "name": "CodeMate"
   },
   "metadata": {
     "description": "CodeMate plugin marketplace for Git and PR workflows",

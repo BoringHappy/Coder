@@ -115,6 +115,37 @@ When `--build` is used:
 3. The locally built image is used instead of pulling from the registry
 4. The `--image` option is ignored when `--build` is used
 
+**Adding Custom Toolchains:**
+
+To add additional toolchains or tools to the container, create a custom Dockerfile that extends the base image:
+
+```dockerfile
+# Custom Dockerfile with additional toolchains
+FROM ghcr.io/boringhappy/codemate:latest
+
+# Add Java
+RUN apt-get update && apt-get install -y openjdk-17-jdk maven
+
+# Add PHP
+RUN apt-get install -y php php-cli php-mbstring composer
+
+# Add Ruby
+RUN apt-get install -y ruby-full
+RUN gem install bundler
+
+# Add any other tools you need
+RUN apt-get install -y postgresql-client redis-tools
+
+# Clean up
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+```
+
+Then build and run with your custom Dockerfile:
+
+```bash
+./start.sh --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/xyz
+```
+
 ## Environment Variables
 
 > **Note:** When using `start.sh`, these variables are handled automatically through the setup process. This reference is primarily for advanced Docker usage or troubleshooting.

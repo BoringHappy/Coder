@@ -8,7 +8,7 @@ This plugin provides skills for creating, updating, and managing pull requests i
 
 ## Skills
 
-### `/pr-plugin:get-details`
+### `/pr:get-details`
 Fetches and displays comprehensive PR information including:
 - PR title and description
 - Source and target branches
@@ -18,15 +18,15 @@ Fetches and displays comprehensive PR information including:
 
 **Usage:**
 ```
-/pr-plugin:get-details
+/pr:get-details
 ```
 
-### `/pr-plugin:commit`
+### `/pr:commit`
 Stages all changes, creates a commit with a meaningful message, and pushes to the remote branch.
 
 **Usage:**
 ```
-/pr-plugin:commit
+/pr:commit
 ```
 
 **Features:**
@@ -34,12 +34,12 @@ Stages all changes, creates a commit with a meaningful message, and pushes to th
 - Generates descriptive commit messages following project conventions
 - Pushes to remote with upstream tracking if needed
 
-### `/pr-plugin:fix-comments`
+### `/pr:fix-comments`
 Automatically addresses feedback from PR review comments.
 
 **Usage:**
 ```
-/pr-plugin:fix-comments
+/pr:fix-comments
 ```
 
 **Workflow:**
@@ -49,13 +49,13 @@ Automatically addresses feedback from PR review comments.
 4. Commits and pushes changes
 5. Replies to comment threads confirming fixes
 
-### `/pr-plugin:update`
+### `/pr:update`
 Updates the PR title and/or description based on the actual changes.
 
 **Usage:**
 ```
-/pr-plugin:update                  # Update both title and summary
-/pr-plugin:update --summary-only   # Update only the summary
+/pr:update                  # Update both title and summary
+/pr:update --summary-only   # Update only the summary
 ```
 
 **Features:**
@@ -69,7 +69,7 @@ This plugin is automatically loaded in the CodeMate environment via the `--plugi
 
 For manual installation in other environments:
 ```bash
-claude --plugin-dir /path/to/pr-plugin
+claude --plugin-dir /path/to/pr
 ```
 
 ## Requirements
@@ -81,7 +81,7 @@ claude --plugin-dir /path/to/pr-plugin
 ## Plugin Structure
 
 ```
-pr-plugin/
+pr/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest
 └── skills/

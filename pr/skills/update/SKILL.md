@@ -1,6 +1,6 @@
 ---
 name: update
-description: Updates the summary/description and optionally the title of a GitHub pull request. Use `/pr-plugin:update` to update both title and summary, or `/pr-plugin:update --summary-only` to update only the summary.
+description: Updates the summary/description and optionally the title of a GitHub pull request. Use `/pr:update` to update both title and summary, or `/pr:update --summary-only` to update only the summary.
 context: fork
 ---
 
@@ -18,7 +18,7 @@ $ARGUMENTS
 
 ## What it does
 
-1. **Fetches PR information**: Uses `/pr-plugin:get-details` skill to get the current PR title, description, diff, and metadata
+1. **Fetches PR information**: Uses `/pr:get-details` skill to get the current PR title, description, diff, and metadata
 2. **Checks for template**: Looks for pull_request_template.md to follow the project's format
 3. **Generates improved summary**: Creates a better description based on the actual changes
 4. **Generates improved title**: Creates a concise, descriptive title based on the changes (unless `--summary-only` is specified)
@@ -26,7 +26,7 @@ $ARGUMENTS
 
 ## Current PR Information
 
-**IMPORTANT**: Before proceeding, you MUST use the `/pr-plugin:get-details` skill to fetch the current PR information including:
+**IMPORTANT**: Before proceeding, you MUST use the `/pr:get-details` skill to fetch the current PR information including:
 - Current PR title
 - Current PR description/body
 - PR diff showing all changes

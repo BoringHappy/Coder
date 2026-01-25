@@ -78,7 +78,7 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 # Copy setup scripts and set permissions
 COPY --chmod=755 setup /usr/local/bin/setup
 COPY --chmod=755 skills /usr/local/bin/setup/skills
-COPY --chmod=755 pr-plugin /usr/local/bin/setup/pr-plugin
+COPY --chmod=755 pr /usr/local/bin/setup/pr
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
-CMD ["sh", "-c", "claude --dangerously-skip-permissions --plugin-dir /usr/local/bin/setup/pr-plugin --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]
+CMD ["sh", "-c", "claude --dangerously-skip-permissions --plugin-dir /usr/local/bin/setup/pr --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]

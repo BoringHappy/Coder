@@ -1,5 +1,5 @@
 {
-  "name": "pr-plugin",
+  "name": "pr",
   "description": "GitHub Pull Request workflow management plugin with skills for creating, updating, and managing PRs",
   "version": "1.0.0",
   "author": {

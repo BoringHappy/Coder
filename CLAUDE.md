@@ -42,11 +42,11 @@ Parameters:
 
 CodeMate uses Claude Code plugins to extend functionality. The PR workflow plugin is automatically loaded at startup.
 
-**PR Plugin** (`pr-plugin/`):
-- `/pr-plugin:get-details` - Fetch PR information including comments
-- `/pr-plugin:commit` - Stage, commit, and push changes
-- `/pr-plugin:fix-comments` - Address PR review feedback
-- `/pr-plugin:update` - Update PR title and summary
+**PR Plugin** (`pr/`):
+- `/pr:get-details` - Fetch PR information including comments
+- `/pr:commit` - Stage, commit, and push changes
+- `/pr:fix-comments` - Address PR review feedback
+- `/pr:update` - Update PR title and summary
 
 **Standalone Skills** (`skills/`):
 - `/agent-browser` - Browser automation for web testing and interaction

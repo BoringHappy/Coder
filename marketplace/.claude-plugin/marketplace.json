@@ -5,7 +5,7 @@
     "email": "codemate@example.com"
   },
   "metadata": {
-    "description": "CodeMate plugin marketplace for PR workflows and development tools",
+    "description": "CodeMate plugin marketplace for PR workflows",
     "version": "1.0.0"
   },
   "plugins": [
@@ -16,14 +16,6 @@
       "version": "1.0.0",
       "category": "git",
       "keywords": ["git", "github", "pull-request", "pr", "workflow"]
-    },
-    {
-      "name": "external",
-      "source": "./plugins/external",
-      "description": "External tools and utilities including browser automation and skill creation",
-      "version": "1.0.0",
-      "category": "tools",
-      "keywords": ["browser", "automation", "skills", "development"]
     }
   ]
 }

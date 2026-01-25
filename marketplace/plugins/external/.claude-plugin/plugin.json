@@ -1,8 +1,0 @@
-{
-  "name": "external",
-  "description": "External tools and utilities including browser automation and skill creation",
-  "version": "1.0.0",
-  "author": {
-    "name": "CodeMate"
-  }
-}

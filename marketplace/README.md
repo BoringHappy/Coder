@@ -1,12 +1,12 @@
 # CodeMate Plugin Marketplace
 
-A local plugin marketplace for CodeMate that provides PR workflow management and development tools.
+A local plugin marketplace for CodeMate that provides PR workflow management.
 
 ## Overview
 
-This marketplace is automatically configured when CodeMate starts up. It contains two plugins that extend Claude Code with specialized capabilities for GitHub PR workflows and development utilities.
+This marketplace is automatically configured when CodeMate starts up. It contains the PR plugin that extends Claude Code with specialized capabilities for GitHub PR workflows.
 
-## Plugins
+## Plugin
 
 ### PR Plugin (`pr@codemate`)
 
@@ -20,16 +20,6 @@ GitHub Pull Request workflow management plugin.
 
 **Location:** `marketplace/plugins/pr/`
 
-### External Plugin (`external@codemate`)
-
-External tools and utilities for development workflows.
-
-**Skills:**
-- `/agent-browser` - Browser automation for web testing, form filling, and data extraction
-- `/skill-creator` - Interactive guide for creating new Claude Code skills
-
-**Location:** `marketplace/plugins/external/`
-
 ## Marketplace Structure
 
 ```
@@ -37,21 +27,15 @@ marketplace/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace catalog
 └── plugins/
-    ├── pr/                        # PR workflow plugin
-    │   ├── .claude-plugin/
-    │   │   └── plugin.json
-    │   ├── README.md
-    │   └── skills/
-    │       ├── get-details/
-    │       ├── commit/
-    │       ├── fix-comments/
-    │       └── update/
-    └── external/                  # External tools plugin
+    └── pr/                        # PR workflow plugin
         ├── .claude-plugin/
         │   └── plugin.json
+        ├── README.md
         └── skills/
-            ├── agent-browser/
-            └── skill-creator/
+            ├── get-details/
+            ├── commit/
+            ├── fix-comments/
+            └── update/
 ```
 
 ## Configuration
@@ -66,15 +50,14 @@ The marketplace is automatically configured in `.claude/settings.json` during co
     }
   },
   "enabledPlugins": {
-    "pr@codemate": true,
-    "external@codemate": true
+    "pr@codemate": true
   }
 }
 ```
 
 ## Usage
 
-Once the container starts, all plugins are automatically enabled and their skills are available:
+Once the container starts, the plugin is automatically enabled and its skills are available:
 
 ```bash
 # PR workflow commands
@@ -82,10 +65,6 @@ Once the container starts, all plugins are automatically enabled and their skill
 /pr:commit
 /pr:fix-comments
 /pr:update
-
-# External tools
-/agent-browser
-/skill-creator
 ```
 
 ## Adding New Plugins

@@ -36,8 +36,7 @@ if [ ! -f /home/agent/.claude/settings.json ] || ! grep -q "codemate" /home/agen
     }
   },
   "enabledPlugins": {
-    "pr@codemate": true,
-    "external@codemate": true
+    "pr@codemate": true
   }
 }
 EOF

@@ -1,12 +1,9 @@
 #!/bin/bash
 set -e
 
-# Color codes
-CYAN='\033[1;36m'
-GREEN='\033[1;32m'
-YELLOW='\033[1;33m'
-RED='\033[1;31m'
-RESET='\033[0m'
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
 printf "${CYAN}Setting up Claude Code plugins...${RESET}\n"
 

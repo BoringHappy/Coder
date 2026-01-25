@@ -3,10 +3,8 @@ set -e
 
 SETUP_DIR="/usr/local/bin/setup"
 
-# Color codes
-CYAN='\033[1;36m'
-GREEN='\033[1;32m'
-RESET='\033[0m'
+# Source common utilities
+source "$SETUP_DIR/shell/common.sh"
 
 printf "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
 printf "${CYAN}Running setup-git.sh...${RESET}\n"

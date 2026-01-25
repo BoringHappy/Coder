@@ -74,6 +74,7 @@ jobs:
           outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.image.outputs.name }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
 
       - name: Export digest
         if: github.event_name != 'pull_request'
@@ -84,7 +85,8 @@ jobs:
             echo "Error: No digest output from build"
             exit 1
           fi
-          touch "/tmp/digests/${digest#sha256:}"
+          # Store platform info in the digest file for manifest creation
+          echo "${{ matrix.platform }}" > "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
         if: github.event_name != 'pull_request'
@@ -151,5 +153,13 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@sha256:%s ' *)
+          # Build source image references from digests
+          SOURCES=""
+          for digest in *; do
+            SOURCES="$SOURCES ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}@sha256:$digest"
+          done
+
+          # Create and push multi-arch manifest
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $SOURCES

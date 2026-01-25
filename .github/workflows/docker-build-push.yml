@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - use-plugins-to-replace-shell-script  # Temporary: testing plugin system
     tags:
       - 'v*'
   workflow_dispatch:

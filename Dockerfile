@@ -75,13 +75,17 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 # Install Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Install agent-browser plugin from Vercel Labs marketplace
-RUN claude plugin marketplace add vercel-labs/agent-browser --scope user \
-    && claude plugin install agent-browser@vercel-labs-agent-browser --scope user
-
-# Copy setup scripts and marketplace
-COPY --chmod=755 setup /usr/local/bin/setup
+# Copy marketplace first (needed for plugin installation)
 COPY --chmod=755 marketplace /usr/local/bin/setup/marketplace
+
+# Install plugins from marketplaces
+RUN claude plugin marketplace add vercel-labs/agent-browser --scope user \
+    && claude plugin marketplace add /usr/local/bin/setup/marketplace --scope user \
+    && claude plugin install agent-browser@vercel-labs-agent-browser --scope user \
+    && claude plugin install pr@codemate --scope user
+
+# Copy setup scripts
+COPY --chmod=755 setup /usr/local/bin/setup
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["sh", "-c", "claude --dangerously-skip-permissions --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]

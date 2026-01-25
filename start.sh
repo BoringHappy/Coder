@@ -341,6 +341,7 @@ run_codemate() {
         -e "GITHUB_TOKEN=$GITHUB_TOKEN" \
         -e "GIT_USER_NAME=$GIT_USER_NAME" \
         -e "GIT_USER_EMAIL=$GIT_USER_EMAIL" \
+        -e "TMPDIR=/home/agent/.claude/tmp" \
         -w "/home/agent/$REPO_NAME" \
         "$CODEMATE_IMAGE"
 }

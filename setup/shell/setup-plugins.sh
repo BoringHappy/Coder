@@ -9,6 +9,10 @@ RESET='\033[0m'
 
 printf "${CYAN}Setting up Claude Code plugins...${RESET}\n"
 
+# Create tmp directory in .claude to avoid cross-device link errors
+mkdir -p /home/agent/.claude/tmp
+export TMPDIR=/home/agent/.claude/tmp
+
 # Check if plugins are already installed
 if claude plugin list 2>/dev/null | grep -q "git@codemate" && \
    claude plugin list 2>/dev/null | grep -q "pr@codemate" && \

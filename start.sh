@@ -18,6 +18,9 @@ BRANCH_NAME="${BRANCH_NAME:-}"
 PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
 CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
+BUILD_LOCAL=false
+DOCKERFILE_PATH="Dockerfile"
+IMAGE_TAG=""
 
 # Function to print colored messages
 print_info() {
@@ -191,6 +194,33 @@ setup_codemate_files() {
     echo ""
 }
 
+# Function to build Docker image locally
+build_docker_image() {
+    local dockerfile_path="$1"
+    local image_tag="$2"
+    local build_context="$(pwd)"
+
+    print_info "Building Docker image from local Dockerfile..."
+
+    # Check if Dockerfile exists
+    if [ ! -f "$dockerfile_path" ]; then
+        print_error "Dockerfile not found at: $dockerfile_path"
+        exit 1
+    fi
+
+    print_info "Using Dockerfile: $dockerfile_path"
+    print_info "Image tag: $image_tag"
+    print_info "Build context: $build_context"
+
+    # Build the image
+    if ! docker build -f "$dockerfile_path" -t "$image_tag" "$build_context"; then
+        print_error "Failed to build Docker image"
+        exit 1
+    fi
+
+    print_success "Docker image built successfully: $image_tag"
+}
+
 # Function to check prerequisites
 check_prerequisites() {
     local missing_deps=()
@@ -362,6 +392,9 @@ Options:
   --repo URL           Git repository URL
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
   --image IMAGE        Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
+  --build              Build Docker image from local Dockerfile
+  -f, --dockerfile PATH  Path to Dockerfile (default: Dockerfile, requires --build)
+  --tag TAG            Image tag for local build (default: codemate:local, requires --build)
   --help               Show this help message
 
 Environment Variables:
@@ -396,6 +429,12 @@ Examples:
 
   # Run with custom image
   $0 --branch feature/xyz --image ghcr.io/boringhappy/codemate:v1.0.0
+
+  # Build and run from local Dockerfile
+  $0 --build --branch feature/xyz
+
+  # Build with custom Dockerfile path and tag
+  $0 --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
 
 EOF
 }
@@ -438,6 +477,18 @@ main() {
                 ;;
             --image)
                 CODEMATE_IMAGE="$2"
+                shift 2
+                ;;
+            --build)
+                BUILD_LOCAL=true
+                shift
+                ;;
+            -f|--dockerfile)
+                DOCKERFILE_PATH="$2"
+                shift 2
+                ;;
+            --tag)
+                IMAGE_TAG="$2"
                 shift 2
                 ;;
             --help)
@@ -488,6 +539,20 @@ main() {
 
     # Check prerequisites
     check_prerequisites
+
+    # Handle local build if requested
+    if [ "$BUILD_LOCAL" = true ]; then
+        # Set default tag if not specified
+        if [ -z "$IMAGE_TAG" ]; then
+            IMAGE_TAG="codemate:local"
+        fi
+
+        # Build the image
+        build_docker_image "$DOCKERFILE_PATH" "$IMAGE_TAG"
+
+        # Use the locally built image
+        CODEMATE_IMAGE="$IMAGE_TAG"
+    fi
 
     # Validate required parameters
     if [ -z "$BRANCH_NAME" ] && [ -z "$PR_NUMBER" ]; then

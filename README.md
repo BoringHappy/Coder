@@ -61,6 +61,12 @@ chmod +x start.sh
 # Run with custom volume mounts (optional)
 ./start.sh --branch feature/xyz --mount ~/data:/data
 
+# Build and run from local Dockerfile
+./start.sh --build --branch feature/xyz
+
+# Build with custom Dockerfile path and tag
+./start.sh --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+
 # For Chinese users: Use DaoCloud mirror for faster image pulls
 ./start.sh --branch feature/xyz --image ghcr.m.daocloud.io/boringhappy/codemate:latest
 ```
@@ -79,6 +85,35 @@ The script will:
 ##### Custom Volume Mounts
 
 Use `--mount <host-path>:<container-path>` to mount additional directories or files. Useful for sharing data, configurations, or credentials with the container. Multiple `--mount` options can be specified.
+
+##### Building from Local Dockerfile
+
+For development or customization, you can build CodeMate from a local Dockerfile:
+
+```bash
+# Build from default Dockerfile in current directory
+./start.sh --build --branch feature/xyz
+
+# Build from custom Dockerfile path
+./start.sh --build -f ./path/to/Dockerfile --branch feature/xyz
+
+# Build with custom image tag
+./start.sh --build --tag my-codemate:dev --branch feature/xyz
+
+# Combine all options
+./start.sh --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+```
+
+**Options:**
+- `--build` - Build Docker image from local Dockerfile before running
+- `-f, --dockerfile PATH` - Path to Dockerfile (default: `Dockerfile`)
+- `--tag TAG` - Image tag for local build (default: `codemate:local`)
+
+When `--build` is used:
+1. The script builds the Docker image from the specified Dockerfile
+2. The default image tag is `codemate:local` (unless `--tag` is specified)
+3. The locally built image is used instead of pulling from the registry
+4. The `--image` option is ignored when `--build` is used
 
 ## Environment Variables
 

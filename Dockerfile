@@ -82,6 +82,7 @@ COPY --chmod=755 marketplace /usr/local/bin/setup/marketplace
 RUN claude plugin marketplace add vercel-labs/agent-browser --scope user \
     && claude plugin marketplace add /usr/local/bin/setup/marketplace --scope user \
     && claude plugin install agent-browser@vercel-labs-agent-browser --scope user \
+    && claude plugin install git@codemate --scope user \
     && claude plugin install pr@codemate --scope user
 
 # Copy setup scripts

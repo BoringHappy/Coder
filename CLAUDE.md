@@ -45,13 +45,16 @@ CodeMate uses a local plugin marketplace to distribute plugins. The marketplace 
 
 **Marketplace Structure** (`marketplace/`):
 - `.claude-plugin/marketplace.json` - Marketplace catalog
+- `plugins/git/` - Git workflow plugin
 - `plugins/pr/` - PR workflow plugin
 
-**Available Plugin:**
+**Available Plugins:**
+
+**Git Plugin** (`git@codemate`):
+- `/git:commit` - Stage, commit, and push changes
 
 **PR Plugin** (`pr@codemate`):
 - `/pr:get-details` - Fetch PR information including comments
-- `/pr:commit` - Stage, commit, and push changes
 - `/pr:fix-comments` - Address PR review feedback
 - `/pr:update` - Update PR title and summary
 

@@ -13,7 +13,7 @@ Automatically address feedback from GitHub pull request comments.
 2. **Parses feedback**: Analyzes each comment to understand what needs to be fixed
 3. **Reads affected files**: Uses the Read tool to examine files mentioned in comments
 4. **Applies fixes**: Makes the necessary code changes using the Edit or Write tools
-5. **Commits and pushes changes**: Uses the `/pr:commit` skill to stage, commit with a descriptive message, and push changes to the remote branch
+5. **Commits and pushes changes**: Uses the `/git:commit` skill to stage, commit with a descriptive message, and push changes to the remote branch
 6. **Replies to comments**: Uses `gh api -X POST repos/:owner/:repo/pulls/{pr}/comments/{comment_id}/replies` to reply directly to each review comment thread, confirming the fix
 
 ## Prerequisites
@@ -23,13 +23,13 @@ Automatically address feedback from GitHub pull request comments.
 - Must have write access to the repository
 - Pull request must exist for the current branch
 - Requires `/pr:get-details` skill to be available
-- Requires `/pr:commit` skill to be available
+- Requires `/git:commit` skill to be available
 
 ## Technical Details
 
 - Uses `/pr:get-details` skill to fetch both PR-level and code review comments in a formatted way
 - The `/pr:get-details` skill internally uses `gh pr view` and `gh api` to gather all comment information
-- Uses `/pr:commit` skill to stage, commit, and push changes to the remote branch
+- Uses `/git:commit` skill to stage, commit, and push changes to the remote branch
 - Replies use `gh api -X POST repos/:owner/:repo/pulls/{pr}/comments/{comment_id}/replies` to thread responses
 - Handles multiple comments in a single run
 

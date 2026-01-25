@@ -21,19 +21,6 @@ Fetches and displays comprehensive PR information including:
 /pr:get-details
 ```
 
-### `/pr:commit`
-Stages all changes, creates a commit with a meaningful message, and pushes to the remote branch.
-
-**Usage:**
-```
-/pr:commit
-```
-
-**Features:**
-- Automatically stages all changes
-- Generates descriptive commit messages following project conventions
-- Pushes to remote with upstream tracking if needed
-
 ### `/pr:fix-comments`
 Automatically addresses feedback from PR review comments.
 
@@ -46,7 +33,7 @@ Automatically addresses feedback from PR review comments.
 1. Fetches all PR comments
 2. Analyzes feedback to understand required changes
 3. Reads and modifies affected files
-4. Commits and pushes changes
+4. Commits and pushes changes (uses `/git:commit` from git plugin)
 5. Replies to comment threads confirming fixes
 
 ### `/pr:update`
@@ -86,8 +73,6 @@ pr/
 │   └── plugin.json          # Plugin manifest
 └── skills/
     ├── get-details/
-    │   └── SKILL.md
-    ├── commit/
     │   └── SKILL.md
     ├── fix-comments/
     │   └── SKILL.md

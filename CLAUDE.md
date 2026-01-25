@@ -38,15 +38,24 @@ Parameters:
 4. `setup/python/setup-repo.py` clones repo, checks out branch/PR, creates PR if needed
 5. Claude Code starts with system prompt from `setup/prompt/system_prompt.txt`
 
-### Skills System
+### Plugin Marketplace
 
-Custom Claude Code skills are defined in `skills/` directory. Each skill has a `SKILL.md` file that defines the prompt injected when the skill is invoked.
+CodeMate uses a local plugin marketplace to distribute plugins. Plugins are installed at build-time in the Dockerfile using the `claude plugin` CLI commands.
 
-Available skills:
-- `/git-commit` - Stage, commit, and push changes
-- `/get-pr-details` - Fetch PR information including comments
-- `/fix-pr-comments` - Address PR review feedback
-- `/update-pr` - Update PR title and summary
+**Marketplace Structure** (`marketplace/`):
+- `.claude-plugin/marketplace.json` - Marketplace catalog
+- `plugins/git/` - Git workflow plugin
+- `plugins/pr/` - PR workflow plugin
+
+**Available Plugins:**
+
+**Git Plugin** (`git@codemate`):
+- `/git:commit` - Stage, commit, and push changes
+
+**PR Plugin** (`pr@codemate`):
+- `/pr:get-details` - Fetch PR information including comments
+- `/pr:fix-comments` - Address PR review feedback
+- `/pr:update` - Update PR title and summary
 
 ### Key Files
 

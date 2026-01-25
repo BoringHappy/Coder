@@ -75,9 +75,11 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 # Install Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Copy setup scripts and set permissions
+# Copy marketplace (needed for plugin installation at runtime)
+COPY --chmod=755 marketplace /usr/local/bin/setup/marketplace
+
+# Copy setup scripts
 COPY --chmod=755 setup /usr/local/bin/setup
-COPY --chmod=755 skills /usr/local/bin/setup/skills
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["sh", "-c", "claude --dangerously-skip-permissions --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]

@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# Color codes
-YELLOW='\033[1;33m'
-GREEN='\033[1;32m'
-RED='\033[1;31m'
-RESET='\033[0m'
+# Source common utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
 if [ -z "$GITHUB_TOKEN" ]; then
     printf "${RED}Error: GITHUB_TOKEN environment variable is required${RESET}\n"

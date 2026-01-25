@@ -137,6 +137,21 @@ The following skills are **pre-installed** in CodeMate and ready to use. The com
 
 To update or customize these skills, use the Custom Skills approach described above by mounting your own skills directory.
 
+## CI/CD
+
+### Automated Submodule Updates
+
+CodeMate includes a GitHub Actions workflow that automatically monitors and updates the marketplace submodule:
+
+**Workflow: `.github/workflows/submodule-update.yml`**
+
+- **Scheduled checks**: Runs daily at 00:00 UTC to check for marketplace updates
+- **Push triggers**: Automatically triggers when marketplace submodule changes are pushed to main
+- **Auto-update**: When updates are detected via scheduled check, automatically commits the new submodule reference
+- **Docker rebuild**: Triggers the Docker image build workflow when submodule updates are detected
+
+This ensures the Docker image always includes the latest plugins from the marketplace without manual intervention.
+
 ## Best Practices
 
 ### Add a Pull Request Template

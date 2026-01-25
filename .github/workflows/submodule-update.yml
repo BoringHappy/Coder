@@ -1,0 +1,67 @@
+name: Auto-build on Submodule Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'marketplace/**'
+  schedule:
+    # Check for submodule updates daily at 08:23 UTC
+    - cron: '23 8 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-submodule:
+    runs-on: ubuntu-24.04
+    outputs:
+      submodule-updated: ${{ steps.check.outputs.updated }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Check for submodule updates
+        id: check
+        run: |
+          # Initialize submodules
+          git submodule update --init --recursive
+
+          # Fetch latest changes from submodule remote
+          cd marketplace
+          git fetch origin
+
+          # Check if local submodule commit differs from remote HEAD
+          LOCAL_COMMIT=$(git rev-parse HEAD)
+          REMOTE_COMMIT=$(git rev-parse origin/main)
+
+          if [ "$LOCAL_COMMIT" != "$REMOTE_COMMIT" ]; then
+            echo "Submodule update detected"
+            echo "Local:  $LOCAL_COMMIT"
+            echo "Remote: $REMOTE_COMMIT"
+            echo "updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "Submodule is up to date"
+            echo "updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update submodule to latest
+        if: steps.check.outputs.updated == 'true' && github.event_name == 'schedule'
+        run: |
+          cd marketplace
+          git checkout main
+          git pull origin main
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add marketplace
+          git commit -m "chore: update marketplace submodule to latest"
+          git push
+
+  trigger-build:
+    needs: check-submodule
+    if: needs.check-submodule.outputs.submodule-updated == 'true' || github.event_name == 'push'
+    uses: ./.github/workflows/docker-build-push.yml
+    secrets: inherit

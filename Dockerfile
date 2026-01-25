@@ -86,6 +86,11 @@ RUN claude plugin marketplace add vercel-labs/agent-browser --scope user \
     && claude plugin install git@codemate --scope user \
     && claude plugin install pr@codemate --scope user
 
+# Verify plugins are installed correctly (smoke test)
+RUN claude plugin list --scope user | grep -q "agent-browser@vercel-labs-agent-browser" || exit 1
+RUN claude plugin list --scope user | grep -q "git@codemate" || exit 1
+RUN claude plugin list --scope user | grep -q "pr@codemate" || exit 1
+
 # Copy setup scripts
 COPY --chmod=755 setup /usr/local/bin/setup
 

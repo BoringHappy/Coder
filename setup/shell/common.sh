@@ -27,3 +27,56 @@ run_setup_script() {
     fi
 }
 
+# Function to add a Claude plugin marketplace
+# Usage: add_marketplace "index/total" "marketplace-name" "marketplace-path"
+add_marketplace() {
+    local progress="$1"
+    local name="$2"
+    local path="$3"
+
+    printf "  [${progress}] Adding ${name} marketplace...\n"
+    if claude plugin marketplace add "$path" 2>&1; then
+        printf "  ${GREEN}✓ ${name} marketplace added${RESET}\n"
+        return 0
+    else
+        printf "  ${YELLOW}⚠ Failed to add ${name} marketplace${RESET}\n"
+        return 1
+    fi
+}
+
+# Function to install a Claude plugin
+# Usage: install_plugin "index/total" "plugin-name"
+install_plugin() {
+    local progress="$1"
+    local plugin="$2"
+
+    printf "  [${progress}] Installing ${plugin}...\n"
+    if claude plugin install "$plugin" 2>&1; then
+        printf "  ${GREEN}✓ ${plugin} installed${RESET}\n"
+        return 0
+    else
+        printf "  ${RED}✗ ${plugin} installation failed${RESET}\n"
+        return 1
+    fi
+}
+
+# Function to verify a plugin is installed and show its skills
+# Usage: verify_plugin "plugin-name" "skill1, skill2, skill3" "$INSTALLED_PLUGINS"
+verify_plugin() {
+    local plugin="$1"
+    local skills="$2"
+    local installed_list="$3"
+
+    if echo "$installed_list" | grep -q "$plugin"; then
+        printf "${GREEN}✓ ${plugin}${RESET}\n"
+        if [ -n "$skills" ]; then
+            printf "  Skills: ${skills}\n"
+        fi
+        return 0
+    else
+        printf "${RED}✗ ${plugin} not found${RESET}\n"
+        return 1
+    fi
+}
+
+

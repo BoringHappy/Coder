@@ -28,66 +28,21 @@ printf "${YELLOW}Installing plugins...${RESET}\n\n"
 
 # Add marketplaces
 printf "${CYAN}Adding marketplaces:${RESET}\n"
-printf "  [1/2] Adding vercel-labs/agent-browser marketplace...\n"
-if claude plugin marketplace add vercel-labs/agent-browser 2>&1; then
-    printf "  ${GREEN}✓ vercel-labs/agent-browser marketplace added${RESET}\n"
-else
-    printf "  ${YELLOW}⚠ Failed to add vercel-labs/agent-browser marketplace${RESET}\n"
-fi
-
-printf "  [2/2] Adding local codemate marketplace...\n"
-if claude plugin marketplace add /usr/local/bin/setup/marketplace 2>&1; then
-    printf "  ${GREEN}✓ codemate marketplace added${RESET}\n"
-else
-    printf "  ${YELLOW}⚠ Failed to add codemate marketplace${RESET}\n"
-fi
+add_marketplace "1/2" "vercel-labs/agent-browser" "vercel-labs/agent-browser"
+add_marketplace "2/2" "codemate" "/usr/local/bin/setup/marketplace"
 
 # Install plugins
 printf "\n${CYAN}Installing plugins:${RESET}\n"
-printf "  [1/3] Installing agent-browser@agent-browser...\n"
-if claude plugin install agent-browser@agent-browser 2>&1; then
-    printf "  ${GREEN}✓ agent-browser@agent-browser installed${RESET}\n"
-else
-    printf "  ${RED}✗ agent-browser@agent-browser installation failed${RESET}\n"
-fi
-
-printf "  [2/3] Installing git@codemate...\n"
-if claude plugin install git@codemate 2>&1; then
-    printf "  ${GREEN}✓ git@codemate installed${RESET}\n"
-else
-    printf "  ${RED}✗ git@codemate installation failed${RESET}\n"
-fi
-
-printf "  [3/3] Installing pr@codemate...\n"
-if claude plugin install pr@codemate 2>&1; then
-    printf "  ${GREEN}✓ pr@codemate installed${RESET}\n"
-else
-    printf "  ${RED}✗ pr@codemate installation failed${RESET}\n"
-fi
+install_plugin "1/3" "agent-browser@agent-browser"
+install_plugin "2/3" "git@codemate"
+install_plugin "3/3" "pr@codemate"
 
 # Verify installations and show loaded plugins
 printf "\n${CYAN}Verifying plugin installations:${RESET}\n"
 INSTALLED_PLUGINS=$(claude plugin list 2>/dev/null || echo "")
 
-if echo "$INSTALLED_PLUGINS" | grep -q "git@codemate"; then
-    printf "${GREEN}✓ git@codemate${RESET}\n"
-    printf "  Skills: /git:commit\n"
-else
-    printf "${RED}✗ git@codemate not found${RESET}\n"
-fi
-
-if echo "$INSTALLED_PLUGINS" | grep -q "pr@codemate"; then
-    printf "${GREEN}✓ pr@codemate${RESET}\n"
-    printf "  Skills: /pr:get-details, /pr:fix-comments, /pr:update\n"
-else
-    printf "${RED}✗ pr@codemate not found${RESET}\n"
-fi
-
-if echo "$INSTALLED_PLUGINS" | grep -q "agent-browser@agent-browser"; then
-    printf "${GREEN}✓ agent-browser@agent-browser${RESET}\n"
-    printf "  Skills: /agent-browser:agent-browser\n"
-else
-    printf "${RED}✗ agent-browser@agent-browser not found${RESET}\n"
-fi
+verify_plugin "git@codemate" "/git:commit" "$INSTALLED_PLUGINS"
+verify_plugin "pr@codemate" "/pr:get-details, /pr:fix-comments, /pr:update" "$INSTALLED_PLUGINS"
+verify_plugin "agent-browser@agent-browser" "/agent-browser:agent-browser" "$INSTALLED_PLUGINS"
 
 printf "\n${GREEN}✓ Plugin setup complete${RESET}\n"

@@ -7,6 +7,13 @@ source "$SCRIPT_DIR/common.sh"
 
 printf "${CYAN}Setting up Claude Code plugins...${RESET}\n"
 
+# Check if plugin updates are disabled
+if [ "$DISABLE_PLUGIN_UPDATE" = "true" ]; then
+    printf "${YELLOW}Plugin updates disabled via DISABLE_PLUGIN_UPDATE${RESET}\n"
+    printf "${YELLOW}Skipping plugin setup${RESET}\n"
+    exit 0
+fi
+
 # Create tmp directory in .claude to avoid cross-device link errors
 printf "  Creating temp directory at /home/agent/.claude/tmp\n"
 mkdir -p /home/agent/.claude/tmp

@@ -75,21 +75,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 # Install Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Copy marketplace first (needed for plugin installation)
+# Copy marketplace (needed for plugin installation at runtime)
 COPY --chmod=755 marketplace /usr/local/bin/setup/marketplace
-
-# Install plugins from marketplaces
-# Commands are chained with && to ensure fail-fast behavior - if any plugin installation fails, the build will fail
-RUN claude plugin marketplace add vercel-labs/agent-browser \
-    && claude plugin marketplace add /usr/local/bin/setup/marketplace \
-    && claude plugin install agent-browser@agent-browser \
-    && claude plugin install git@codemate \
-    && claude plugin install pr@codemate
-
-# Verify plugins are installed correctly (smoke test)
-RUN claude plugin list | grep -q "agent-browser@agent-browser" || exit 1
-RUN claude plugin list | grep -q "git@codemate" || exit 1
-RUN claude plugin list | grep -q "pr@codemate" || exit 1
 
 # Copy setup scripts
 COPY --chmod=755 setup /usr/local/bin/setup

@@ -19,6 +19,11 @@ printf "${CYAN}━━━━━━━━━━━━━━━━━━━━━�
 bash "$SETUP_DIR/shell/setup-gh.sh"
 
 printf "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
+printf "${CYAN}Running setup-plugins.sh...${RESET}\n"
+printf "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
+bash "$SETUP_DIR/shell/setup-plugins.sh"
+
+printf "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
 printf "${CYAN}Running setup-repo.py...${RESET}\n"
 printf "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
 python3 "$SETUP_DIR/python/setup-repo.py"

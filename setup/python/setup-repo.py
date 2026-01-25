@@ -57,6 +57,14 @@ def main():
         print(f"{RED}Skipping git PR setup: GIT_REPO_URL or BRANCH_NAME/PR_NUMBER not set{RESET}")
         sys.exit(0)
 
+    # Validate branch name is not main/master or default branch
+    if branch_name:
+        forbidden_branches = ["main", "master"]
+        if branch_name.lower() in forbidden_branches:
+            print(f"{RED}Error: Cannot use '{branch_name}' as branch name.{RESET}")
+            print(f"{RED}Branch name cannot be 'main' or 'master'.{RESET}")
+            sys.exit(1)
+
     print(f"{YELLOW}Setting up git repository...{RESET}")
 
     # Extract repo name from git URL
@@ -75,6 +83,16 @@ def main():
         print(f"  Using existing repository")
         os.chdir(workspace)
         run("git fetch origin")
+
+    # Additional validation: check against repository's default branch
+    if branch_name:
+        result = run("gh repo view --json defaultBranchRef -q .defaultBranchRef.name", check=False)
+        if result.returncode == 0:
+            default_branch = result.stdout.strip()
+            if default_branch and branch_name.lower() == default_branch.lower():
+                print(f"{RED}Error: Cannot use '{branch_name}' as branch name.{RESET}")
+                print(f"{RED}Branch name cannot be the repository's default branch '{default_branch}'.{RESET}")
+                sys.exit(1)
 
     if pr_number:
         print(f"  Getting branch name from PR {MAGENTA}#{pr_number}{RESET}")

@@ -322,11 +322,18 @@ run_codemate() {
         fi
     done
 
+    # Build env file flag if .env exists
+    local env_file_flag=""
+    if [ -f "$current_dir/.env" ]; then
+        env_file_flag="--env-file $current_dir/.env"
+    fi
+
     docker run --rm --name "$CONTAINER_NAME" \
         --pull always \
         $NETWORK_FLAG \
         -it \
         "${volume_mounts[@]}" \
+        $env_file_flag \
         -e "GIT_REPO_URL=$GIT_REPO_URL" \
         -e "BRANCH_NAME=$BRANCH_NAME" \
         -e "PR_NUMBER=$PR_NUMBER" \

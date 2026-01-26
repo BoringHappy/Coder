@@ -12,7 +12,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+from claude_agent_sdk import (
+    AssistantMessage,
+    ClaudeAgentOptions,
+    ClaudeSDKClient,
+    TextBlock,
+)
 from dotenv import load_dotenv
 from github import Github
 from loguru import logger
@@ -84,9 +89,11 @@ class ClaudeCodeAgent:
         pr_number: int,
         check_interval: int = 60,
         system_prompt_path: str | None = None,
+        initial_query: str | None = None,
     ):
         self.pr_monitor = GitHubPRMonitor(github_token, repo_name, pr_number)
         self.check_interval = check_interval
+        self.initial_query = initial_query
 
         # Load system prompt
         system_prompt = self._load_system_prompt(system_prompt_path)
@@ -102,7 +109,6 @@ class ClaudeCodeAgent:
             setting_sources=["user", "project", "local"],  # Load all settings
         )
 
-        self.client = None
         logger.info("ClaudeCodeAgent initialized")
 
     def _load_system_prompt(self, path: str | None) -> str:
@@ -116,41 +122,47 @@ When you detect new PR comments, use the /pr:fix-comments skill to address them.
 This skill will automatically read all comments, make necessary changes, and reply to reviewers.
 """
 
-    async def handle_new_comments(self) -> None:
-        """Check for new comments and ask Claude to fix them."""
-        if not self.pr_monitor.has_new_comments():
-            logger.debug("No new comments found")
-            return
-
-        logger.info("New comments detected, asking Claude to fix them")
-
-        # Create client if not exists
-        if self.client is None:
-            self.client = ClaudeSDKClient(options=self.options)
-            await self.client.connect()
-            logger.info("Connected to Claude SDK")
-
-        # Send query to Claude - maintains conversation context
-        await self.client.query(
-            "There are new PR review comments. "
-            "Please use the /pr:fix-comments skill to address all of them."
-        )
-
-        # Process response
-        async for message in self.client.receive_response():
-            logger.debug(f"Received message: {type(message).__name__}")
-
-        # Mark comments as processed
-        self.pr_monitor.mark_comments_processed()
-        logger.info("Comments processed successfully")
-
     async def run(self) -> None:
-        """Main loop - continuously monitor for new comments."""
+        """Main loop - continuously monitor for new comments and handle them."""
         logger.info(f"Starting agent loop (checking every {self.check_interval}s)")
 
-        while True:
-            await self.handle_new_comments()
-            await asyncio.sleep(self.check_interval)
+        async with ClaudeSDKClient(self.options) as client:
+            # Send initial query if provided
+            if self.initial_query:
+                logger.info(f"Sending initial query: {self.initial_query}")
+                await client.query(self.initial_query)
+
+                # Process initial response
+                async for message in client.receive_response():
+                    if isinstance(message, AssistantMessage):
+                        for block in message.content:
+                            if isinstance(block, TextBlock):
+                                logger.debug(f"Claude: {block.text[:100]}...")
+
+            # Main monitoring loop
+            while True:
+                if self.pr_monitor.has_new_comments():
+                    logger.info("New comments detected, asking Claude to fix them")
+
+                    # Send query to Claude - maintains conversation context
+                    await client.query(
+                        "Please use the /pr:fix-comments skill to address all of them."
+                    )
+
+                    # Process response
+                    async for message in client.receive_response():
+                        if isinstance(message, AssistantMessage):
+                            for block in message.content:
+                                if isinstance(block, TextBlock):
+                                    logger.debug(f"Claude: {block.text[:100]}...")
+
+                    # Mark comments as processed
+                    self.pr_monitor.mark_comments_processed()
+                    logger.info("Comments processed successfully")
+                else:
+                    logger.debug("No new comments found")
+
+                await asyncio.sleep(self.check_interval)
 
 
 def main():
@@ -181,6 +193,10 @@ def main():
         "--system-prompt",
         default=os.environ.get("SYSTEM_PROMPT_PATH"),
         help="Path to additional system prompt file",
+    )
+    parser.add_argument(
+        "--query",
+        help="Initial query to send to Claude before starting the monitoring loop",
     )
 
     args = parser.parse_args()
@@ -213,6 +229,7 @@ def main():
         pr_number=args.pr,
         check_interval=args.interval,
         system_prompt_path=args.system_prompt,
+        initial_query=args.query,
     )
 
     asyncio.run(agent.run())

@@ -122,6 +122,14 @@ When you detect new PR comments, use the /pr:fix-comments skill to address them.
 This skill will automatically read all comments, make necessary changes, and reply to reviewers.
 """
 
+    async def _process_response(self, client: ClaudeSDKClient) -> None:
+        """Process response from Claude SDK client."""
+        async for message in client.receive_response():
+            if isinstance(message, AssistantMessage):
+                for block in message.content:
+                    if isinstance(block, TextBlock):
+                        logger.debug(f"Claude: {block.text[:100]}...")
+
     async def run(self) -> None:
         """Main loop - continuously monitor for new comments and handle them."""
         logger.info(f"Starting agent loop (checking every {self.check_interval}s)")
@@ -131,13 +139,7 @@ This skill will automatically read all comments, make necessary changes, and rep
             if self.initial_query:
                 logger.info(f"Sending initial query: {self.initial_query}")
                 await client.query(self.initial_query)
-
-                # Process initial response
-                async for message in client.receive_response():
-                    if isinstance(message, AssistantMessage):
-                        for block in message.content:
-                            if isinstance(block, TextBlock):
-                                logger.debug(f"Claude: {block.text[:100]}...")
+                await self._process_response(client)
 
             # Main monitoring loop
             while True:
@@ -148,13 +150,7 @@ This skill will automatically read all comments, make necessary changes, and rep
                     await client.query(
                         "Please use the /pr:fix-comments skill to address all of them."
                     )
-
-                    # Process response
-                    async for message in client.receive_response():
-                        if isinstance(message, AssistantMessage):
-                            for block in message.content:
-                                if isinstance(block, TextBlock):
-                                    logger.debug(f"Claude: {block.text[:100]}...")
+                    await self._process_response(client)
 
                     # Mark comments as processed
                     self.pr_monitor.mark_comments_processed()

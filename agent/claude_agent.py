@@ -2,125 +2,99 @@
 """
 Claude Code Agent - Python-controlled loop for automated PR comment handling.
 
-This agent implements the functionality of `claude --dangerously-skip-permissions`
-with automated GitHub PR comment monitoring and resolution.
+This agent monitors GitHub PR comments and uses Claude Code's /pr:fix-comments
+skill to automatically address review feedback.
 """
 
 import os
 import sys
-import json
-import time
-import subprocess
-import logging
 import asyncio
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Optional
 from datetime import datetime
 
-from claude_agent_sdk import (
-    ClaudeSDKClient,
-    ClaudeAgentOptions,
-    AssistantMessage,
-    TextBlock,
-    ToolUseBlock,
-    ResultMessage
-)
+from loguru import logger
+from github import Github
+from dotenv import load_dotenv
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
 
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Load environment variables
+load_dotenv()
 
 
 class GitHubPRMonitor:
-    """Monitors GitHub PR for new comments."""
+    """Monitors GitHub PR for new comments using PyGithub."""
 
-    def __init__(self, repo: str, pr_number: int):
-        self.repo = repo
+    def __init__(self, github_token: str, repo_name: str, pr_number: int):
+        self.github = Github(github_token)
+        self.repo = self.github.get_repo(repo_name)
+        self.pr = self.repo.get_pull(pr_number)
         self.pr_number = pr_number
         self.last_check_time = datetime.now()
         self.processed_comment_ids = set()
 
-    def get_pr_comments(self) -> List[Dict[str, Any]]:
-        """Fetch PR review comments using gh CLI."""
+        logger.info(f"Monitoring PR #{pr_number} in {repo_name}")
+
+    def has_new_comments(self) -> bool:
+        """Check if there are new comments since last check."""
         try:
             # Get review comments
-            result = subprocess.run(
-                ['gh', 'api', f'/repos/{self.repo}/pulls/{self.pr_number}/comments'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            review_comments = json.loads(result.stdout)
+            review_comments = list(self.pr.get_review_comments())
+            issue_comments = list(self.pr.get_issue_comments())
 
-            # Get issue comments (general PR comments)
-            result = subprocess.run(
-                ['gh', 'api', f'/repos/{self.repo}/issues/{self.pr_number}/comments'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            issue_comments = json.loads(result.stdout)
+            all_comments = review_comments + issue_comments
 
-            return review_comments + issue_comments
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to fetch PR comments: {e}")
-            return []
+            for comment in all_comments:
+                if (comment.id not in self.processed_comment_ids and
+                    comment.created_at.replace(tzinfo=None) > self.last_check_time):
+                    logger.info(f"New comment detected: {comment.id}")
+                    return True
 
-    def get_new_comments(self) -> List[Dict[str, Any]]:
-        """Get comments that haven't been processed yet."""
-        all_comments = self.get_pr_comments()
-        new_comments = []
+            return False
+        except Exception as e:
+            logger.error(f"Failed to check for new comments: {e}")
+            return False
 
-        for comment in all_comments:
-            comment_id = comment['id']
-            comment_time = datetime.fromisoformat(
-                comment['created_at'].replace('Z', '+00:00')
-            )
+    def mark_comments_processed(self):
+        """Mark all current comments as processed."""
+        try:
+            review_comments = list(self.pr.get_review_comments())
+            issue_comments = list(self.pr.get_issue_comments())
 
-            if (comment_id not in self.processed_comment_ids and
-                comment_time > self.last_check_time):
-                new_comments.append(comment)
-                self.processed_comment_ids.add(comment_id)
+            for comment in review_comments + issue_comments:
+                self.processed_comment_ids.add(comment.id)
 
-        return new_comments
+            self.last_check_time = datetime.now()
+        except Exception as e:
+            logger.error(f"Failed to mark comments as processed: {e}")
 
 
 class ClaudeCodeAgent:
-    """Main agent that controls Claude Code with automated PR comment handling."""
+    """Main agent that uses Claude Code's /pr:fix-comments skill."""
 
     def __init__(
         self,
-        api_key: str,
-        repo: str,
+        github_token: str,
+        repo_name: str,
         pr_number: int,
         check_interval: int = 60,
         system_prompt_path: Optional[str] = None
     ):
-        self.api_key = api_key
-        self.repo = repo
-        self.pr_number = pr_number
+        self.pr_monitor = GitHubPRMonitor(github_token, repo_name, pr_number)
         self.check_interval = check_interval
-        self.pr_monitor = GitHubPRMonitor(repo, pr_number)
 
         # Load system prompt
-        self.system_prompt = self._load_system_prompt(system_prompt_path)
+        system_prompt = self._load_system_prompt(system_prompt_path)
 
         # Configure Claude Agent SDK options
         self.options = ClaudeAgentOptions(
-            tools=['*'],  # Enable all tools
-            permission_mode='bypassPermissions',  # Equivalent to --dangerously-skip-permissions
-            system_prompt=self.system_prompt
+            tools=['*'],  # Enable all tools including skills
+            permission_mode='bypassPermissions',
+            system_prompt=system_prompt
         )
 
-        # Initialize Claude SDK Client
         self.client = None
-
-        logger.info(f"Initialized ClaudeCodeAgent for {repo} PR #{pr_number}")
-        logger.info("Configured with all tools enabled and bypass permissions mode")
+        logger.info("ClaudeCodeAgent initialized")
 
     def _load_system_prompt(self, path: Optional[str]) -> str:
         """Load system prompt from file or use default."""
@@ -134,82 +108,37 @@ class ClaudeCodeAgent:
 
         return "You are a helpful AI assistant specialized in managing GitHub Pull Request workflows."
 
-    def _format_comment_for_query(self, comment: Dict[str, Any]) -> str:
-        """Format a PR comment into a query for Claude."""
-        author = comment.get('user', {}).get('login', 'Unknown')
-        body = comment.get('body', '')
-        path = comment.get('path', '')
-        line = comment.get('line', '')
-
-        query = f"PR Review Comment from {author}:\n\n"
-
-        if path:
-            query += f"File: {path}\n"
-        if line:
-            query += f"Line: {line}\n"
-
-        query += f"\nComment:\n{body}\n\n"
-        query += "Please address this review comment by making the necessary code changes."
-
-        return query
-
     async def handle_new_comments(self) -> None:
-        """Check for new PR comments and handle them."""
-        new_comments = self.pr_monitor.get_new_comments()
-
-        if not new_comments:
+        """Check for new comments and use /pr:fix-comments skill to address them."""
+        if not self.pr_monitor.has_new_comments():
             logger.debug("No new comments found")
             return
 
-        logger.info(f"Found {len(new_comments)} new comment(s)")
+        logger.info("New comments detected, invoking /pr:fix-comments skill")
 
-        for comment in new_comments:
-            try:
-                query = self._format_comment_for_query(comment)
-                logger.info(f"Processing comment {comment['id']}: {comment.get('body', '')[:50]}...")
-
-                # Create client if not exists
-                if self.client is None:
-                    self.client = ClaudeSDKClient(options=self.options)
-                    await self.client.connect()
-
-                # Send query to Claude
-                await self.client.query(query)
-
-                # Process response
-                async for message in self.client.receive_response():
-                    if isinstance(message, AssistantMessage):
-                        for block in message.content:
-                            if isinstance(block, TextBlock):
-                                logger.info(f"Claude: {block.text[:100]}...")
-                    elif isinstance(message, ResultMessage):
-                        logger.info(f"Task completed in {message.duration_ms}ms")
-
-                # Optionally reply to the comment
-                self._reply_to_comment(comment['id'], "Changes have been made to address this comment.")
-
-            except Exception as e:
-                logger.error(f"Failed to handle comment {comment['id']}: {e}")
-
-    def _reply_to_comment(self, comment_id: int, message: str) -> None:
-        """Reply to a PR comment."""
         try:
-            subprocess.run(
-                ['gh', 'api', '-X', 'POST',
-                 f'/repos/{self.repo}/pulls/{self.pr_number}/comments/{comment_id}/replies',
-                 '-f', f'body={message}'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            logger.info(f"Replied to comment {comment_id}")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to reply to comment: {e}")
+            # Create client if not exists
+            if self.client is None:
+                self.client = ClaudeSDKClient(options=self.options)
+                await self.client.connect()
+
+            # Use the /pr:fix-comments skill to handle all comments
+            await self.client.query("/pr:fix-comments")
+
+            # Process response
+            async for message in self.client.receive_response():
+                logger.debug(f"Received message: {type(message).__name__}")
+
+            # Mark comments as processed
+            self.pr_monitor.mark_comments_processed()
+            logger.info("Comments processed successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to handle comments: {e}")
 
     async def run(self) -> None:
-        """Main loop - continuously monitor for new comments and handle them."""
-        logger.info("Starting Claude Code Agent loop...")
-        logger.info(f"Monitoring PR #{self.pr_number} every {self.check_interval} seconds")
+        """Main loop - continuously monitor for new comments."""
+        logger.info(f"Starting agent loop (checking every {self.check_interval}s)")
 
         try:
             while True:
@@ -227,46 +156,6 @@ class ClaudeCodeAgent:
                 await self.client.disconnect()
 
 
-def get_repo_info() -> tuple[str, int]:
-    """Get repository and PR information from environment or git."""
-    # Try to get PR number from environment
-    pr_number = os.environ.get('PR_NUMBER')
-    if pr_number:
-        pr_number = int(pr_number)
-    else:
-        # Try to get from current branch
-        try:
-            result = subprocess.run(
-                ['gh', 'pr', 'view', '--json', 'number'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            pr_data = json.loads(result.stdout)
-            pr_number = pr_data['number']
-        except (subprocess.CalledProcessError, KeyError, json.JSONDecodeError):
-            logger.error("Could not determine PR number. Set PR_NUMBER environment variable.")
-            sys.exit(1)
-
-    # Get repository
-    repo = os.environ.get('GITHUB_REPOSITORY')
-    if not repo:
-        try:
-            result = subprocess.run(
-                ['gh', 'repo', 'view', '--json', 'nameWithOwner'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            repo_data = json.loads(result.stdout)
-            repo = repo_data['nameWithOwner']
-        except (subprocess.CalledProcessError, KeyError, json.JSONDecodeError):
-            logger.error("Could not determine repository. Set GITHUB_REPOSITORY environment variable.")
-            sys.exit(1)
-
-    return repo, pr_number
-
-
 def main():
     """Main entry point for the Claude Code Agent."""
     import argparse
@@ -275,66 +164,61 @@ def main():
         description='Claude Code Agent - Automated PR comment handling'
     )
     parser.add_argument(
-        '--api-key',
-        default=os.environ.get('ANTHROPIC_API_KEY'),
-        help='Anthropic API key (default: ANTHROPIC_API_KEY env var)'
+        '--github-token',
+        default=os.environ.get('GITHUB_TOKEN'),
+        help='GitHub token (default: GITHUB_TOKEN env var)'
     )
     parser.add_argument(
         '--repo',
-        help='GitHub repository (owner/repo format, default: auto-detect)'
+        default=os.environ.get('GITHUB_REPOSITORY'),
+        help='GitHub repository (owner/repo format)'
     )
     parser.add_argument(
         '--pr',
         type=int,
-        help='PR number (default: auto-detect from current branch)'
+        default=os.environ.get('PR_NUMBER'),
+        help='PR number'
     )
     parser.add_argument(
         '--interval',
         type=int,
-        default=60,
+        default=int(os.environ.get('CHECK_INTERVAL', '60')),
         help='Check interval in seconds (default: 60)'
     )
     parser.add_argument(
         '--system-prompt',
+        default=os.environ.get('SYSTEM_PROMPT_PATH'),
         help='Path to system prompt file'
-    )
-    parser.add_argument(
-        '--once',
-        action='store_true',
-        help='Run once and exit (don\'t loop)'
     )
 
     args = parser.parse_args()
 
-    # Validate API key
-    if not args.api_key:
-        logger.error("ANTHROPIC_API_KEY not set. Use --api-key or set environment variable.")
+    # Validate required arguments
+    if not args.github_token:
+        logger.error("GITHUB_TOKEN not set. Use --github-token or set environment variable.")
         sys.exit(1)
 
-    # Get repo and PR info
-    if args.repo and args.pr:
-        repo = args.repo
-        pr_number = args.pr
-    else:
-        repo, pr_number = get_repo_info()
+    if not args.repo:
+        logger.error("GITHUB_REPOSITORY not set. Use --repo or set environment variable.")
+        sys.exit(1)
 
-    logger.info(f"Repository: {repo}")
-    logger.info(f"PR Number: {pr_number}")
+    if not args.pr:
+        logger.error("PR_NUMBER not set. Use --pr or set environment variable.")
+        sys.exit(1)
+
+    logger.info(f"Repository: {args.repo}")
+    logger.info(f"PR Number: {args.pr}")
 
     # Create and run agent
     agent = ClaudeCodeAgent(
-        api_key=args.api_key,
-        repo=repo,
-        pr_number=pr_number,
+        github_token=args.github_token,
+        repo_name=args.repo,
+        pr_number=args.pr,
         check_interval=args.interval,
         system_prompt_path=args.system_prompt
     )
 
-    if args.once:
-        logger.info("Running once...")
-        asyncio.run(agent.handle_new_comments())
-    else:
-        asyncio.run(agent.run())
+    asyncio.run(agent.run())
 
 
 if __name__ == '__main__':

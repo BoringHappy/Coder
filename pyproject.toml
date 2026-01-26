@@ -5,10 +5,13 @@ description = "Docker-based environment for running Claude Code with automated G
 requires-python = ">=3.13"
 dependencies = [
     "claude-agent-sdk>=0.1.22",
+    "loguru>=0.7.3",
+    "pygithub>=2.8.1",
+    "python-dotenv>=1.2.1",
 ]
 
 [project.scripts]
-claude-agent = "agent.claude_agent:main"
+agent = "agent.claude_agent:main"
 
 [tool.uv]
 dev-dependencies = []

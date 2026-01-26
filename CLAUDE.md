@@ -32,30 +32,34 @@ Parameters:
 
 ### Python Agent (New Feature)
 
-CodeMate now includes a Python-controlled agent loop that implements `--dangerously-skip-permissions` functionality with automated PR comment monitoring:
+CodeMate now includes a Python-controlled agent loop that monitors PR comments and automatically invokes the `/pr:fix-comments` skill:
 
 **Location**: `agent/claude_agent.py`
 
 **Features**:
-- Automated PR comment monitoring using GitHub CLI
+- Automated PR comment monitoring using PyGithub
 - Claude Agent SDK integration with full tool access (`*`)
-- Automatic plugin and skill loading
-- Configurable check intervals
-- Can run standalone or integrated into Docker container
+- Uses `/pr:fix-comments` skill for automated comment resolution
+- Configurable check intervals via environment variables
+- Loguru for structured logging
 
 **Usage**:
 ```bash
-# Run agent directly
-uv run agent/claude_agent.py
+# Run agent with uv
+uv run agent
 
-# Run with specific PR
-uv run agent/claude_agent.py --repo owner/repo --pr 123
-
-# Run once and exit
-uv run agent/claude_agent.py --once
+# Or with environment variables
+GITHUB_TOKEN=xxx GITHUB_REPOSITORY=owner/repo PR_NUMBER=123 uv run agent
 ```
 
-See `agent/README.md` for detailed documentation and `agent/DOCKER_INTEGRATION.md` for Docker integration options.
+**Environment Variables**:
+- `GITHUB_TOKEN` - GitHub personal access token (required)
+- `GITHUB_REPOSITORY` - Repository in owner/repo format (required)
+- `PR_NUMBER` - Pull request number (required)
+- `CHECK_INTERVAL` - Check interval in seconds (default: 60)
+- `SYSTEM_PROMPT_PATH` - Path to custom system prompt (optional)
+
+The agent continuously monitors for new PR comments and automatically invokes Claude Code's `/pr:fix-comments` skill to address them.
 
 ### Container Startup Flow
 
@@ -86,9 +90,7 @@ The marketplace is fetched from the external repository: `BoringHappy/CodeMatePl
 - `Dockerfile` - Container definition, uses `docker/sandbox-templates:claude-code` base
 - `start.sh` - Standalone script to run CodeMate with configuration management
 - `setup/python/setup-repo.py` - Main repo/PR setup logic, reads PR template from `.github/PULL_REQUEST_TEMPLATE.md`
-- `agent/claude_agent.py` - Python agent for automated PR comment handling
-- `agent/README.md` - Agent documentation
-- `agent/DOCKER_INTEGRATION.md` - Docker integration guide
+- `agent/claude_agent.py` - Python agent for automated PR comment monitoring
 - `pyproject.toml` - Python project configuration with uv
 
 

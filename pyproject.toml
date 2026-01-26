@@ -1,0 +1,14 @@
+[project]
+name = "codemate"
+version = "0.1.0"
+description = "Docker-based environment for running Claude Code with automated Git/PR setup and Python-controlled agent loop"
+requires-python = ">=3.13"
+dependencies = [
+    "claude-agent-sdk>=0.1.22",
+]
+
+[project.scripts]
+claude-agent = "agent.claude_agent:main"
+
+[tool.uv]
+dev-dependencies = []

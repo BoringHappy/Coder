@@ -40,12 +40,9 @@ Parameters:
 
 ### Plugin Marketplace
 
-CodeMate uses a local plugin marketplace to distribute plugins. Plugins are installed at build-time in the Dockerfile using the `claude plugin` CLI commands.
+CodeMate uses the CodeMatePlugin marketplace to distribute plugins. Plugins are installed at runtime during container startup via `setup/shell/setup-plugins.sh` using the `claude plugin` CLI commands.
 
-**Marketplace Structure** (`marketplace/`):
-- `.claude-plugin/marketplace.json` - Marketplace catalog
-- `plugins/git/` - Git workflow plugin
-- `plugins/pr/` - PR workflow plugin
+The marketplace is fetched from the external repository: `BoringHappy/CodeMatePlugin`
 
 **Available Plugins:**
 

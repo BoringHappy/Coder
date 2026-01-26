@@ -21,6 +21,7 @@ CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
 BUILD_LOCAL=false
 DOCKERFILE_PATH="Dockerfile"
 IMAGE_TAG=""
+CUSTOM_COMMAND=""
 
 # Function to print colored messages
 print_info() {
@@ -358,22 +359,33 @@ run_codemate() {
         env_file_flag="--env-file $current_dir/.env"
     fi
 
-    docker run --rm --name "$CONTAINER_NAME" \
-        --pull always \
-        $NETWORK_FLAG \
-        -it \
-        "${volume_mounts[@]}" \
-        $env_file_flag \
-        -e "GIT_REPO_URL=$GIT_REPO_URL" \
-        -e "BRANCH_NAME=$BRANCH_NAME" \
-        -e "PR_NUMBER=$PR_NUMBER" \
-        -e "PR_TITLE=$PR_TITLE" \
-        -e "GITHUB_TOKEN=$GITHUB_TOKEN" \
-        -e "GIT_USER_NAME=$GIT_USER_NAME" \
-        -e "GIT_USER_EMAIL=$GIT_USER_EMAIL" \
-        -e "TMPDIR=/home/agent/.claude/tmp" \
-        -w "/home/agent/$REPO_NAME" \
+    # Build docker run command with optional custom command
+    local docker_cmd=(
+        docker run --rm --name "$CONTAINER_NAME"
+        --pull always
+        $NETWORK_FLAG
+        -it
+        "${volume_mounts[@]}"
+        $env_file_flag
+        -e "GIT_REPO_URL=$GIT_REPO_URL"
+        -e "BRANCH_NAME=$BRANCH_NAME"
+        -e "PR_NUMBER=$PR_NUMBER"
+        -e "PR_TITLE=$PR_TITLE"
+        -e "GITHUB_TOKEN=$GITHUB_TOKEN"
+        -e "GIT_USER_NAME=$GIT_USER_NAME"
+        -e "GIT_USER_EMAIL=$GIT_USER_EMAIL"
+        -e "TMPDIR=/home/agent/.claude/tmp"
+        -w "/home/agent/$REPO_NAME"
         "$CODEMATE_IMAGE"
+    )
+
+    # Add custom command if specified
+    if [ -n "$CUSTOM_COMMAND" ]; then
+        docker_cmd+=("$CUSTOM_COMMAND")
+        print_info "Running custom command: $CUSTOM_COMMAND"
+    fi
+
+    "${docker_cmd[@]}"
 }
 
 # Function to show usage
@@ -397,6 +409,7 @@ Options:
   -f, --dockerfile PATH  Path to Dockerfile (default: Dockerfile, requires --build)
   --tag TAG            Image tag for local build (default: codemate:local)
                        Note: Only works with --build. To use a pre-built image, use --image instead
+  --command CMD        Custom command to run in container (e.g., "zsh" to enter shell directly)
   --help               Show this help message
 
 Environment Variables:
@@ -437,6 +450,12 @@ Examples:
 
   # Build with custom Dockerfile path and tag
   $0 --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+
+  # Enter zsh shell directly without starting Claude
+  $0 --branch feature/xyz --command zsh
+
+  # Run a custom command in the container
+  $0 --branch feature/xyz --command "bash -c 'ls -la && pwd'"
 
 EOF
 }
@@ -491,6 +510,10 @@ main() {
                 ;;
             --tag)
                 IMAGE_TAG="$2"
+                shift 2
+                ;;
+            --command)
+                CUSTOM_COMMAND="$2"
                 shift 2
                 ;;
             --help)

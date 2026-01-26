@@ -54,9 +54,11 @@ class GitHubPRMonitor:
         all_comments = review_comments + issue_comments
 
         for comment in all_comments:
+            # Ensure both datetimes are timezone-naive for comparison
+            comment_time = comment.created_at.replace(tzinfo=None) if comment.created_at.tzinfo else comment.created_at
             if (
                 comment.id not in self.processed_comment_ids
-                and comment.created_at.replace(tzinfo=None) > self.last_check_time
+                and comment_time > self.last_check_time
             ):
                 logger.info(f"New comment detected: {comment.id}")
                 # Update last_check_time before returning to avoid re-processing
@@ -134,8 +136,6 @@ This skill will automatically read all comments, make necessary changes, and rep
 
     async def run(self) -> None:
         """Main loop - continuously monitor for new comments and handle them."""
-        logger.info(f"Starting agent loop (checking every {self.check_interval}s)")
-
         async with ClaudeSDKClient(self.options) as client:
             # Send initial query if provided
             if self.initial_query:
@@ -145,6 +145,7 @@ This skill will automatically read all comments, make necessary changes, and rep
 
             # Main monitoring loop
             while True:
+                logger.info(f"Checking for new comments (interval: {self.check_interval}s)")
                 if self.pr_monitor.has_new_comments():
                     logger.info("New comments detected, asking Claude to fix them")
 

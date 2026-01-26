@@ -148,7 +148,7 @@ This skill will automatically read all comments, make necessary changes, and rep
 
                     # Send query to Claude - maintains conversation context
                     await client.query(
-                        "Please use the /pr:fix-comments skill to address all of them."
+                        "New comments detected. Please use the /pr:fix-comments skill to address all of them."
                     )
                     await self._process_response(client)
 

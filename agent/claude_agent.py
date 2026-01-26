@@ -3,7 +3,7 @@
 Claude Code Agent - Python-controlled loop for automated PR comment handling.
 
 This agent monitors GitHub PR comments and uses Claude Code to automatically
-address review feedback.
+address review feedback using a continuous conversation session.
 """
 
 import os
@@ -16,7 +16,7 @@ from datetime import datetime
 from loguru import logger
 from github import Github
 from dotenv import load_dotenv
-from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
 
 # Load environment variables
 load_dotenv()
@@ -70,7 +70,7 @@ class GitHubPRMonitor:
 
 
 class ClaudeCodeAgent:
-    """Main agent that uses Claude Code to fix PR comments."""
+    """Main agent that uses Claude Code to fix PR comments with continuous conversation."""
 
     def __init__(
         self,
@@ -97,6 +97,7 @@ class ClaudeCodeAgent:
             setting_sources=["project"]  # Load CLAUDE.md and project settings
         )
 
+        self.client = None
         logger.info("ClaudeCodeAgent initialized")
 
     def _load_system_prompt(self, path: Optional[str]) -> str:
@@ -119,12 +120,19 @@ This skill will automatically read all comments, make necessary changes, and rep
         logger.info("New comments detected, asking Claude to fix them")
 
         try:
-            # Use the query() function to send a prompt to Claude
-            # Claude will use the /pr:fix-comments skill automatically
-            async for message in query(
-                prompt="There are new PR review comments. Please use the /pr:fix-comments skill to address all of them.",
-                options=self.options
-            ):
+            # Create client if not exists
+            if self.client is None:
+                self.client = ClaudeSDKClient(options=self.options)
+                await self.client.connect()
+                logger.info("Connected to Claude SDK")
+
+            # Send query to Claude - maintains conversation context
+            await self.client.query(
+                "There are new PR review comments. Please use the /pr:fix-comments skill to address all of them."
+            )
+
+            # Process response
+            async for message in self.client.receive_response():
                 logger.debug(f"Received message: {type(message).__name__}")
 
             # Mark comments as processed
@@ -149,6 +157,10 @@ This skill will automatically read all comments, make necessary changes, and rep
 
         except KeyboardInterrupt:
             logger.info("Agent stopped by user")
+        finally:
+            if self.client:
+                await self.client.disconnect()
+                logger.info("Disconnected from Claude SDK")
 
 
 def main():

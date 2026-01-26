@@ -129,6 +129,8 @@ This skill will automatically read all comments, make necessary changes, and rep
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         logger.debug(f"Claude: {block.text[:100]}...")
+            else:
+                logger.debug(f"Received message: {type(message).__name__}")
 
     async def run(self) -> None:
         """Main loop - continuously monitor for new comments and handle them."""

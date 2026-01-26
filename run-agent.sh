@@ -272,11 +272,6 @@ main() {
     print_info "Starting agent..."
     echo ""
 
-    export ANTHROPIC_API_KEY
-    export GITHUB_TOKEN
-    export GITHUB_REPOSITORY
-    export PR_NUMBER
-
     uv run agent "${cmd_args[@]}"
 }
 

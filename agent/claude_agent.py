@@ -16,6 +16,7 @@ from datetime import datetime
 from loguru import logger
 from github import Github
 from dotenv import load_dotenv
+from tenacity import retry, stop_after_attempt, wait_exponential
 from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
 
 # Load environment variables
@@ -35,38 +36,33 @@ class GitHubPRMonitor:
 
         logger.info(f"Monitoring PR #{pr_number} in {repo_name}")
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def has_new_comments(self) -> bool:
         """Check if there are new comments since last check."""
-        try:
-            # Get review comments
-            review_comments = list(self.pr.get_review_comments())
-            issue_comments = list(self.pr.get_issue_comments())
+        # Get review comments
+        review_comments = list(self.pr.get_review_comments())
+        issue_comments = list(self.pr.get_issue_comments())
 
-            all_comments = review_comments + issue_comments
+        all_comments = review_comments + issue_comments
 
-            for comment in all_comments:
-                if (comment.id not in self.processed_comment_ids and
-                    comment.created_at.replace(tzinfo=None) > self.last_check_time):
-                    logger.info(f"New comment detected: {comment.id}")
-                    return True
+        for comment in all_comments:
+            if (comment.id not in self.processed_comment_ids and
+                comment.created_at.replace(tzinfo=None) > self.last_check_time):
+                logger.info(f"New comment detected: {comment.id}")
+                return True
 
-            return False
-        except Exception as e:
-            logger.error(f"Failed to check for new comments: {e}")
-            return False
+        return False
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def mark_comments_processed(self):
         """Mark all current comments as processed."""
-        try:
-            review_comments = list(self.pr.get_review_comments())
-            issue_comments = list(self.pr.get_issue_comments())
+        review_comments = list(self.pr.get_review_comments())
+        issue_comments = list(self.pr.get_issue_comments())
 
-            for comment in review_comments + issue_comments:
-                self.processed_comment_ids.add(comment.id)
+        for comment in review_comments + issue_comments:
+            self.processed_comment_ids.add(comment.id)
 
-            self.last_check_time = datetime.now()
-        except Exception as e:
-            logger.error(f"Failed to mark comments as processed: {e}")
+        self.last_check_time = datetime.now()
 
 
 class ClaudeCodeAgent:
@@ -94,7 +90,7 @@ class ClaudeCodeAgent:
                 "append": system_prompt
             },
             permission_mode='bypassPermissions',
-            setting_sources=["project"]  # Load CLAUDE.md and project settings
+            setting_sources=["user", "project", "local"]  # Load all settings
         )
 
         self.client = None
@@ -119,48 +115,32 @@ This skill will automatically read all comments, make necessary changes, and rep
 
         logger.info("New comments detected, asking Claude to fix them")
 
-        try:
-            # Create client if not exists
-            if self.client is None:
-                self.client = ClaudeSDKClient(options=self.options)
-                await self.client.connect()
-                logger.info("Connected to Claude SDK")
+        # Create client if not exists
+        if self.client is None:
+            self.client = ClaudeSDKClient(options=self.options)
+            await self.client.connect()
+            logger.info("Connected to Claude SDK")
 
-            # Send query to Claude - maintains conversation context
-            await self.client.query(
-                "There are new PR review comments. Please use the /pr:fix-comments skill to address all of them."
-            )
+        # Send query to Claude - maintains conversation context
+        await self.client.query(
+            "There are new PR review comments. Please use the /pr:fix-comments skill to address all of them."
+        )
 
-            # Process response
-            async for message in self.client.receive_response():
-                logger.debug(f"Received message: {type(message).__name__}")
+        # Process response
+        async for message in self.client.receive_response():
+            logger.debug(f"Received message: {type(message).__name__}")
 
-            # Mark comments as processed
-            self.pr_monitor.mark_comments_processed()
-            logger.info("Comments processed successfully")
-
-        except Exception as e:
-            logger.error(f"Failed to handle comments: {e}")
+        # Mark comments as processed
+        self.pr_monitor.mark_comments_processed()
+        logger.info("Comments processed successfully")
 
     async def run(self) -> None:
         """Main loop - continuously monitor for new comments."""
         logger.info(f"Starting agent loop (checking every {self.check_interval}s)")
 
-        try:
-            while True:
-                try:
-                    await self.handle_new_comments()
-                except Exception as e:
-                    logger.error(f"Error in main loop: {e}")
-
-                await asyncio.sleep(self.check_interval)
-
-        except KeyboardInterrupt:
-            logger.info("Agent stopped by user")
-        finally:
-            if self.client:
-                await self.client.disconnect()
-                logger.info("Disconnected from Claude SDK")
+        while True:
+            await self.handle_new_comments()
+            await asyncio.sleep(self.check_interval)
 
 
 def main():

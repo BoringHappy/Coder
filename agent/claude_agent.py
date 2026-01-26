@@ -9,7 +9,7 @@ address review feedback using a continuous conversation session.
 import asyncio
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from claude_agent_sdk import (
@@ -35,7 +35,7 @@ class GitHubPRMonitor:
         self.repo = self.github.get_repo(repo_name)
         self.pr = self.repo.get_pull(pr_number)
         self.pr_number = pr_number
-        self.last_check_time = datetime.now()
+        self.last_check_time = datetime.now(UTC) - timedelta(hours=1)
         self.processed_comment_ids = set()
 
         logger.info(f"Monitoring PR #{pr_number} in {repo_name}")
@@ -54,15 +54,12 @@ class GitHubPRMonitor:
         all_comments = review_comments + issue_comments
 
         for comment in all_comments:
-            # Ensure both datetimes are timezone-naive for comparison
-            comment_time = comment.created_at.replace(tzinfo=None) if comment.created_at.tzinfo else comment.created_at
-            if (
-                comment.id not in self.processed_comment_ids
-                and comment_time > self.last_check_time
-            ):
+            # Ensure both datetimes are timezone-aware (UTC) for comparison
+            comment_time = comment.created_at
+            if comment.id not in self.processed_comment_ids and comment_time > self.last_check_time:
                 logger.info(f"New comment detected: {comment.id}")
                 # Update last_check_time before returning to avoid re-processing
-                self.last_check_time = datetime.now()
+                self.last_check_time = datetime.now(UTC)
                 return True
 
         return False
@@ -130,7 +127,7 @@ This skill will automatically read all comments, make necessary changes, and rep
             if isinstance(message, AssistantMessage):
                 for block in message.content:
                     if isinstance(block, TextBlock):
-                        logger.debug(f"Claude: {block.text[:100]}...")
+                        logger.debug(f"Claude: {block.text[:1000]}...")
             else:
                 logger.debug(f"Received message: {type(message).__name__} - {message}")
 

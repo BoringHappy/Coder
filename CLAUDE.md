@@ -53,7 +53,6 @@ GITHUB_TOKEN=xxx GITHUB_REPOSITORY=owner/repo PR_NUMBER=123 uv run agent
 ```
 
 **Environment Variables**:
-- `ANTHROPIC_API_KEY` - Anthropic API key (required by SDK)
 - `GITHUB_TOKEN` - GitHub personal access token (required)
 - `GITHUB_REPOSITORY` - Repository in owner/repo format (required)
 - `PR_NUMBER` - Pull request number (required)

@@ -16,7 +16,7 @@ from datetime import datetime
 from loguru import logger
 from github import Github
 from dotenv import load_dotenv
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
 
 # Load environment variables
@@ -36,7 +36,7 @@ class GitHubPRMonitor:
 
         logger.info(f"Monitoring PR #{pr_number} in {repo_name}")
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True)
     def has_new_comments(self) -> bool:
         """Check if there are new comments since last check."""
         # Get review comments
@@ -49,11 +49,13 @@ class GitHubPRMonitor:
             if (comment.id not in self.processed_comment_ids and
                 comment.created_at.replace(tzinfo=None) > self.last_check_time):
                 logger.info(f"New comment detected: {comment.id}")
+                # Update last_check_time before returning to avoid re-processing
+                self.last_check_time = datetime.now()
                 return True
 
         return False
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True)
     def mark_comments_processed(self):
         """Mark all current comments as processed."""
         review_comments = list(self.pr.get_review_comments())
@@ -61,8 +63,6 @@ class GitHubPRMonitor:
 
         for comment in review_comments + issue_comments:
             self.processed_comment_ids.add(comment.id)
-
-        self.last_check_time = datetime.now()
 
 
 class ClaudeCodeAgent:

@@ -6,18 +6,17 @@ This agent monitors GitHub PR comments and uses Claude Code to automatically
 address review feedback using a continuous conversation session.
 """
 
+import asyncio
 import os
 import sys
-import asyncio
-from pathlib import Path
-from typing import Optional
 from datetime import datetime
+from pathlib import Path
 
-from loguru import logger
-from github import Github
+from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
 from dotenv import load_dotenv
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+from github import Github
+from loguru import logger
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Load environment variables
 load_dotenv()
@@ -36,7 +35,11 @@ class GitHubPRMonitor:
 
         logger.info(f"Monitoring PR #{pr_number} in {repo_name}")
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True)
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        reraise=True,
+    )
     def has_new_comments(self) -> bool:
         """Check if there are new comments since last check."""
         # Get review comments
@@ -46,8 +49,10 @@ class GitHubPRMonitor:
         all_comments = review_comments + issue_comments
 
         for comment in all_comments:
-            if (comment.id not in self.processed_comment_ids and
-                comment.created_at.replace(tzinfo=None) > self.last_check_time):
+            if (
+                comment.id not in self.processed_comment_ids
+                and comment.created_at.replace(tzinfo=None) > self.last_check_time
+            ):
                 logger.info(f"New comment detected: {comment.id}")
                 # Update last_check_time before returning to avoid re-processing
                 self.last_check_time = datetime.now()
@@ -55,7 +60,11 @@ class GitHubPRMonitor:
 
         return False
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10), reraise=True)
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        reraise=True,
+    )
     def mark_comments_processed(self):
         """Mark all current comments as processed."""
         review_comments = list(self.pr.get_review_comments())
@@ -74,7 +83,7 @@ class ClaudeCodeAgent:
         repo_name: str,
         pr_number: int,
         check_interval: int = 60,
-        system_prompt_path: Optional[str] = None
+        system_prompt_path: str | None = None,
     ):
         self.pr_monitor = GitHubPRMonitor(github_token, repo_name, pr_number)
         self.check_interval = check_interval
@@ -87,16 +96,16 @@ class ClaudeCodeAgent:
             system_prompt={
                 "type": "preset",
                 "preset": "claude_code",
-                "append": system_prompt
+                "append": system_prompt,
             },
-            permission_mode='bypassPermissions',
-            setting_sources=["user", "project", "local"]  # Load all settings
+            permission_mode="bypassPermissions",
+            setting_sources=["user", "project", "local"],  # Load all settings
         )
 
         self.client = None
         logger.info("ClaudeCodeAgent initialized")
 
-    def _load_system_prompt(self, path: Optional[str]) -> str:
+    def _load_system_prompt(self, path: str | None) -> str:
         """Load additional system prompt from file."""
         if path and Path(path).exists():
             return Path(path).read_text()
@@ -123,7 +132,8 @@ This skill will automatically read all comments, make necessary changes, and rep
 
         # Send query to Claude - maintains conversation context
         await self.client.query(
-            "There are new PR review comments. Please use the /pr:fix-comments skill to address all of them."
+            "There are new PR review comments. "
+            "Please use the /pr:fix-comments skill to address all of them."
         )
 
         # Process response
@@ -148,34 +158,29 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='Claude Code Agent - Automated PR comment handling'
+        description="Claude Code Agent - Automated PR comment handling"
     )
     parser.add_argument(
-        '--github-token',
-        default=os.environ.get('GITHUB_TOKEN'),
-        help='GitHub token (default: GITHUB_TOKEN env var)'
+        "--github-token",
+        default=os.environ.get("GITHUB_TOKEN"),
+        help="GitHub token (default: GITHUB_TOKEN env var)",
     )
     parser.add_argument(
-        '--repo',
-        default=os.environ.get('GITHUB_REPOSITORY'),
-        help='GitHub repository (owner/repo format)'
+        "--repo",
+        default=os.environ.get("GITHUB_REPOSITORY"),
+        help="GitHub repository (owner/repo format)",
     )
+    parser.add_argument("--pr", type=int, default=os.environ.get("PR_NUMBER"), help="PR number")
     parser.add_argument(
-        '--pr',
+        "--interval",
         type=int,
-        default=os.environ.get('PR_NUMBER'),
-        help='PR number'
+        default=int(os.environ.get("CHECK_INTERVAL", "60")),
+        help="Check interval in seconds (default: 60)",
     )
     parser.add_argument(
-        '--interval',
-        type=int,
-        default=int(os.environ.get('CHECK_INTERVAL', '60')),
-        help='Check interval in seconds (default: 60)'
-    )
-    parser.add_argument(
-        '--system-prompt',
-        default=os.environ.get('SYSTEM_PROMPT_PATH'),
-        help='Path to additional system prompt file'
+        "--system-prompt",
+        default=os.environ.get("SYSTEM_PROMPT_PATH"),
+        help="Path to additional system prompt file",
     )
 
     args = parser.parse_args()
@@ -194,7 +199,7 @@ def main():
         sys.exit(1)
 
     # Verify ANTHROPIC_API_KEY is set (required by SDK)
-    if not os.environ.get('ANTHROPIC_API_KEY'):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
         logger.error("ANTHROPIC_API_KEY not set. The Claude Agent SDK requires this.")
         sys.exit(1)
 
@@ -207,11 +212,11 @@ def main():
         repo_name=args.repo,
         pr_number=args.pr,
         check_interval=args.interval,
-        system_prompt_path=args.system_prompt
+        system_prompt_path=args.system_prompt,
     )
 
     asyncio.run(agent.run())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

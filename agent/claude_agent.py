@@ -2,8 +2,8 @@
 """
 Claude Code Agent - Python-controlled loop for automated PR comment handling.
 
-This agent monitors GitHub PR comments and uses Claude Code's /pr:fix-comments
-skill to automatically address review feedback.
+This agent monitors GitHub PR comments and uses Claude Code to automatically
+address review feedback.
 """
 
 import os
@@ -16,7 +16,7 @@ from datetime import datetime
 from loguru import logger
 from github import Github
 from dotenv import load_dotenv
-from claude_agent_sdk import ClaudeSDKClient, ClaudeAgentOptions
+from claude_agent_sdk import query, ClaudeAgentOptions
 
 # Load environment variables
 load_dotenv()
@@ -70,7 +70,7 @@ class GitHubPRMonitor:
 
 
 class ClaudeCodeAgent:
-    """Main agent that uses Claude Code's /pr:fix-comments skill."""
+    """Main agent that uses Claude Code to fix PR comments."""
 
     def __init__(
         self,
@@ -88,45 +88,43 @@ class ClaudeCodeAgent:
 
         # Configure Claude Agent SDK options
         self.options = ClaudeAgentOptions(
-            tools=['*'],  # Enable all tools including skills
+            system_prompt={
+                "type": "preset",
+                "preset": "claude_code",
+                "append": system_prompt
+            },
             permission_mode='bypassPermissions',
-            system_prompt=system_prompt
+            setting_sources=["project"]  # Load CLAUDE.md and project settings
         )
 
-        self.client = None
         logger.info("ClaudeCodeAgent initialized")
 
     def _load_system_prompt(self, path: Optional[str]) -> str:
-        """Load system prompt from file or use default."""
+        """Load additional system prompt from file."""
         if path and Path(path).exists():
             return Path(path).read_text()
 
-        # Default system prompt path
-        default_path = Path("/usr/local/bin/setup/prompt/system_prompt.txt")
-        if default_path.exists():
-            return default_path.read_text()
-
-        return "You are a helpful AI assistant specialized in managing GitHub Pull Request workflows."
+        # Default additional instructions
+        return """
+When you detect new PR comments, use the /pr:fix-comments skill to address them.
+This skill will automatically read all comments, make necessary changes, and reply to reviewers.
+"""
 
     async def handle_new_comments(self) -> None:
-        """Check for new comments and use /pr:fix-comments skill to address them."""
+        """Check for new comments and ask Claude to fix them."""
         if not self.pr_monitor.has_new_comments():
             logger.debug("No new comments found")
             return
 
-        logger.info("New comments detected, invoking /pr:fix-comments skill")
+        logger.info("New comments detected, asking Claude to fix them")
 
         try:
-            # Create client if not exists
-            if self.client is None:
-                self.client = ClaudeSDKClient(options=self.options)
-                await self.client.connect()
-
-            # Use the /pr:fix-comments skill to handle all comments
-            await self.client.query("/pr:fix-comments")
-
-            # Process response
-            async for message in self.client.receive_response():
+            # Use the query() function to send a prompt to Claude
+            # Claude will use the /pr:fix-comments skill automatically
+            async for message in query(
+                prompt="There are new PR review comments. Please use the /pr:fix-comments skill to address all of them.",
+                options=self.options
+            ):
                 logger.debug(f"Received message: {type(message).__name__}")
 
             # Mark comments as processed
@@ -151,9 +149,6 @@ class ClaudeCodeAgent:
 
         except KeyboardInterrupt:
             logger.info("Agent stopped by user")
-        finally:
-            if self.client:
-                await self.client.disconnect()
 
 
 def main():
@@ -188,7 +183,7 @@ def main():
     parser.add_argument(
         '--system-prompt',
         default=os.environ.get('SYSTEM_PROMPT_PATH'),
-        help='Path to system prompt file'
+        help='Path to additional system prompt file'
     )
 
     args = parser.parse_args()
@@ -204,6 +199,11 @@ def main():
 
     if not args.pr:
         logger.error("PR_NUMBER not set. Use --pr or set environment variable.")
+        sys.exit(1)
+
+    # Verify ANTHROPIC_API_KEY is set (required by SDK)
+    if not os.environ.get('ANTHROPIC_API_KEY'):
+        logger.error("ANTHROPIC_API_KEY not set. The Claude Agent SDK requires this.")
         sys.exit(1)
 
     logger.info(f"Repository: {args.repo}")

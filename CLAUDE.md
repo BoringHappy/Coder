@@ -53,13 +53,15 @@ GITHUB_TOKEN=xxx GITHUB_REPOSITORY=owner/repo PR_NUMBER=123 uv run agent
 ```
 
 **Environment Variables**:
+- `ANTHROPIC_API_KEY` - Anthropic API key (required by SDK)
 - `GITHUB_TOKEN` - GitHub personal access token (required)
 - `GITHUB_REPOSITORY` - Repository in owner/repo format (required)
 - `PR_NUMBER` - Pull request number (required)
 - `CHECK_INTERVAL` - Check interval in seconds (default: 60)
-- `SYSTEM_PROMPT_PATH` - Path to custom system prompt (optional)
+- `SYSTEM_PROMPT_PATH` - Path to additional system prompt (optional)
 
-The agent continuously monitors for new PR comments and automatically invokes Claude Code's `/pr:fix-comments` skill to address them.
+The agent continuously monitors for new PR comments and sends a prompt to Claude
+asking it to use the `/pr:fix-comments` skill to address them.
 
 ### Container Startup Flow
 

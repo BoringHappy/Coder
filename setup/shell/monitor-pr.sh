@@ -28,17 +28,6 @@ if [ -z "$REPO_DIR" ] && [ -n "$GIT_REPO_URL" ]; then
     REPO_NAME=$(basename "$GIT_REPO_URL" .git)
     REPO_DIR="/home/agent/$REPO_NAME"
 fi
-
-# Fallback: auto-detect repo directory by finding a git repository in /home/agent
-if [ -z "$REPO_DIR" ] || [ ! -d "$REPO_DIR" ]; then
-    for dir in /home/agent/*/; do
-        if [ -d "${dir}.git" ]; then
-            REPO_DIR="${dir%/}"
-            break
-        fi
-    done
-fi
-
 cd "${REPO_DIR:-/home/agent/repo}" || { echo "$(date): Failed to cd to repo directory"; exit 1; }
 
 # Function to check if a tmux session exists

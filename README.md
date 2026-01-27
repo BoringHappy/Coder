@@ -17,6 +17,7 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 - zsh with Oh My Zsh
 - Persistent Claude configuration
 - Built-in Claude Code skills for PR workflow automation
+- Slack notifications when Claude stops (via `SLACK_WEBHOOK`)
 
 ## Quick Start
 

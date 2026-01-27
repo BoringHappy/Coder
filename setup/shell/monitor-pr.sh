@@ -1,29 +1,15 @@
 #!/bin/bash
 # PR Monitor Script - Standalone script for monitoring PR comments and git changes
-# Can be run via cron or as a one-shot check
+# Designed to be run via cron (no loop, single execution)
 
 set -e
 
 # Configuration (can be overridden via environment variables)
 CLAUDE_SESSION="${CLAUDE_SESSION:-claude-code}"
-HEARTBEAT_FILE="${HEARTBEAT_FILE:-/tmp/codemate-heartbeat}"
-IDLE_TIMEOUT="${IDLE_TIMEOUT:-3600}"
 STATE_FILE="${STATE_FILE:-/tmp/pr-monitor-state}"
-LOG_FILE="${LOG_FILE:-/tmp/pr-monitor.log}"
 
 # Ensure we're in the repo directory
 cd "${REPO_DIR:-/home/user/repo}" 2>/dev/null || cd /home/user/repo
-
-# Logging function
-log() {
-    echo "$(date): $*" >> "$LOG_FILE"
-}
-
-# Function to update heartbeat file
-update_heartbeat() {
-    local status="${1:-alive}"
-    echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') $status" > "$HEARTBEAT_FILE"
-}
 
 # Function to check if a tmux session exists
 session_exists() {
@@ -50,7 +36,6 @@ load_state() {
         LAST_CHECK_TIME=""
         GIT_CHANGES_NOTIFIED="false"
         CONSECUTIVE_FAILURES=0
-        LAST_ACTIVITY_TIME=$(date +%s)
     fi
 }
 
@@ -60,37 +45,7 @@ save_state() {
 LAST_CHECK_TIME="$LAST_CHECK_TIME"
 GIT_CHANGES_NOTIFIED="$GIT_CHANGES_NOTIFIED"
 CONSECUTIVE_FAILURES=$CONSECUTIVE_FAILURES
-LAST_ACTIVITY_TIME=$LAST_ACTIVITY_TIME
 EOF
-}
-
-# Check keep-alive status
-check_keep_alive() {
-    local current_time=$(date +%s)
-    local has_activity=false
-
-    # Check if Claude session is busy
-    if ! is_session_stopped 2>/dev/null; then
-        has_activity=true
-    fi
-
-    # Check for unstaged git changes
-    if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-        has_activity=true
-    fi
-
-    if [ "$has_activity" = true ]; then
-        LAST_ACTIVITY_TIME=$current_time
-        return 0
-    fi
-
-    local idle_time=$((current_time - LAST_ACTIVITY_TIME))
-    if [ "$idle_time" -gt "$IDLE_TIMEOUT" ]; then
-        log "Idle timeout reached ($idle_time seconds)"
-        return 1
-    fi
-
-    return 0
 }
 
 # Get PR number with retry
@@ -102,7 +57,6 @@ get_pr_number() {
             echo "$pr_number"
             return 0
         fi
-        log "Attempt $attempt to get PR number failed, retrying..."
         sleep 2
     done
     return 1
@@ -144,56 +98,42 @@ check_pr_comments() {
             return 0
         fi
 
-        log "API call attempt $attempt failed, retrying..."
         sleep $((attempt * 2))
     done
 
     CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
-    log "[PR] API call failed (consecutive failures: $CONSECUTIVE_FAILURES)"
     return 1
 }
 
-# Main monitoring logic (single run)
+# Main logic (single run)
 main() {
-    log "=== PR Monitor check started ==="
+    echo "$(date): PR Monitor check started"
 
-    # Load previous state
     load_state
-
-    # Update heartbeat
-    update_heartbeat "alive"
-
-    # Check keep-alive
-    if ! check_keep_alive; then
-        update_heartbeat "idle-timeout"
-    fi
 
     # Check if Claude session is stopped (only act when stopped)
     if ! is_session_stopped; then
-        log "[Session] Claude is busy, skipping check"
+        echo "$(date): Claude is busy, skipping"
         save_state
         exit 0
     fi
 
     # Get PR number
     pr_number=$(get_pr_number) || {
-        log "No PR found, skipping PR comment check"
-        update_heartbeat "no-pr"
+        echo "$(date): No PR found"
         save_state
         exit 0
     }
 
-    log "Checking PR #$pr_number"
+    echo "$(date): Checking PR #$pr_number"
 
     # Check for unstaged git changes
     git_changes=$(git status --porcelain 2>/dev/null || echo "")
-    log "[Git] changes=$([ -n "$git_changes" ] && echo 'yes' || echo 'no'), notified=$GIT_CHANGES_NOTIFIED"
 
     if [ -n "$git_changes" ]; then
         if [ "$GIT_CHANGES_NOTIFIED" = "false" ]; then
-            log "Unstaged changes detected!"
+            echo "$(date): Unstaged changes detected"
             if session_exists "$CLAUDE_SESSION"; then
-                log "Sending 'commit changes' to Claude Code session"
                 tmux send-keys -t "$CLAUDE_SESSION" "Please use /git:commit skill to submit changes to github"
                 tmux send-keys -t "$CLAUDE_SESSION" C-m
                 GIT_CHANGES_NOTIFIED="true"
@@ -203,25 +143,24 @@ main() {
         GIT_CHANGES_NOTIFIED="false"
     fi
 
-    # Check for unsolved PR comments (skip if too many failures)
+    # Skip API call if too many failures
     if [ "$CONSECUTIVE_FAILURES" -ge 5 ]; then
-        log "Too many consecutive failures, skipping API call"
-        update_heartbeat "api-errors"
+        echo "$(date): Too many failures, skipping API call"
         save_state
         exit 0
     fi
 
     unsolved_count=$(check_pr_comments "$pr_number") || {
+        echo "$(date): API call failed"
         save_state
         exit 0
     }
 
-    log "[PR] unsolved_count=$unsolved_count"
+    echo "$(date): unsolved_count=$unsolved_count"
 
     if [ "$unsolved_count" -gt 0 ]; then
-        log "Unsolved PR comments detected! ($unsolved_count)"
+        echo "$(date): Unsolved PR comments detected ($unsolved_count)"
         if session_exists "$CLAUDE_SESSION"; then
-            log "Sending 'fix comments' to Claude Code session"
             tmux send-keys -t "$CLAUDE_SESSION" "Please Use /fix-comments skill to address comments"
             tmux send-keys -t "$CLAUDE_SESSION" C-m
         fi
@@ -229,8 +168,7 @@ main() {
     fi
 
     save_state
-    log "=== PR Monitor check completed ==="
+    echo "$(date): PR Monitor check completed"
 }
 
-# Run main function
 main "$@"

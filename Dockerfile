@@ -30,6 +30,7 @@ RUN set -euxo pipefail \
     && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -yy --no-install-recommends \
         bc \
+        cron \
         dnsutils \
         gh \
         git \
@@ -82,6 +83,11 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Copy setup scripts
 COPY --chmod=755 setup /usr/local/bin/setup
+
+# Setup cron job for PR monitoring (runs every minute)
+RUN echo "* * * * * agent REPO_DIR=/home/user/repo /usr/local/bin/setup/shell/monitor-pr.sh >> /tmp/pr-monitor.log 2>&1" > /etc/cron.d/pr-monitor \
+    && chmod 0644 /etc/cron.d/pr-monitor \
+    && crontab -u agent /etc/cron.d/pr-monitor
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["/usr/local/bin/setup/run.sh"]

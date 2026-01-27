@@ -2,6 +2,15 @@
 # PR Monitor Script - Standalone script for monitoring PR comments and git changes
 # Designed to be run via cron (no loop, single execution)
 
+# Source environment variables exported during container startup
+# This is necessary because cron doesn't inherit Docker runtime environment variables
+ENV_FILE="/home/agent/.cron-env"
+if [ -f "$ENV_FILE" ]; then
+    set -a
+    source "$ENV_FILE"
+    set +a
+fi
+
 # Set PATH and HOME for cron environment
 export PATH="/usr/local/bin:/usr/bin:/bin:/home/agent/.local/bin"
 export HOME="${HOME:-/home/agent}"

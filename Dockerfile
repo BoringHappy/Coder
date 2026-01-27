@@ -81,7 +81,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 # Install Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Copy setup scripts (as root for proper permissions)
+# Copy setup scripts as root (755 allows agent user to read/execute)
 USER root
 COPY --chmod=755 setup /usr/local/bin/setup
 

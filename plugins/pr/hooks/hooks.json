@@ -29,7 +29,7 @@
           },
           {
             "type": "command",
-            "command": "~/.claude/plugins/pr/hooks/send_to_slack.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/send_to_slack.sh"
           }
         ]
       }

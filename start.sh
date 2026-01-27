@@ -93,8 +93,6 @@ create_settings_json() {
     cat > "$settings_file" << 'EOF'
 {
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "<fill your token>",
-    "ANTHROPIC_BASE_URL": "<fill your base_url>",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
   "attribution": {

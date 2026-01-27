@@ -57,11 +57,31 @@ ask_yes_no() {
 # Function to create .env file
 create_env_file() {
     local env_file="$1"
-    cat > "$env_file" << 'EOF'
+    local anthropic_token=""
+    local anthropic_url=""
+
+    echo ""
+    print_info "Anthropic API Configuration"
+    echo ""
+
+    # Prompt for ANTHROPIC_AUTH_TOKEN
+    printf "${YELLOW}?${NC} Enter your Anthropic API token (press Enter to skip): "
+    read -r anthropic_token
+
+    # Prompt for ANTHROPIC_BASE_URL
+    printf "${YELLOW}?${NC} Enter your Anthropic base URL (press Enter to skip): "
+    read -r anthropic_url
+
+    # Create .env file with user inputs
+    cat > "$env_file" << EOF
 # CodeMate Environment Configuration
 
 # Optional: Default repository URL
 # GIT_REPO_URL=
+
+# Anthropic API Configuration
+$(if [ -n "$anthropic_token" ]; then echo "ANTHROPIC_AUTH_TOKEN=$anthropic_token"; else echo "# ANTHROPIC_AUTH_TOKEN="; fi)
+$(if [ -n "$anthropic_url" ]; then echo "ANTHROPIC_BASE_URL=$anthropic_url"; else echo "# ANTHROPIC_BASE_URL="; fi)
 EOF
     print_success "Created $env_file"
 }
@@ -186,8 +206,9 @@ setup_codemate_files() {
     print_success "Setup complete!"
     echo ""
     print_info "Next steps:"
-    echo "  1. Edit settings.json to add necessary config"
-    echo "  2. Run: ./start.sh --repo <repo-url> --branch <branch-name>"
+    echo "  1. Edit .env to add ANTHROPIC_AUTH_TOKEN and ANTHROPIC_BASE_URL (if not set during setup)"
+    echo "  2. Edit settings.json to add necessary config"
+    echo "  3. Run: ./start.sh --repo <repo-url> --branch <branch-name>"
     echo ""
     echo "Example:"
     echo "  ./start.sh --repo https://github.com/user/repo.git --branch feature/my-feature"

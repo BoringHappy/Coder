@@ -26,6 +26,10 @@
           {
             "type": "command",
             "command": "echo \"$(date -u '+%Y-%m-%d %H:%M:%S'), Stop\" >> $HOME/.session_status"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/send_to_slack.sh"
           }
         ]
       }

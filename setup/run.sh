@@ -16,14 +16,19 @@ session_exists() {
     tmux has-session -t "$1" 2>/dev/null
 }
 
-# Function to get latest session status
-get_latest_status() {
+# Function to check if latest session status ends with Stop
+is_session_stopped() {
     local status_file="$HOME/.session_status"
     if [ -f "$status_file" ]; then
-        # Get the last non-empty line and extract the status (after the comma)
-        tail -n 10 "$status_file" | grep -v '^$' | tail -n 1 | cut -d',' -f2 | tr -d ' '
+        # Get the last non-empty line and check if it ends with "Stop"
+        local last_line=$(tail -n 10 "$status_file" | grep -v '^$' | tail -n 1)
+        if [[ "$last_line" =~ Stop$ ]]; then
+            return 0  # true
+        else
+            return 1  # false
+        fi
     else
-        echo "Unknown"
+        return 1  # false if file doesn't exist
     fi
 }
 
@@ -34,10 +39,9 @@ monitor_pr_comments() {
     while true; do
         sleep "$CHECK_INTERVAL"
 
-        # Check session status - only proceed if status is "Stop"
-        local current_status=$(get_latest_status)
-        if [ "$current_status" != "Stop" ]; then
-            echo "$(date): Session status is '$current_status', skipping comment check"
+        # Check session status - only proceed if last line ends with "Stop"
+        if ! is_session_stopped; then
+            echo "$(date): Session not stopped, skipping comment check"
             continue
         fi
 
@@ -86,7 +90,7 @@ sleep 2
 
 # Start PR monitor in a separate tmux session
 printf "${GREEN}Starting PR comment monitor in tmux session: $MONITOR_SESSION${RESET}\n"
-tmux new-session -d -s "$MONITOR_SESSION" "$(declare -f get_latest_status); $(declare -f monitor_pr_comments); $(declare -f session_exists); CLAUDE_SESSION='$CLAUDE_SESSION'; CHECK_INTERVAL=$CHECK_INTERVAL; monitor_pr_comments"
+tmux new-session -d -s "$MONITOR_SESSION" "$(declare -f is_session_stopped); $(declare -f monitor_pr_comments); $(declare -f session_exists); CLAUDE_SESSION='$CLAUDE_SESSION'; CHECK_INTERVAL=$CHECK_INTERVAL; monitor_pr_comments"
 
 # Display session information
 printf "${YELLOW}=== Tmux Sessions ===${RESET}\n"

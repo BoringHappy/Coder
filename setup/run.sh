@@ -37,14 +37,13 @@ monitor_pr_comments() {
     local last_comment_count=0
     local last_check_time=""
     local git_changes_notified=false
-    local repo_dir="$1"
 
     # Wait at least 1 minute before checking PR number to allow session to initialize
     echo "$(date): Waiting 60 seconds before starting monitoring..."
     sleep 60
 
     # Get PR number once at the start (it won't change during monitoring)
-    local pr_number=$(cd "$repo_dir" && gh pr view --json number -q .number 2>/dev/null || echo "")
+    local pr_number=$(gh pr view --json number -q .number 2>/dev/null || echo "")
 
     if [ -z "$pr_number" ]; then
         echo "$(date): No PR found, PR comment monitoring disabled"
@@ -52,7 +51,7 @@ monitor_pr_comments() {
         echo "$(date): Monitoring PR #$pr_number for new comments"
     fi
 
-    echo "$(date): Monitoring for unstaged git changes in $repo_dir"
+    echo "$(date): Monitoring for unstaged git changes"
 
     while true; do
         sleep "$CHECK_INTERVAL"
@@ -64,7 +63,7 @@ monitor_pr_comments() {
         fi
 
         # Check for unstaged changes
-        if git -C "$repo_dir" status --porcelain 2>/dev/null | grep -q .; then
+        if git status --porcelain 2>/dev/null | grep -q .; then
             if [ "$git_changes_notified" = false ]; then
                 echo "$(date): Unstaged changes detected!"
 
@@ -93,7 +92,7 @@ monitor_pr_comments() {
             # 1. Comments starting with "Claude Replied:"
             # 2. Comment threads where the last reply starts with "Claude Replied:"
             # 3. Comments older than last check time (for subsequent runs)
-            unsolved_count=$(cd "$repo_dir" && gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
+            unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
                 # Filter by time if not first run
                 . $time_filter |
                 # Group all comments by thread
@@ -156,8 +155,7 @@ sleep 2
 
 # Start PR monitor in a separate tmux session
 printf "${GREEN}Starting PR comment monitor in tmux session: $MONITOR_SESSION${RESET}\n"
-REPO_DIR=$(pwd)
-tmux new-session -d -s "$MONITOR_SESSION" "$(declare -f is_session_stopped); $(declare -f monitor_pr_comments); $(declare -f session_exists); CLAUDE_SESSION='$CLAUDE_SESSION'; CHECK_INTERVAL=$CHECK_INTERVAL; monitor_pr_comments '$REPO_DIR'"
+tmux new-session -d -s "$MONITOR_SESSION" "$(declare -f is_session_stopped); $(declare -f monitor_pr_comments); $(declare -f session_exists); CLAUDE_SESSION='$CLAUDE_SESSION'; CHECK_INTERVAL=$CHECK_INTERVAL; monitor_pr_comments"
 
 # Display session information
 printf "${YELLOW}=== Tmux Sessions ===${RESET}\n"

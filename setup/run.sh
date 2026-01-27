@@ -16,12 +16,30 @@ session_exists() {
     tmux has-session -t "$1" 2>/dev/null
 }
 
+# Function to get latest session status
+get_latest_status() {
+    local status_file="$HOME/.session_status"
+    if [ -f "$status_file" ]; then
+        # Get the last non-empty line and extract the status (after the comma)
+        tail -n 10 "$status_file" | grep -v '^$' | tail -n 1 | cut -d',' -f2 | tr -d ' '
+    else
+        echo "Unknown"
+    fi
+}
+
 # Function to monitor PR comments
 monitor_pr_comments() {
     local last_comment_count=0
 
     while true; do
         sleep "$CHECK_INTERVAL"
+
+        # Check session status - only proceed if status is "Stop"
+        local current_status=$(get_latest_status)
+        if [ "$current_status" != "Stop" ]; then
+            echo "$(date): Session status is '$current_status', skipping comment check"
+            continue
+        fi
 
         # Get current PR number if available
         pr_number=$(gh pr view --json number -q .number 2>/dev/null || echo "")
@@ -31,11 +49,11 @@ monitor_pr_comments() {
             continue
         fi
 
-        # Get current comment count (reviews + comments)
-        current_count=$(gh pr view "$pr_number" --json comments,reviews --jq '(.comments | length) + (.reviews | length)' 2>/dev/null || echo "0")
+        # Get unsolved comments (top-level review comments without resolution)
+        unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq '[.[] | select(.in_reply_to_id == null)] | length' 2>/dev/null || echo "0")
 
-        if [ "$current_count" -gt "$last_comment_count" ]; then
-            echo "$(date): New PR comments detected! ($current_count total)"
+        if [ "$unsolved_count" -gt 0 ] && [ "$unsolved_count" -gt "$last_comment_count" ]; then
+            echo "$(date): Unsolved PR comments detected! ($unsolved_count total)"
 
             # Send "fix comments" command to Claude Code session
             if session_exists "$CLAUDE_SESSION"; then
@@ -43,7 +61,7 @@ monitor_pr_comments() {
                 tmux send-keys -t "$CLAUDE_SESSION" "fix comments" C-m
             fi
 
-            last_comment_count="$current_count"
+            last_comment_count="$unsolved_count"
         fi
     done
 }
@@ -68,7 +86,7 @@ sleep 2
 
 # Start PR monitor in a separate tmux session
 printf "${GREEN}Starting PR comment monitor in tmux session: $MONITOR_SESSION${RESET}\n"
-tmux new-session -d -s "$MONITOR_SESSION" "$(declare -f monitor_pr_comments); $(declare -f session_exists); CLAUDE_SESSION='$CLAUDE_SESSION'; CHECK_INTERVAL=$CHECK_INTERVAL; monitor_pr_comments"
+tmux new-session -d -s "$MONITOR_SESSION" "$(declare -f get_latest_status); $(declare -f monitor_pr_comments); $(declare -f session_exists); CLAUDE_SESSION='$CLAUDE_SESSION'; CHECK_INTERVAL=$CHECK_INTERVAL; monitor_pr_comments"
 
 # Display session information
 printf "${YELLOW}=== Tmux Sessions ===${RESET}\n"

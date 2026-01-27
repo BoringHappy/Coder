@@ -44,6 +44,7 @@ RUN set -euxo pipefail \
         rsync \
         socat \
         sudo \
+        tmux \
         tree \
         unzip \
         zsh \
@@ -79,4 +80,4 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 COPY --chmod=755 setup /usr/local/bin/setup
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
-CMD ["sh", "-c", "claude --dangerously-skip-permissions --append-system-prompt \"$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""]
+CMD ["/usr/local/bin/setup/run.sh"]

@@ -1,0 +1,22 @@
+{
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo \"$(date -u '+%Y-%m-%d %H:%M:%S'), SessionStart\" >> $HOME/.session_status"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo \"$(date -u '+%Y-%m-%d %H:%M:%S'), Stop\" >> $HOME/.session_status"
+        }
+      ]
+    }
+  ]
+}

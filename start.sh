@@ -17,6 +17,7 @@ GIT_REPO_URL="${GIT_REPO_URL:-$(git config --get remote.origin.url 2>/dev/null |
 BRANCH_NAME="${BRANCH_NAME:-}"
 PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
+QUERY="${QUERY:-}"
 CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
 BUILD_LOCAL=false
 DOCKERFILE_PATH="Dockerfile"
@@ -391,6 +392,7 @@ run_codemate() {
         -e "BRANCH_NAME=$BRANCH_NAME"
         -e "PR_NUMBER=$PR_NUMBER"
         -e "PR_TITLE=$PR_TITLE"
+        -e "QUERY=$QUERY"
         -e "GITHUB_TOKEN=$GITHUB_TOKEN"
         -e "GIT_USER_NAME=$GIT_USER_NAME"
         -e "GIT_USER_EMAIL=$GIT_USER_EMAIL"
@@ -415,6 +417,7 @@ Options:
   --branch NAME        Branch name to work on
   --pr NUMBER          Existing PR number to work on
   --pr-title TITLE     PR title (optional)
+  --query QUERY        Initial query to send to Claude after startup
   --repo URL           Git repository URL
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
   --image IMAGE        Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
@@ -430,6 +433,7 @@ Environment Variables:
   BRANCH_NAME          Branch to work on
   PR_NUMBER            Existing PR number
   PR_TITLE             PR title
+  QUERY                Initial query to send to Claude after startup
   GITHUB_TOKEN         GitHub personal access token
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
@@ -464,6 +468,9 @@ Examples:
   # Build with custom Dockerfile path and tag
   $0 --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
 
+  # Run with initial query
+  $0 --branch feature/xyz --query "Please review the code and fix any issues"
+
 EOF
 }
 
@@ -493,6 +500,10 @@ main() {
                 ;;
             --pr-title)
                 PR_TITLE="$2"
+                shift 2
+                ;;
+            --query)
+                QUERY="$2"
                 shift 2
                 ;;
             --repo)

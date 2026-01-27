@@ -153,6 +153,13 @@ tmux new-session -d -s "$CLAUDE_SESSION" "claude --dangerously-skip-permissions 
 # Give Claude a moment to start
 sleep 2
 
+# Send initial query if provided
+if [ -n "$QUERY" ]; then
+    printf "${GREEN}Sending initial query to Claude...${RESET}\n"
+    tmux send-keys -t "$CLAUDE_SESSION" "$QUERY"
+    tmux send-keys -t "$CLAUDE_SESSION" C-m
+fi
+
 # Start PR monitor in a separate tmux session
 printf "${GREEN}Starting PR comment monitor in tmux session: $MONITOR_SESSION${RESET}\n"
 tmux new-session -d -s "$MONITOR_SESSION" "$(declare -f is_session_stopped); $(declare -f monitor_pr_comments); $(declare -f session_exists); CLAUDE_SESSION='$CLAUDE_SESSION'; CHECK_INTERVAL=$CHECK_INTERVAL; monitor_pr_comments"

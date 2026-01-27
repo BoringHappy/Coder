@@ -29,7 +29,7 @@
           },
           {
             "type": "command",
-            "command": "/home/agent/CodeMate/plugins/pr/hooks/send_to_slack.sh"
+            "command": "~/.claude/plugins/pr/hooks/send_to_slack.sh"
           }
         ]
       }

@@ -156,14 +156,17 @@ fi
 printf "${GREEN}Starting Claude Code in tmux session: $CLAUDE_SESSION${RESET}\n"
 tmux new-session -d -s "$CLAUDE_SESSION" "claude --dangerously-skip-permissions --append-system-prompt \"\$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""
 
-# Give Claude a moment to start
-sleep 2
-
 # Send initial query if provided
 if [ -n "$QUERY" ]; then
+    # Wait for Claude to fully initialize before sending query
+    printf "${GREEN}Waiting for Claude to initialize...${RESET}\n"
+    sleep 5
     printf "${GREEN}Sending initial query to Claude...${RESET}\n"
     tmux send-keys -t "$CLAUDE_SESSION" "$QUERY"
     tmux send-keys -t "$CLAUDE_SESSION" C-m
+else
+    # Give Claude a moment to start
+    sleep 2
 fi
 
 # Start PR monitor in a separate tmux session

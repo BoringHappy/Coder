@@ -36,20 +36,22 @@ is_session_stopped() {
 monitor_pr_comments() {
     local last_comment_count=0
 
+    # Get PR number once at the start (it won't change during monitoring)
+    local pr_number=$(gh pr view --json number -q .number 2>/dev/null || echo "")
+
+    if [ -z "$pr_number" ]; then
+        echo "$(date): No PR found, monitoring disabled"
+        return
+    fi
+
+    echo "$(date): Monitoring PR #$pr_number for new comments"
+
     while true; do
         sleep "$CHECK_INTERVAL"
 
         # Check session status - only proceed if last line ends with "Stop"
         if ! is_session_stopped; then
             echo "$(date): Session not stopped, skipping comment check"
-            continue
-        fi
-
-        # Get current PR number if available
-        pr_number=$(gh pr view --json number -q .number 2>/dev/null || echo "")
-
-        if [ -z "$pr_number" ]; then
-            echo "$(date): No PR found, skipping comment check"
             continue
         fi
 

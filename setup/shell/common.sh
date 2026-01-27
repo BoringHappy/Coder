@@ -27,12 +27,19 @@ run_setup_script() {
     fi
 }
 
-# Function to add a Claude plugin marketplace
+# Function to add a Claude plugin marketplace (checks if already added)
 # Usage: add_marketplace "index/total" "marketplace-name" "marketplace-path"
 add_marketplace() {
     local progress="$1"
     local name="$2"
     local path="$3"
+
+    # Check if marketplace is already added
+    local existing_marketplaces=$(claude plugin marketplace list 2>/dev/null || echo "")
+    if echo "$existing_marketplaces" | grep -q "$path"; then
+        printf "  [${progress}] ${GREEN}✓ ${name} marketplace already added${RESET}\n"
+        return 0
+    fi
 
     printf "  [${progress}] Adding ${name} marketplace...\n"
     if claude plugin marketplace add "$path" 2>&1; then
@@ -44,19 +51,29 @@ add_marketplace() {
     fi
 }
 
-# Function to install and verify a Claude plugin
+# Function to install and verify a Claude plugin (checks if already installed)
 # Usage: install_and_verify_plugin "index/total" "plugin-name" "skill1, skill2, skill3"
 install_and_verify_plugin() {
     local progress="$1"
     local plugin="$2"
     local skills="$3"
 
+    # Check if plugin is already installed
+    local installed_list=$(claude plugin list 2>/dev/null || echo "")
+    if echo "$installed_list" | grep -q "$plugin"; then
+        printf "  [${progress}] ${GREEN}✓ ${plugin} already installed${RESET}\n"
+        if [ -n "$skills" ]; then
+            printf "    Skills: ${skills}\n"
+        fi
+        return 0
+    fi
+
     printf "  [${progress}] Installing ${plugin}...\n"
     if claude plugin install "$plugin" 2>&1; then
         printf "  ${GREEN}✓ ${plugin} installed${RESET}\n"
 
         # Verify installation
-        local installed_list=$(claude plugin list 2>/dev/null || echo "")
+        installed_list=$(claude plugin list 2>/dev/null || echo "")
         if echo "$installed_list" | grep -q "$plugin"; then
             if [ -n "$skills" ]; then
                 printf "    Skills: ${skills}\n"

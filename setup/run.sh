@@ -35,6 +35,11 @@ is_session_stopped() {
 # Function to monitor PR comments
 monitor_pr_comments() {
     local last_comment_count=0
+    local last_check_time=""
+
+    # Wait at least 1 minute before checking PR number to allow session to initialize
+    echo "$(date): Waiting 60 seconds before starting PR monitoring..."
+    sleep 60
 
     # Get PR number once at the start (it won't change during monitoring)
     local pr_number=$(gh pr view --json number -q .number 2>/dev/null || echo "")
@@ -55,19 +60,28 @@ monitor_pr_comments() {
             continue
         fi
 
+        # Build time filter for subsequent runs (only check comments after last check)
+        local time_filter=""
+        if [ -n "$last_check_time" ]; then
+            time_filter="| map(select(.created_at > \"$last_check_time\"))"
+        fi
+
         # Get unsolved comments, excluding:
         # 1. Comments starting with "Claude Replied:"
         # 2. Comment threads where the last reply starts with "Claude Replied:"
-        unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq '
+        # 3. Comments older than last check time (for subsequent runs)
+        unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
+            # Filter by time if not first run
+            . $time_filter |
             # Group all comments by thread
             group_by(.in_reply_to_id // .id) |
             map(
                 # For each thread, check if it should be excluded
                 if (
-                    # Exclude if top-level comment starts with "Claude Replied:"
-                    (.[0].body | startswith("Claude Replied:")) or
-                    # Exclude if last comment in thread starts with "Claude Replied:"
-                    (.[-1].body | startswith("Claude Replied:"))
+                    # Exclude if top-level comment starts with \"Claude Replied:\"
+                    (.[0].body | startswith(\"Claude Replied:\")) or
+                    # Exclude if last comment in thread starts with \"Claude Replied:\"
+                    (.[-1].body | startswith(\"Claude Replied:\"))
                 ) then
                     empty
                 else
@@ -79,10 +93,10 @@ monitor_pr_comments() {
                     end
                 end
             ) | length
-        ' 2>/dev/null || echo "0")
+        " 2>/dev/null || echo "0")
 
-        if [ "$unsolved_count" -gt 0 ] && [ "$unsolved_count" -gt "$last_comment_count" ]; then
-            echo "$(date): Unsolved PR comments detected! ($unsolved_count total)"
+        if [ "$unsolved_count" -gt 0 ]; then
+            echo "$(date): Unsolved PR comments detected! ($unsolved_count new)"
 
             # Send "fix comments" command to Claude Code session
             if session_exists "$CLAUDE_SESSION"; then
@@ -90,6 +104,8 @@ monitor_pr_comments() {
                 tmux send-keys -t "$CLAUDE_SESSION" "fix comments" C-m
             fi
 
+            # Update last check time to current time
+            last_check_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
             last_comment_count="$unsolved_count"
         fi
     done

@@ -26,6 +26,10 @@
           {
             "type": "command",
             "command": "echo \"$(date -u '+%Y-%m-%d %H:%M:%S'), Stop\" >> $HOME/.session_status"
+          },
+          {
+            "type": "command",
+            "command": "/home/agent/CodeMate/setup/notify/send_to_slack.sh"
           }
         ]
       }

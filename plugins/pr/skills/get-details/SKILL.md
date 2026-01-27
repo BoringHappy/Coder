@@ -24,6 +24,9 @@ Changed files:
 Review comments:
 !`gh pr view --json reviews -q '.reviews[] | "**\(.author.login)** (\(.state)) - \(.submittedAt):\n\(.body)\n"' | cat`
 
+Inline review comments (code comments):
+!`gh api repos/:owner/:repo/pulls/$(gh pr view --json number -q .number)/comments --jq '.[] | "**\(.user.login)** on `\(.path):\(.line)` - \(.created_at) [comment_id:\(.id)]:\n\(.body)\n"' | cat`
+
 PR comments:
 !`gh pr view --json comments -q '.comments[] | "**\(.author.login)** - \(.createdAt):\n\(.body)\n"' | cat`
 
@@ -35,7 +38,8 @@ PR comments:
 2. **Branch** - Source branch → target branch
 3. **Description** - The PR description/body (summarized if lengthy)
 4. **Changed Files** - List of files modified in this PR
-5. **Review Comments** - Summary of review feedback (if any)
-6. **PR Comments** - Summary of general comments (if any)
+5. **Review Comments** - Summary of overall review feedback (if any)
+6. **Inline Review Comments** - Code-specific comments attached to lines (if any)
+7. **PR Comments** - Summary of general comments (if any)
 
 Format the output clearly using markdown so the user can see the PR details at a glance. This summary should always be visible in your response to the user.

@@ -168,6 +168,10 @@ On startup, the container:
 3. Creates PR if working on new branch
 4. Starts Claude Code with `--dangerously-skip-permissions` flag
 
+## Tmux Integration
+
+CodeMate runs Claude Code in a persistent tmux session with automated background monitoring that detects and notifies about new PR review comments.
+
 ## Skills
 
 CodeMate comes with pre-installed skills from the [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) repository and [agent-browser](https://github.com/vercel-labs/agent-browser). These skills are automatically available when you start the container and provide workflow automation for Git, PR management, and browser interactions.

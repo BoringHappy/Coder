@@ -32,13 +32,14 @@ is_session_stopped() {
     fi
 }
 
-# Function to monitor PR comments
+# Function to monitor PR comments and git changes
 monitor_pr_comments() {
     local last_comment_count=0
     local last_check_time=""
+    local git_changes_notified=false
 
     # Wait at least 1 minute before checking PR number to allow session to initialize
-    echo "$(date): Waiting 60 seconds before starting PR monitoring..."
+    echo "$(date): Waiting 60 seconds before starting monitoring..."
     sleep 60
 
     # Get PR number once at the start (it won't change during monitoring)
@@ -50,14 +51,36 @@ monitor_pr_comments() {
     fi
 
     echo "$(date): Monitoring PR #$pr_number for new comments"
+    echo "$(date): Monitoring for unstaged git changes"
 
     while true; do
         sleep "$CHECK_INTERVAL"
 
         # Check session status - only proceed if last line ends with "Stop"
         if ! is_session_stopped; then
-            echo "$(date): Session not stopped, skipping comment check"
+            echo "$(date): Session not stopped, skipping checks"
             continue
+        fi
+
+        # Check for unstaged changes
+        if git status --porcelain 2>/dev/null | grep -q .; then
+            if [ "$git_changes_notified" = false ]; then
+                echo "$(date): Unstaged changes detected!"
+
+                # Send commit prompt to Claude Code session
+                if session_exists "$CLAUDE_SESSION"; then
+                    echo "$(date): Sending 'commit changes' to Claude Code session"
+                    tmux send-keys -t "$CLAUDE_SESSION" "Please use /git:commit skill to submit changes to github"
+                    tmux send-keys -t "$CLAUDE_SESSION" C-m
+                    git_changes_notified=true
+                    # Wait for Claude to process the commit before next check
+                    sleep 15
+                    continue
+                fi
+            fi
+        else
+            # Reset notification flag when no changes are present
+            git_changes_notified=false
         fi
 
         # Build time filter for subsequent runs (only check comments after last check)

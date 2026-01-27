@@ -17,6 +17,7 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 - zsh with Oh My Zsh
 - Persistent Claude configuration
 - Built-in Claude Code skills for PR workflow automation
+- Slack notifications when Claude stops (via `SLACK_WEBHOOK`)
 
 ## Quick Start
 
@@ -158,6 +159,7 @@ Then build and run with your custom Dockerfile:
 | `GIT_USER_NAME` | Auto | Git commit author name (defaults to `git config user.name` if not provided) |
 | `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
 | `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:latest`) |
+| `SLACK_WEBHOOK` | No | Slack Incoming Webhook URL for notifications when Claude stops |
 
 
 ## How It Works

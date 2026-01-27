@@ -93,8 +93,6 @@ create_settings_json() {
     cat > "$settings_file" << 'EOF'
 {
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "<fill your token>",
-    "ANTHROPIC_BASE_URL": "<fill your base_url>",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
   "attribution": {
@@ -438,6 +436,7 @@ Environment Variables:
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
   CODEMATE_IMAGE       Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
+  SLACK_WEBHOOK        Slack Incoming Webhook URL for notifications when Claude stops
 
 Examples:
   # First time setup

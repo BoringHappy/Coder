@@ -16,7 +16,7 @@ CLAUDE_SESSION="${CLAUDE_SESSION:-claude-code}"
 STATE_FILE="${STATE_FILE:-/tmp/pr-monitor-state}"
 
 # Ensure we're in the repo directory
-cd "${REPO_DIR:-/home/user/repo}" 2>/dev/null || cd /home/user/repo
+cd "${REPO_DIR:-/home/agent/repo}" 2>/dev/null || cd /home/agent/repo
 
 # Function to check if a tmux session exists
 session_exists() {

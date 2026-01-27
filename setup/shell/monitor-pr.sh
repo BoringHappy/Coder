@@ -2,7 +2,14 @@
 # PR Monitor Script - Standalone script for monitoring PR comments and git changes
 # Designed to be run via cron (no loop, single execution)
 
-set -e
+# Set PATH and HOME for cron environment
+export PATH="/usr/local/bin:/usr/bin:/bin:/home/agent/.local/bin"
+export HOME="${HOME:-/home/agent}"
+
+# Lock file to prevent overlapping runs
+LOCK_FILE="/tmp/pr-monitor.lock"
+exec 200>"$LOCK_FILE"
+flock -n 200 || { echo "$(date): Already running, skipping"; exit 0; }
 
 # Configuration (can be overridden via environment variables)
 CLAUDE_SESSION="${CLAUDE_SESSION:-claude-code}"

@@ -85,9 +85,9 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 COPY --chmod=755 setup /usr/local/bin/setup
 
 # Setup cron job for PR monitoring (runs every minute)
+# Using /etc/cron.d format which requires user field and is auto-loaded by cron daemon
 RUN echo "* * * * * agent REPO_DIR=/home/user/repo /usr/local/bin/setup/shell/monitor-pr.sh >> /tmp/pr-monitor.log 2>&1" > /etc/cron.d/pr-monitor \
-    && chmod 0644 /etc/cron.d/pr-monitor \
-    && crontab -u agent /etc/cron.d/pr-monitor
+    && chmod 0644 /etc/cron.d/pr-monitor
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["/usr/local/bin/setup/run.sh"]

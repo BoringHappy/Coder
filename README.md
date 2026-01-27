@@ -176,6 +176,25 @@ CodeMate runs Claude Code in a persistent tmux session with automated background
 
 CodeMate comes with pre-installed skills from the [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) repository and [agent-browser](https://github.com/vercel-labs/agent-browser). These skills are automatically available when you start the container and provide workflow automation for Git, PR management, and browser interactions.
 
+### Available Plugins
+
+**Git Plugin** (`git@codemate`):
+| Command | Description |
+|---------|-------------|
+| `/git:commit` | Stage all changes, create a commit with a meaningful message, and push to remote |
+
+**PR Plugin** (`pr@codemate`):
+| Command | Description |
+|---------|-------------|
+| `/pr:get-details` | Fetch PR information including title, description, file changes, and review comments |
+| `/pr:fix-comments` | Read PR review comments, fix the issues, commit changes, and reply to comments |
+| `/pr:update` | Update PR title and/or summary. Use `--summary-only` to update only the summary |
+
+**Browser Plugin** (`agent-browser`):
+| Command | Description |
+|---------|-------------|
+| `/agent-browser` | Automate browser interactions for web testing, form filling, screenshots, and data extraction |
+
 ## Best Practices
 
 ### Add a Pull Request Template

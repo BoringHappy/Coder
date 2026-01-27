@@ -221,7 +221,7 @@ tmux kill-server
 - **Persistent sessions**: Detach and reattach without interrupting Claude
 - **Automated PR workflow**: Claude automatically addresses new review comments
 - **Background monitoring**: PR comment checking runs independently
-- **Session isolation**: Monitor logs don't clutter Claude's output
+- **Session isolation**: Separate sessions keep monitor logs out of Claude's output
 
 ## Skills
 

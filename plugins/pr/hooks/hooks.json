@@ -10,6 +10,16 @@
         ]
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"$(date -u '+%Y-%m-%d %H:%M:%S'), UserPromptSubmit\" >> $HOME/.session_status"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

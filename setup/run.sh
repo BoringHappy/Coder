@@ -56,14 +56,28 @@ monitor_pr_comments() {
     while true; do
         sleep "$CHECK_INTERVAL"
 
+        # Get current status for logging
+        local session_status="running"
+        if is_session_stopped; then
+            session_status="stopped"
+        fi
+
+        local git_status="clean"
+        local git_changes=$(git status --porcelain 2>/dev/null)
+        if [ -n "$git_changes" ]; then
+            git_status="changes"
+        fi
+
+        echo "$(date): [Loop] session=$session_status, git=$git_status, git_notified=$git_changes_notified"
+
         # Check session status - only proceed if last line ends with "Stop"
-        if ! is_session_stopped; then
+        if [ "$session_status" != "stopped" ]; then
             echo "$(date): Session not stopped, skipping checks"
             continue
         fi
 
         # Check for unstaged changes
-        if git status --porcelain 2>/dev/null | grep -q .; then
+        if [ -n "$git_changes" ]; then
             if [ "$git_changes_notified" = false ]; then
                 echo "$(date): Unstaged changes detected!"
 
@@ -117,6 +131,8 @@ monitor_pr_comments() {
                 end
             ) | length
         " 2>/dev/null || echo "0")
+
+        echo "$(date): [Loop] PR comments check: unsolved_count=$unsolved_count"
 
         if [ "$unsolved_count" -gt 0 ]; then
             echo "$(date): Unsolved PR comments detected! ($unsolved_count new)"

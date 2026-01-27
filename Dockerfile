@@ -5,6 +5,8 @@ FROM ${BASE_IMAGE}
 # Environment variables
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=/home/agent/.local/bin:/usr/local/share/npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Create non-root user and configure system
 RUN set -ex \
@@ -22,7 +24,9 @@ RUN set -ex \
 # Install CLI tools, development packages, Node.js LTS, and agent-browser
 RUN set -euxo pipefail \
     && apt-get update \
-    && apt-get install -yy --no-install-recommends ca-certificates curl gnupg \
+    && apt-get install -yy --no-install-recommends ca-certificates curl gnupg locales \
+    && locale-gen C.UTF-8 \
+    && update-locale LANG=C.UTF-8 \
     && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
     && apt-get install -yy --no-install-recommends \
         bc \

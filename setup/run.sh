@@ -53,8 +53,31 @@ monitor_pr_comments() {
             continue
         fi
 
-        # Get unsolved comments (top-level review comments without resolution)
-        unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq '[.[] | select(.in_reply_to_id == null)] | length' 2>/dev/null || echo "0")
+        # Get unsolved comments, excluding:
+        # 1. Comments starting with "Claude Replied:"
+        # 2. Comment threads where the last reply ends with "Claude Replied:"
+        unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq '
+            # Group all comments by thread
+            group_by(.in_reply_to_id // .id) |
+            map(
+                # For each thread, check if it should be excluded
+                if (
+                    # Exclude if top-level comment starts with "Claude Replied:"
+                    (.[0].body | startswith("Claude Replied:")) or
+                    # Exclude if last comment in thread ends with "Claude Replied:"
+                    (.[-1].body | endswith("Claude Replied:"))
+                ) then
+                    empty
+                else
+                    # Only count threads that start with a top-level comment
+                    if .[0].in_reply_to_id == null then
+                        .
+                    else
+                        empty
+                    end
+                end
+            ) | length
+        ' 2>/dev/null || echo "0")
 
         if [ "$unsolved_count" -gt 0 ] && [ "$unsolved_count" -gt "$last_comment_count" ]; then
             echo "$(date): Unsolved PR comments detected! ($unsolved_count total)"

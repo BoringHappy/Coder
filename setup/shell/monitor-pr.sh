@@ -15,8 +15,12 @@ flock -n 200 || { echo "$(date): Already running, skipping"; exit 0; }
 CLAUDE_SESSION="${CLAUDE_SESSION:-claude-code}"
 STATE_FILE="${STATE_FILE:-/tmp/pr-monitor-state}"
 
-# Ensure we're in the repo directory
-cd "${REPO_DIR:-/home/user/repo}" 2>/dev/null || cd /home/user/repo
+# Derive repo directory from GIT_REPO_URL (e.g., https://github.com/org/repo.git -> /home/agent/repo)
+if [ -z "$REPO_DIR" ] && [ -n "$GIT_REPO_URL" ]; then
+    REPO_NAME=$(basename "$GIT_REPO_URL" .git)
+    REPO_DIR="/home/agent/$REPO_NAME"
+fi
+cd "${REPO_DIR:-/home/agent/repo}" || { echo "$(date): Failed to cd to repo directory"; exit 1; }
 
 # Function to check if a tmux session exists
 session_exists() {

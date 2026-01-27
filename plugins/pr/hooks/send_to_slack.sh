@@ -5,6 +5,17 @@
 # Exit if SLACK_WEBHOOK is not set
 [ -z "$SLACK_WEBHOOK" ] && exit 0
 
+# Check if there are new commits since session start
+START_COMMIT_FILE="$HOME/.session_start_commit"
+if [ -f "$START_COMMIT_FILE" ]; then
+    START_COMMIT=$(cat "$START_COMMIT_FILE")
+    CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null)
+    if [ "$START_COMMIT" = "$CURRENT_COMMIT" ]; then
+        # No new commits, skip sending notification
+        exit 0
+    fi
+fi
+
 # Get repo name and branch from git
 REPO_NAME=$(basename -s .git "$(git config --get remote.origin.url)" 2>/dev/null || echo "unknown")
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")

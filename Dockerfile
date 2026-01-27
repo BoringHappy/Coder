@@ -44,6 +44,7 @@ RUN set -euxo pipefail \
         rsync \
         socat \
         sudo \
+        tmux \
         tree \
         unzip \
         zsh \

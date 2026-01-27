@@ -65,12 +65,52 @@ claude --plugin-dir /path/to/pr
 - Git repository with remote access
 - Active pull request (for most skills)
 
+## Hooks
+
+### `send_to_slack.sh`
+
+A Claude Code Stop hook that sends notifications to Slack when Claude stops working. This is useful for getting notified when Claude completes a task or needs attention.
+
+**Setup:**
+
+1. Create a Slack Incoming Webhook:
+   - Go to your Slack workspace's App Directory
+   - Search for "Incoming WebHooks" and add it
+   - Choose a channel and copy the webhook URL
+
+2. Set the `SLACK_WEBHOOK` environment variable in your `.env` file:
+   ```bash
+   SLACK_WEBHOOK=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+   ```
+
+**Message Content:**
+
+The Slack notification includes:
+- Repository name
+- Branch name
+- PR link
+- PR title
+- Last commit message
+
+**Example Slack Message:**
+```
+*Repository:* my-repo
+*Branch:* feature/new-feature
+*PR Link:* https://github.com/user/my-repo/pull/123
+*PR Title:* Add new feature
+*Commit:* Fix bug in authentication flow
+```
+
+**Note:** If `SLACK_WEBHOOK` is not set, the hook exits silently without sending any notification.
+
 ## Plugin Structure
 
 ```
 pr/
 ├── .claude-plugin/
 │   └── plugin.json          # Plugin manifest
+├── hooks/
+│   └── send_to_slack.sh     # Slack notification hook
 └── skills/
     ├── get-details/
     │   └── SKILL.md

@@ -436,6 +436,7 @@ Environment Variables:
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
   CODEMATE_IMAGE       Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
+  SLACK_WEBHOOK        Slack Incoming Webhook URL for notifications when Claude stops
 
 Examples:
   # First time setup

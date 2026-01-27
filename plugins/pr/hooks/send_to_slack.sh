@@ -9,21 +9,25 @@
 REPO_NAME=$(basename -s .git "$(git config --get remote.origin.url)" 2>/dev/null || echo "unknown")
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 
-# Get PR number and title using gh CLI
-PR_INFO=$(gh pr view --json number,title 2>/dev/null)
+# Get PR info using gh CLI
+PR_INFO=$(gh pr view --json number,title,url 2>/dev/null)
 if [ -n "$PR_INFO" ]; then
-    PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number // "N/A"')
+    PR_URL=$(echo "$PR_INFO" | jq -r '.url // "N/A"')
     PR_TITLE=$(echo "$PR_INFO" | jq -r '.title // "N/A"')
 else
-    PR_NUMBER="N/A"
+    PR_URL="N/A"
     PR_TITLE="N/A"
 fi
 
 # Get last commit message
 LAST_COMMIT=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "No commit found")
 
-# Build Slack message payload
-MESSAGE="*Repository:* ${REPO_NAME}\n*Branch:* ${BRANCH_NAME}\n*PR Number:* ${PR_NUMBER}\n*PR Title:* ${PR_TITLE}\n*Commit:* ${LAST_COMMIT}"
+# Build Slack message payload with actual newlines
+MESSAGE="*Repository:* ${REPO_NAME}
+*Branch:* ${BRANCH_NAME}
+*PR Link:* ${PR_URL}
+*PR Title:* ${PR_TITLE}
+*Commit:* ${LAST_COMMIT}"
 
 PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text}')
 

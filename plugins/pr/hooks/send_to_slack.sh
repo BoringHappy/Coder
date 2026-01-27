@@ -6,11 +6,11 @@
 [ -z "$SLACK_WEBHOOK" ] && exit 0
 
 # Check if there are new commits since session start
-START_COMMIT_FILE="$HOME/.session_start_commit"
-if [ -f "$START_COMMIT_FILE" ]; then
-    START_COMMIT=$(cat "$START_COMMIT_FILE")
+COMMIT_FILE="$HOME/.session_commit"
+if [ -f "$COMMIT_FILE" ]; then
+    LAST_NOTIFIED_COMMIT=$(cat "$COMMIT_FILE")
     CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null)
-    if [ "$START_COMMIT" = "$CURRENT_COMMIT" ]; then
+    if [ "$LAST_NOTIFIED_COMMIT" = "$CURRENT_COMMIT" ]; then
         # No new commits, skip sending notification
         exit 0
     fi
@@ -46,5 +46,8 @@ PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text}')
 curl -s -X POST -H 'Content-type: application/json' \
     --data "$PAYLOAD" \
     "$SLACK_WEBHOOK" > /dev/null 2>&1
+
+# Update commit file with current commit to avoid duplicate notifications
+git rev-parse HEAD 2>/dev/null > "$COMMIT_FILE"
 
 exit 0

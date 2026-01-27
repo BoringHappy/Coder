@@ -22,12 +22,14 @@ is_session_stopped() {
     if [ -f "$status_file" ]; then
         # Get the last non-empty line and check if it ends with "Stop"
         local last_line=$(tail -n 10 "$status_file" | grep -v '^$' | tail -n 1)
+        echo "$(date): [Session] status=$last_line"
         if [[ "$last_line" =~ Stop$ ]]; then
             return 0  # true
         else
             return 1  # false
         fi
     else
+        echo "$(date): [Session] status_file not found"
         return 1  # false if file doesn't exist
     fi
 }
@@ -58,12 +60,14 @@ monitor_pr_comments() {
 
         # Check session status - only proceed if last line ends with "Stop"
         if ! is_session_stopped; then
-            echo "$(date): Session not stopped, skipping checks"
             continue
         fi
 
         # Check for unstaged changes
-        if git status --porcelain 2>/dev/null | grep -q .; then
+        local git_changes=$(git status --porcelain 2>/dev/null)
+        echo "$(date): [Git] changes=$([ -n "$git_changes" ] && echo 'yes' || echo 'no'), notified=$git_changes_notified"
+
+        if [ -n "$git_changes" ]; then
             if [ "$git_changes_notified" = false ]; then
                 echo "$(date): Unstaged changes detected!"
 
@@ -118,6 +122,8 @@ monitor_pr_comments() {
             ) | length
         " 2>/dev/null || echo "0")
 
+        echo "$(date): [PR] unsolved_count=$unsolved_count"
+
         if [ "$unsolved_count" -gt 0 ]; then
             echo "$(date): Unsolved PR comments detected! ($unsolved_count new)"
 
@@ -150,8 +156,18 @@ fi
 printf "${GREEN}Starting Claude Code in tmux session: $CLAUDE_SESSION${RESET}\n"
 tmux new-session -d -s "$CLAUDE_SESSION" "claude --dangerously-skip-permissions --append-system-prompt \"\$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""
 
-# Give Claude a moment to start
-sleep 2
+# Send initial query if provided
+if [ -n "$QUERY" ]; then
+    # Wait for Claude to fully initialize before sending query
+    printf "${GREEN}Waiting for Claude to initialize...${RESET}\n"
+    sleep 5
+    printf "${GREEN}Sending initial query to Claude...${RESET}\n"
+    tmux send-keys -t "$CLAUDE_SESSION" "$QUERY"
+    tmux send-keys -t "$CLAUDE_SESSION" C-m
+else
+    # Give Claude a moment to start
+    sleep 2
+fi
 
 # Start PR monitor in a separate tmux session
 printf "${GREEN}Starting PR comment monitor in tmux session: $MONITOR_SESSION${RESET}\n"

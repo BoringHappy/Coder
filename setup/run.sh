@@ -73,6 +73,9 @@ monitor_pr_comments() {
                     tmux send-keys -t "$CLAUDE_SESSION" "Please use /git:commit skill to submit changes to github"
                     tmux send-keys -t "$CLAUDE_SESSION" C-m
                     git_changes_notified=true
+                    # Wait for Claude to process the commit before next check
+                    sleep 15
+                    continue
                 fi
             fi
         else

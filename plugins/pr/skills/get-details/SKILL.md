@@ -25,7 +25,7 @@ Review comments:
 !`gh pr view --json reviews -q '.reviews[] | "**\(.author.login)** (\(.state)) - \(.submittedAt):\n\(.body)\n"' | cat`
 
 Inline review comments (code comments):
-!`gh api repos/:owner/:repo/pulls/$(gh pr view --json number -q .number)/comments --jq '.[] | "**\(.user.login)** on `\(.path):\(.line)` - \(.created_at) [comment_id:\(.id)]:\n\(.body)\n"' | cat`
+!`gh api repos/:owner/:repo/pulls/$(gh pr view --json number -q .number)/comments --jq '.[] | "**\(.user.login)** on \(.path):\(.line) - \(.created_at) [comment_id:\(.id)]:\n\(.body)\n"' | cat`
 
 PR comments:
 !`gh pr view --json comments -q '.comments[] | "**\(.author.login)** - \(.createdAt):\n\(.body)\n"' | cat`

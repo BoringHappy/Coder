@@ -65,7 +65,7 @@ monitor_pr_comments() {
 
         # Check for unstaged changes
         local git_changes=$(git status --porcelain 2>/dev/null)
-        echo "$(date): [Git] changes=$([ -n \"$git_changes\" ] && echo 'yes' || echo 'no'), notified=$git_changes_notified"
+        echo "$(date): [Git] changes=$([ -n "$git_changes" ] && echo 'yes' || echo 'no'), notified=$git_changes_notified"
 
         if [ -n "$git_changes" ]; then
             if [ "$git_changes_notified" = false ]; then

@@ -55,7 +55,7 @@ monitor_pr_comments() {
 
         # Get unsolved comments, excluding:
         # 1. Comments starting with "Claude Replied:"
-        # 2. Comment threads where the last reply ends with "Claude Replied:"
+        # 2. Comment threads where the last reply starts with "Claude Replied:"
         unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq '
             # Group all comments by thread
             group_by(.in_reply_to_id // .id) |
@@ -64,8 +64,8 @@ monitor_pr_comments() {
                 if (
                     # Exclude if top-level comment starts with "Claude Replied:"
                     (.[0].body | startswith("Claude Replied:")) or
-                    # Exclude if last comment in thread ends with "Claude Replied:"
-                    (.[-1].body | endswith("Claude Replied:"))
+                    # Exclude if last comment in thread starts with "Claude Replied:"
+                    (.[-1].body | startswith("Claude Replied:"))
                 ) then
                     empty
                 else

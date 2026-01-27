@@ -170,58 +170,7 @@ On startup, the container:
 
 ## Tmux Integration
 
-CodeMate uses tmux to provide session management and intelligent PR comment monitoring. Two tmux sessions are automatically created on startup:
-
-### Sessions
-
-**`claude-code` (main session)**
-- Runs Claude Code interactively
-- Automatically attached when container starts
-- Detach with `Ctrl+b d` to leave Claude running in background
-- Reattach with `tmux attach -t claude-code`
-
-**`pr-monitor` (background session)**
-- Monitors PR comments every 30 seconds
-- Automatically detects new unsolved review comments
-- Sends notification to Claude when comments are found (only when Claude is idle)
-- Excludes comments already addressed by Claude (those starting with "Claude Replied:")
-
-### How PR Comment Monitoring Works
-
-1. Waits 60 seconds after startup for session initialization
-2. Checks for new PR comments every 30 seconds
-3. Only triggers when Claude is idle (session status shows "Stop")
-4. Filters out:
-   - Comments starting with "Claude Replied:"
-   - Comment threads where the last reply is from Claude
-   - Comments already checked in previous runs
-5. Sends "Please Use /fix-comments skill to address comments" to Claude Code session
-
-### Useful Commands
-
-```bash
-# List all tmux sessions
-tmux ls
-
-# Switch to PR monitor session (view monitoring logs)
-tmux attach -t pr-monitor
-
-# Switch back to Claude Code session
-tmux attach -t claude-code
-
-# Detach from current session (keeps it running)
-# Press: Ctrl+b, then d
-
-# Kill all tmux sessions
-tmux kill-server
-```
-
-### Benefits
-
-- **Persistent sessions**: Detach and reattach without interrupting Claude
-- **Automated PR workflow**: Claude automatically addresses new review comments
-- **Background monitoring**: PR comment checking runs independently
-- **Session isolation**: Separate sessions keep monitor logs out of Claude's output
+CodeMate runs Claude Code in a persistent tmux session with automated background monitoring that detects and notifies about new PR review comments.
 
 ## Skills
 

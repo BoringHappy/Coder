@@ -101,7 +101,8 @@ monitor_pr_comments() {
             # Send "fix comments" command to Claude Code session
             if session_exists "$CLAUDE_SESSION"; then
                 echo "$(date): Sending 'fix comments' to Claude Code session"
-                tmux send-keys -t "$CLAUDE_SESSION" "Please Use /fix-comments skill to address comments" C-m
+                tmux send-keys -t "$CLAUDE_SESSION" "Please Use /fix-comments skill to address comments"
+                tmux send-keys -t "$CLAUDE_SESSION" C-m
             fi
 
             # Update last check time to current time

@@ -46,11 +46,11 @@ monitor_pr_comments() {
     local pr_number=$(gh pr view --json number -q .number 2>/dev/null || echo "")
 
     if [ -z "$pr_number" ]; then
-        echo "$(date): No PR found, PR comment monitoring disabled"
-    else
-        echo "$(date): Monitoring PR #$pr_number for new comments"
+        echo "$(date): No PR found, monitoring disabled"
+        return
     fi
 
+    echo "$(date): Monitoring PR #$pr_number for new comments"
     echo "$(date): Monitoring for unstaged git changes"
 
     while true; do
@@ -83,57 +83,54 @@ monitor_pr_comments() {
             git_changes_notified=false
         fi
 
-        # Check PR comments only if PR exists
-        if [ -n "$pr_number" ]; then
-            # Build time filter for subsequent runs (only check comments after last check)
-            local time_filter=""
-            if [ -n "$last_check_time" ]; then
-                time_filter="| map(select(.created_at > \"$last_check_time\"))"
-            fi
+        # Build time filter for subsequent runs (only check comments after last check)
+        local time_filter=""
+        if [ -n "$last_check_time" ]; then
+            time_filter="| map(select(.created_at > \"$last_check_time\"))"
+        fi
 
-            # Get unsolved comments, excluding:
-            # 1. Comments starting with "Claude Replied:"
-            # 2. Comment threads where the last reply starts with "Claude Replied:"
-            # 3. Comments older than last check time (for subsequent runs)
-            unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
-                # Filter by time if not first run
-                . $time_filter |
-                # Group all comments by thread
-                group_by(.in_reply_to_id // .id) |
-                map(
-                    # For each thread, check if it should be excluded
-                    if (
-                        # Exclude if top-level comment starts with \"Claude Replied:\"
-                        (.[0].body | startswith(\"Claude Replied:\")) or
-                        # Exclude if last comment in thread starts with \"Claude Replied:\"
-                        (.[-1].body | startswith(\"Claude Replied:\"))
-                    ) then
-                        empty
+        # Get unsolved comments, excluding:
+        # 1. Comments starting with "Claude Replied:"
+        # 2. Comment threads where the last reply starts with "Claude Replied:"
+        # 3. Comments older than last check time (for subsequent runs)
+        unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
+            # Filter by time if not first run
+            . $time_filter |
+            # Group all comments by thread
+            group_by(.in_reply_to_id // .id) |
+            map(
+                # For each thread, check if it should be excluded
+                if (
+                    # Exclude if top-level comment starts with \"Claude Replied:\"
+                    (.[0].body | startswith(\"Claude Replied:\")) or
+                    # Exclude if last comment in thread starts with \"Claude Replied:\"
+                    (.[-1].body | startswith(\"Claude Replied:\"))
+                ) then
+                    empty
+                else
+                    # Only count threads that start with a top-level comment
+                    if .[0].in_reply_to_id == null then
+                        .
                     else
-                        # Only count threads that start with a top-level comment
-                        if .[0].in_reply_to_id == null then
-                            .
-                        else
-                            empty
-                        end
+                        empty
                     end
-                ) | length
-            " 2>/dev/null || echo "0")
+                end
+            ) | length
+        " 2>/dev/null || echo "0")
 
-            if [ "$unsolved_count" -gt 0 ]; then
-                echo "$(date): Unsolved PR comments detected! ($unsolved_count new)"
+        if [ "$unsolved_count" -gt 0 ]; then
+            echo "$(date): Unsolved PR comments detected! ($unsolved_count new)"
 
-                # Send "fix comments" command to Claude Code session
-                if session_exists "$CLAUDE_SESSION"; then
-                    echo "$(date): Sending 'fix comments' to Claude Code session"
-                    tmux send-keys -t "$CLAUDE_SESSION" "Please Use /fix-comments skill to address comments"
-                    tmux send-keys -t "$CLAUDE_SESSION" C-m
-                fi
-
-                # Update last check time to current time
-                last_check_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-                last_comment_count="$unsolved_count"
+            # Send "fix comments" command to Claude Code session
+            if session_exists "$CLAUDE_SESSION"; then
+                echo "$(date): Sending 'fix comments' to Claude Code session"
+                tmux send-keys -t "$CLAUDE_SESSION" "Please Use /fix-comments skill to address comments"
+                tmux send-keys -t "$CLAUDE_SESSION" C-m
             fi
+
+            # Update last check time to current time
+            last_check_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+            last_comment_count="$unsolved_count"
         fi
     done
 }

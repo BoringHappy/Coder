@@ -17,6 +17,7 @@ GIT_REPO_URL="${GIT_REPO_URL:-$(git config --get remote.origin.url 2>/dev/null |
 BRANCH_NAME="${BRANCH_NAME:-}"
 PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
+ISSUE_NUMBER="${ISSUE_NUMBER:-}"
 QUERY="${QUERY:-}"
 CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
 BUILD_LOCAL=false
@@ -390,6 +391,7 @@ run_codemate() {
         -e "BRANCH_NAME=$BRANCH_NAME"
         -e "PR_NUMBER=$PR_NUMBER"
         -e "PR_TITLE=$PR_TITLE"
+        -e "ISSUE_NUMBER=$ISSUE_NUMBER"
         -e "QUERY=$QUERY"
         -e "GITHUB_TOKEN=$GITHUB_TOKEN"
         -e "GIT_USER_NAME=$GIT_USER_NAME"
@@ -415,6 +417,7 @@ Options:
   --branch NAME        Branch name to work on
   --pr NUMBER          Existing PR number to work on
   --pr-title TITLE     PR title (optional)
+  --issue NUMBER       GitHub issue number to work on (creates branch issue-NUMBER)
   --query QUERY        Initial query to send to Claude after startup
   --repo URL           Git repository URL
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
@@ -431,6 +434,7 @@ Environment Variables:
   BRANCH_NAME          Branch to work on
   PR_NUMBER            Existing PR number
   PR_TITLE             PR title
+  ISSUE_NUMBER         GitHub issue number
   QUERY                Initial query to send to Claude after startup
   GITHUB_TOKEN         GitHub personal access token
   GIT_USER_NAME        Git commit author name
@@ -453,6 +457,9 @@ Examples:
 
   # Run with existing PR
   $0 --pr 123
+
+  # Run with GitHub issue
+  $0 --issue 456
 
   # Run with custom volume mounts
   $0 --branch feature/xyz --mount /local/path:/container/path
@@ -499,6 +506,10 @@ main() {
                 ;;
             --pr-title)
                 PR_TITLE="$2"
+                shift 2
+                ;;
+            --issue)
+                ISSUE_NUMBER="$2"
                 shift 2
                 ;;
             --query)
@@ -592,9 +603,34 @@ main() {
         CODEMATE_IMAGE="$IMAGE_TAG"
     fi
 
+    # Handle issue-based workflow
+    if [ -n "$ISSUE_NUMBER" ]; then
+        # Set branch name based on issue number
+        BRANCH_NAME="issue-${ISSUE_NUMBER}"
+
+        # Check if branch already exists
+        if git show-ref --verify --quiet refs/heads/issue-${ISSUE_NUMBER} 2>/dev/null; then
+            print_warning "Branch issue-${ISSUE_NUMBER} already exists"
+        fi
+
+        # Extract repo owner and name from GIT_REPO_URL for issue URL
+        if [ -n "$GIT_REPO_URL" ]; then
+            # Remove .git suffix and extract owner/repo
+            REPO_PATH=$(echo "$GIT_REPO_URL" | sed 's/\.git$//' | sed 's|.*github\.com[:/]||')
+            ISSUE_URL="https://github.com/${REPO_PATH}/issues/${ISSUE_NUMBER}"
+
+            # Set initial query if not already set
+            if [ -z "$QUERY" ]; then
+                QUERY="Please use /pr:read-issue skill to read and address issue #${ISSUE_NUMBER} (${ISSUE_URL})"
+            fi
+        fi
+
+        print_info "Working on issue #${ISSUE_NUMBER} using branch: ${BRANCH_NAME}"
+    fi
+
     # Validate required parameters
-    if [ -z "$BRANCH_NAME" ] && [ -z "$PR_NUMBER" ]; then
-        print_error "Either --branch or --pr must be specified"
+    if [ -z "$BRANCH_NAME" ] && [ -z "$PR_NUMBER" ] && [ -z "$ISSUE_NUMBER" ]; then
+        print_error "Either --branch, --pr, or --issue must be specified"
         echo ""
         show_usage
         exit 1

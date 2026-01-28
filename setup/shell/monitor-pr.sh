@@ -55,6 +55,7 @@ load_state() {
         LAST_CHECK_TIME=""
         GIT_CHANGES_NOTIFIED="false"
         CONSECUTIVE_FAILURES=0
+        LAST_ISSUE_COMMENT_ID=""
     fi
 }
 
@@ -64,6 +65,7 @@ save_state() {
 LAST_CHECK_TIME="$LAST_CHECK_TIME"
 GIT_CHANGES_NOTIFIED="$GIT_CHANGES_NOTIFIED"
 CONSECUTIVE_FAILURES=$CONSECUTIVE_FAILURES
+LAST_ISSUE_COMMENT_ID="$LAST_ISSUE_COMMENT_ID"
 EOF
 }
 
@@ -124,6 +126,60 @@ check_pr_comments() {
     return 1
 }
 
+# Check for new Issue Comments (pure PR comments) and send content to Claude
+check_issue_comments() {
+    local pr_number="$1"
+
+    # Fetch issue comments, filter by ID if we have a last processed ID
+    local comments=""
+    for attempt in 1 2 3; do
+        if [ -n "$LAST_ISSUE_COMMENT_ID" ]; then
+            comments=$(gh api repos/:owner/:repo/issues/"$pr_number"/comments --jq "
+                map(select(.id > $LAST_ISSUE_COMMENT_ID)) |
+                map(select(.body | startswith(\"Claude Replied:\") | not)) |
+                sort_by(.id)
+            " 2>/dev/null)
+        else
+            comments=$(gh api repos/:owner/:repo/issues/"$pr_number"/comments --jq "
+                map(select(.body | startswith(\"Claude Replied:\") | not)) |
+                sort_by(.id)
+            " 2>/dev/null)
+        fi
+
+        if [ $? -eq 0 ]; then
+            break
+        fi
+        sleep $((attempt * 2))
+    done
+
+    if [ -z "$comments" ] || [ "$comments" = "[]" ]; then
+        return 0
+    fi
+
+    # Process each new comment
+    local comment_count=$(echo "$comments" | jq 'length')
+    if [ "$comment_count" -gt 0 ]; then
+        echo "$(date): Found $comment_count new issue comment(s)"
+
+        # Get the first unprocessed comment
+        local comment_id=$(echo "$comments" | jq -r '.[0].id')
+        local comment_body=$(echo "$comments" | jq -r '.[0].body')
+        local comment_user=$(echo "$comments" | jq -r '.[0].user.login')
+
+        echo "$(date): Processing issue comment #$comment_id from $comment_user"
+
+        if session_exists "$CLAUDE_SESSION"; then
+            # Send the comment content to Claude
+            tmux send-keys -t "$CLAUDE_SESSION" "PR Comment from $comment_user: $comment_body"
+            tmux send-keys -t "$CLAUDE_SESSION" C-m
+            LAST_ISSUE_COMMENT_ID="$comment_id"
+            return 1  # Signal that we sent a comment
+        fi
+    fi
+
+    return 0
+}
+
 # Main logic (single run)
 main() {
     echo "$(date): PR Monitor check started"
@@ -166,6 +222,18 @@ main() {
     if [ "$CONSECUTIVE_FAILURES" -ge 5 ]; then
         echo "$(date): Too many failures, skipping API call"
         save_state
+        exit 0
+    fi
+
+    # Check for new Issue Comments (pure PR comments)
+    check_issue_comments "$pr_number"
+    issue_comment_sent=$?
+
+    # If we sent an issue comment, skip review comments check this run
+    if [ "$issue_comment_sent" -eq 1 ]; then
+        echo "$(date): Issue comment sent to Claude, skipping review comments check"
+        save_state
+        echo "$(date): PR Monitor check completed"
         exit 0
     fi
 

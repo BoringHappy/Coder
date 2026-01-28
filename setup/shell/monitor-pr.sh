@@ -126,6 +126,15 @@ check_pr_comments() {
     return 1
 }
 
+# Check if a comment has the eyes (👀) reaction
+has_eyes_reaction() {
+    local comment_id="$1"
+    local has_eyes=$(gh api repos/:owner/:repo/issues/comments/"$comment_id"/reactions --jq '
+        map(select(.content == "eyes")) | length > 0
+    ' 2>/dev/null)
+    [ "$has_eyes" = "true" ]
+}
+
 # Check for new Issue Comments (pure PR comments) and send content to Claude
 check_issue_comments() {
     local pr_number="$1"
@@ -156,15 +165,19 @@ check_issue_comments() {
         return 0
     fi
 
-    # Process each new comment
+    # Process comments, skipping those with eyes reaction
     local comment_count=$(echo "$comments" | jq 'length')
-    if [ "$comment_count" -gt 0 ]; then
-        echo "$(date): Found $comment_count new issue comment(s)"
+    for i in $(seq 0 $((comment_count - 1))); do
+        local comment_id=$(echo "$comments" | jq -r ".[$i].id")
+        local comment_body=$(echo "$comments" | jq -r ".[$i].body")
+        local comment_user=$(echo "$comments" | jq -r ".[$i].user.login")
 
-        # Get the first unprocessed comment
-        local comment_id=$(echo "$comments" | jq -r '.[0].id')
-        local comment_body=$(echo "$comments" | jq -r '.[0].body')
-        local comment_user=$(echo "$comments" | jq -r '.[0].user.login')
+        # Skip comments that already have eyes reaction (acknowledged)
+        if has_eyes_reaction "$comment_id"; then
+            echo "$(date): Skipping comment #$comment_id (already has 👀 reaction)"
+            LAST_ISSUE_COMMENT_ID="$comment_id"
+            continue
+        fi
 
         echo "$(date): Processing issue comment #$comment_id from $comment_user"
 
@@ -175,7 +188,7 @@ check_issue_comments() {
             LAST_ISSUE_COMMENT_ID="$comment_id"
             return 1  # Signal that we sent a comment
         fi
-    fi
+    done
 
     return 0
 }

@@ -19,7 +19,7 @@ CodeMate 通过在隔离的 Docker 容器中运行 Claude Code 来解决这个�
 - 配置 Oh My Zsh 的 zsh
 - 持久化 Claude 配置
 - 内置 Claude Code Skills 用于 PR 工作流自动化
-- Slack 通知（当 Claude 停止时，通过 `SLACK_WEBHOOK`）
+- Slack 通知（当 Claude 停止时，需配置 `SLACK_WEBHOOK`）
 - tmux 会话管理与 PR 评论监控
 
 ## 快速开始

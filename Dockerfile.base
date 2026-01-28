@@ -24,9 +24,9 @@ RUN set -ex \
     && chown -R agent:agent /usr/local/share/npm-global
 
 # Install CLI tools, development packages, Node.js LTS, and agent-browser
-# Use Azure CDN mirror for faster downloads (GitHub Actions runs on Azure)
-RUN sed -i 's|http://ports.ubuntu.com|http://azure.ports.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || \
-    sed -i 's|http://ports.ubuntu.com|http://azure.ports.ubuntu.com|g' /etc/apt/sources.list
+# Use AWS mirrors for faster downloads in GitHub Actions
+RUN sed -i 's|http://ports.ubuntu.com|http://us-east-1.ec2.ports.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || \
+    sed -i 's|http://ports.ubuntu.com|http://us-east-1.ec2.ports.ubuntu.com|g' /etc/apt/sources.list
 
 RUN set -euxo pipefail \
     && apt-get update \

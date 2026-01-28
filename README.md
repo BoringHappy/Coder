@@ -1,5 +1,7 @@
 # CodeMate
 
+English | [简体中文](README_CN.md)
+
 Docker-based Claude Code environment with automated Git/PR setup.
 
 > **⚠️ Security Notice:** This container runs with `--dangerously-skip-permissions` by default, allowing Claude to execute commands without confirmation. Use only in isolated environments with trusted repositories.

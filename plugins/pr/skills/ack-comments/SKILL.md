@@ -1,17 +1,17 @@
 ---
 name: ack-comments
-description: Acknowledges new PR issue comments by replying with an eye emoji (👀). Use when you need to mark issue comments as seen before processing them.
+description: Acknowledges new PR issue comments by adding an eye emoji (👀) reaction. Use when you need to mark issue comments as seen after processing them.
 ---
 
 # Acknowledge PR Issue Comments
 
-Replies to new PR issue comments with an eye emoji (👀) to indicate they have been seen.
+Adds a 👀 reaction to PR issue comments to indicate they have been seen and addressed.
 
 ## What it does
 
 1. **Fetches issue comments**: Gets all issue comments (pure PR comments) from the current pull request
-2. **Filters unacknowledged comments**: Skips comments that already have a reply containing 👀
-3. **Replies with eye emoji**: Posts a reply with 👀 to each new comment to mark it as acknowledged
+2. **Filters unacknowledged comments**: Skips comments that already have the 👀 reaction
+3. **Adds eye reaction**: Adds 👀 reaction to each new comment to mark it as acknowledged
 
 ## Current PR Issue Comments
 
@@ -23,15 +23,15 @@ Issue comments (showing comment ID and body):
 
 ## Instructions
 
-For each issue comment shown above that does NOT already have a 👀 reply:
+For each issue comment shown above that does NOT already have a 👀 reaction:
 
-1. **Check if already acknowledged**: Look for existing replies to the comment that contain 👀
-2. **Reply with eye emoji**: Use the following command to reply:
+1. **Check if already acknowledged**: Look at the `reactions.eyes` count in the comment data
+2. **Add eye reaction**: Use the following command to add the reaction:
    ```bash
    gh api repos/:owner/:repo/issues/comments/{comment_id}/reactions -X POST -f content=eyes
    ```
 
-   Note: This adds an "eyes" reaction (👀) to the comment rather than a text reply, which is cleaner.
+   Note: This adds an "eyes" reaction (👀) to the comment, which is cleaner than a text reply.
 
 3. **Report status**: Tell the user which comments were acknowledged
 

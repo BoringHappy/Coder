@@ -45,10 +45,7 @@ PAYLOAD=$(jq -n \
           },
           {
             type: "section",
-            fields: [
-              { type: "mrkdwn", text: ("*PR Title:*\n" + $pr_title) },
-              { type: "mrkdwn", text: ("*Latest Commit:*\n" + $commit) }
-            ]
+            text: { type: "mrkdwn", text: ("*PR:* " + $pr_title + "\n*Commit:* " + $commit) }
           },
           {
             type: "actions",

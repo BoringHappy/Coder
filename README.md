@@ -196,11 +196,54 @@ CodeMate comes with pre-installed skills from the [CodeMatePlugin](https://githu
 | `/pr:get-details` | Fetch PR information including title, description, file changes, and review comments |
 | `/pr:fix-comments` | Read PR review comments, fix the issues, commit changes, and reply to comments |
 | `/pr:update` | Update PR title and/or summary. Use `--summary-only` to update only the summary |
+| `/pr:ack-comments` | Acknowledge PR issue comments by adding 👀 reaction |
 
 **Browser Plugin** (`agent-browser`):
 | Command | Description |
 |---------|-------------|
 | `/agent-browser` | Automate browser interactions for web testing, form filling, screenshots, and data extraction |
+
+## PR Comment Monitoring
+
+CodeMate automatically monitors PR comments and notifies Claude when new feedback arrives. A cron job runs every minute to check for new comments.
+
+### Comment Types
+
+GitHub PRs have two types of comments that CodeMate monitors:
+
+| Type | Location | API Endpoint | Use Case |
+|------|----------|--------------|----------|
+| **Review Comments** | Files changed tab (inline) | `/pulls/{pr}/comments` | Code-specific feedback on particular lines |
+| **Issue Comments** | Conversation tab | `/issues/{pr}/comments` | General discussion, questions, requests |
+
+### Review Comments Workflow
+
+When someone leaves a **review comment** (inline code comment):
+
+1. Monitor detects unresolved review comments
+2. Sends message to Claude: `"Please Use /fix-comments skill to address comments"`
+3. Claude uses `/pr:fix-comments` skill to:
+   - Read the feedback
+   - Make code changes
+   - Commit and push
+   - Reply with "Claude Replied: ..." to mark as resolved
+
+### Issue Comments Workflow
+
+When someone leaves an **issue comment** (general PR comment):
+
+1. Monitor detects new issue comments without 👀 reaction
+2. Sends the actual comment content to Claude
+3. Claude processes the request
+4. Claude uses `/pr:ack-comments` skill to add 👀 reaction
+5. Future runs skip comments with 👀 reaction
+
+### Filtering Logic
+
+Comments are filtered out if they:
+- Start with "Claude Replied:" (already handled)
+- Have 👀 reaction (already acknowledged)
+- Were created by Claude itself
 
 ## Best Practices
 

@@ -608,6 +608,11 @@ main() {
         # Set branch name based on issue number
         BRANCH_NAME="issue-${ISSUE_NUMBER}"
 
+        # Check if branch already exists
+        if git show-ref --verify --quiet refs/heads/issue-${ISSUE_NUMBER} 2>/dev/null; then
+            print_warning "Branch issue-${ISSUE_NUMBER} already exists"
+        fi
+
         # Extract repo owner and name from GIT_REPO_URL for issue URL
         if [ -n "$GIT_REPO_URL" ]; then
             # Remove .git suffix and extract owner/repo

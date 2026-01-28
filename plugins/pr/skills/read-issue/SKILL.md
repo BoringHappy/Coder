@@ -1,0 +1,48 @@
+---
+name: read-issue
+description: Reads details of a GitHub issue including title, description, labels, and comments. Use when the user wants to view issue information or start working on an issue.
+---
+
+# Read GitHub Issue
+
+Retrieves and displays GitHub issue information including title, description, labels, assignees, and comments.
+
+## Issue Information
+
+Title:
+!`gh issue view $ISSUE_NUMBER --json title -q .title | cat`
+
+State:
+!`gh issue view $ISSUE_NUMBER --json state -q .state | cat`
+
+Labels:
+!`gh issue view $ISSUE_NUMBER --json labels -q '.labels[].name' | cat`
+
+Assignees:
+!`gh issue view $ISSUE_NUMBER --json assignees -q '.assignees[].login' | cat`
+
+Description:
+!`gh issue view $ISSUE_NUMBER --json body -q .body | cat`
+
+Comments:
+!`gh issue view $ISSUE_NUMBER --json comments -q '.comments[] | "**\(.author.login)** - \(.createdAt):\n\(.body)\n"' | cat`
+
+Issue URL:
+!`gh issue view $ISSUE_NUMBER --json url -q .url | cat`
+
+## Instructions
+
+**IMPORTANT: You MUST output a summary to the user.** After gathering the issue information above, display a formatted summary that includes:
+
+1. **Issue Number** - The issue number
+2. **Title** - The issue title
+3. **State** - Whether the issue is open or closed
+4. **Labels** - Any labels attached to the issue
+5. **Assignees** - Who is assigned to the issue (if any)
+6. **Description** - The issue description/body
+7. **Comments** - Summary of comments on the issue (if any)
+8. **Issue URL** - Direct link to the issue
+
+Format the output clearly using markdown so the user can see the issue details at a glance. This summary should always be visible in your response to the user.
+
+After displaying the issue information, you should analyze the requirements and start planning how to address the issue.

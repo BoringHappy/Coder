@@ -126,31 +126,25 @@ check_pr_comments() {
     return 1
 }
 
-# Check if a comment has the eyes (👀) reaction
-has_eyes_reaction() {
-    local comment_id="$1"
-    local has_eyes=$(gh api repos/:owner/:repo/issues/comments/"$comment_id"/reactions --jq '
-        map(select(.content == "eyes")) | length > 0
-    ' 2>/dev/null)
-    [ "$has_eyes" = "true" ]
-}
-
 # Check for new Issue Comments (pure PR comments) and send content to Claude
 check_issue_comments() {
     local pr_number="$1"
 
-    # Fetch issue comments, filter by ID if we have a last processed ID
+    # Fetch issue comments with reactions in a single API call
+    # Filter out comments that: are already processed, start with "Claude Replied:", or have eyes reaction
     local comments=""
     for attempt in 1 2 3; do
         if [ -n "$LAST_ISSUE_COMMENT_ID" ]; then
             comments=$(gh api repos/:owner/:repo/issues/"$pr_number"/comments --jq "
                 map(select(.id > $LAST_ISSUE_COMMENT_ID)) |
                 map(select(.body | startswith(\"Claude Replied:\") | not)) |
+                map(select(.reactions.eyes == 0)) |
                 sort_by(.id)
             " 2>/dev/null)
         else
             comments=$(gh api repos/:owner/:repo/issues/"$pr_number"/comments --jq "
                 map(select(.body | startswith(\"Claude Replied:\") | not)) |
+                map(select(.reactions.eyes == 0)) |
                 sort_by(.id)
             " 2>/dev/null)
         fi
@@ -165,19 +159,12 @@ check_issue_comments() {
         return 0
     fi
 
-    # Process comments, skipping those with eyes reaction
+    # Process the first unacknowledged comment
     local comment_count=$(echo "$comments" | jq 'length')
-    for i in $(seq 0 $((comment_count - 1))); do
-        local comment_id=$(echo "$comments" | jq -r ".[$i].id")
-        local comment_body=$(echo "$comments" | jq -r ".[$i].body")
-        local comment_user=$(echo "$comments" | jq -r ".[$i].user.login")
-
-        # Skip comments that already have eyes reaction (acknowledged)
-        if has_eyes_reaction "$comment_id"; then
-            echo "$(date): Skipping comment #$comment_id (already has 👀 reaction)"
-            LAST_ISSUE_COMMENT_ID="$comment_id"
-            continue
-        fi
+    if [ "$comment_count" -gt 0 ]; then
+        local comment_id=$(echo "$comments" | jq -r '.[0].id')
+        local comment_body=$(echo "$comments" | jq -r '.[0].body')
+        local comment_user=$(echo "$comments" | jq -r '.[0].user.login')
 
         echo "$(date): Processing issue comment #$comment_id from $comment_user"
 
@@ -188,7 +175,7 @@ check_issue_comments() {
             LAST_ISSUE_COMMENT_ID="$comment_id"
             return 1  # Signal that we sent a comment
         fi
-    done
+    fi
 
     return 0
 }

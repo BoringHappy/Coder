@@ -24,6 +24,8 @@ CodeMate 通过在隔离的 Docker 容器中运行 Claude Code 来解决这个�
 
 ## 快速开始
 
+https://github.com/user-attachments/assets/bb0c68ef-da05-401a-adb3-ea8ccc22667c
+
 ### 前置要求
 
 - Docker

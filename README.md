@@ -24,6 +24,8 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 
 ## Quick Start
 
+https://github.com/user-attachments/assets/bb0c68ef-da05-401a-adb3-ea8ccc22667c
+
 ### Prerequisites
 
 - Docker

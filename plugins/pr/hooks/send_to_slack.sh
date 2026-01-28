@@ -69,6 +69,6 @@ curl -s -X POST -H 'Content-type: application/json' \
     "$SLACK_WEBHOOK" > /dev/null 2>&1
 
 # Update commit file with current commit to avoid duplicate notifications
-git rev-parse HEAD 2>/dev/null > "/tmp/.session_commit"
+git rev-parse HEAD 2>/dev/null > "$COMMIT_FILE"
 
 exit 0

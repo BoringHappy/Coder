@@ -9,26 +9,23 @@ Retrieves and displays GitHub issue information including title, description, la
 
 ## Issue Information
 
-Title:
-!`gh issue view $ISSUE_NUMBER --json title -q .title | cat`
+!`gh issue view $ISSUE_NUMBER --json title,state,labels,assignees,body,comments,url -q '
+"**Title:** \(.title)
 
-State:
-!`gh issue view $ISSUE_NUMBER --json state -q .state | cat`
+**State:** \(.state)
 
-Labels:
-!`gh issue view $ISSUE_NUMBER --json labels -q '.labels[].name' | cat`
+**Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)
 
-Assignees:
-!`gh issue view $ISSUE_NUMBER --json assignees -q '.assignees[].login' | cat`
+**Assignees:** \(if .assignees | length > 0 then (.assignees | map(.login) | join(", ")) else "None" end)
 
-Description:
-!`gh issue view $ISSUE_NUMBER --json body -q .body | cat`
+**Issue URL:** \(.url)
 
-Comments:
-!`gh issue view $ISSUE_NUMBER --json comments -q '.comments[] | "**\(.author.login)** - \(.createdAt):\n\(.body)\n"' | cat`
+**Description:**
+\(.body)
 
-Issue URL:
-!`gh issue view $ISSUE_NUMBER --json url -q .url | cat`
+**Comments:**
+\(if .comments | length > 0 then (.comments | map("**\(.author.login)** - \(.createdAt):\n\(.body)") | join("\n\n")) else "No comments" end)
+"' | cat`
 
 ## Instructions
 

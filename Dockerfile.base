@@ -82,6 +82,3 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
 
 # Install Claude Code
 RUN curl -fsSL https://claude.ai/install.sh | bash
-
-# Switch back to root for downstream images
-USER root

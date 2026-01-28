@@ -3,6 +3,9 @@
 ARG BASE_IMAGE=ghcr.io/boringhappy/codemate-base:latest
 FROM ${BASE_IMAGE}
 
+# Switch to root for setup operations
+USER root
+
 # Copy setup scripts as root (755 allows agent user to read/execute)
 COPY --chmod=755 setup /usr/local/bin/setup
 

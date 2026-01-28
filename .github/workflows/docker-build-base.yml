@@ -2,8 +2,8 @@ name: Build and Push Base Image
 
 on:
   schedule:
-    # Run every Sunday at 03:17 UTC (off-peak hours with specific minute)
-    - cron: '17 3 * * 0'
+    # Run every Sunday at 03:47 UTC (off-peak hours)
+    - cron: '47 3 * * 0'
   push:
     branches:
       - main

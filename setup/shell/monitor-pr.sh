@@ -183,7 +183,7 @@ check_issue_comments() {
 
         if session_exists "$CLAUDE_SESSION"; then
             # Send the comment content to Claude with instruction to acknowledge
-            tmux send-keys -t "$CLAUDE_SESSION" "PR Comment from $comment_user: $comment_body (please use /pr:ack-comments when addressed)"
+            tmux send-keys -t "$CLAUDE_SESSION" "PR Comment from $comment_user: $comment_body (After addressing, run /pr:ack-comments to add 👀 reaction)"
             tmux send-keys -t "$CLAUDE_SESSION" C-m
             LAST_ISSUE_COMMENT_ID="$comment_id"
             return 1  # Signal that we sent a comment

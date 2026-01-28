@@ -18,6 +18,7 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 - Persistent Claude configuration
 - Built-in Claude Code skills for PR workflow automation
 - Slack notifications when Claude stops (via `SLACK_WEBHOOK`)
+- tmux session management with PR comment monitoring
 
 ## Quick Start
 
@@ -61,6 +62,9 @@ chmod +x start.sh
 
 # Run with custom volume mounts (optional)
 ./start.sh --branch feature/xyz --mount ~/data:/data
+
+# Run with initial query to Claude
+./start.sh --branch feature/xyz --query "Please review the code and fix any issues"
 
 # Build and run from local Dockerfile
 ./start.sh --build --branch feature/xyz
@@ -160,6 +164,9 @@ Then build and run with your custom Dockerfile:
 | `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
 | `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:latest`) |
 | `SLACK_WEBHOOK` | No | Slack Incoming Webhook URL for notifications when Claude stops |
+| `ANTHROPIC_AUTH_TOKEN` | No | Anthropic API token (for custom API endpoints) |
+| `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
+| `QUERY` | No | Initial query to send to Claude after startup |
 
 
 ## How It Works
@@ -168,7 +175,30 @@ On startup, the container:
 1. Clones/updates repository to `/home/agent/<repo-name>`
 2. Checks out specified branch or PR
 3. Creates PR if working on new branch
-4. Starts Claude Code with `--dangerously-skip-permissions` flag
+4. Starts Claude Code in a tmux session with `--dangerously-skip-permissions` flag
+5. Sends initial query to Claude if `--query` is provided
+6. Runs a cron job to monitor PR comments (every minute)
+
+### Session Management
+
+CodeMate runs Claude in a tmux session for better process management:
+
+```bash
+# List tmux sessions
+tmux ls
+
+# Attach to Claude session
+tmux attach -t claude-code
+
+# Kill Claude session
+tmux kill-server
+
+# View PR monitor log
+tail -f /tmp/pr-monitor.log
+
+# View cron jobs
+crontab -l
+```
 
 ## Skills
 

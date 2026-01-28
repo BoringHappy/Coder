@@ -15,8 +15,9 @@ COPY --chmod=755 setup /usr/local/bin/setup
 RUN echo "* * * * * agent /usr/local/bin/setup/shell/monitor-pr.sh >> /tmp/pr-monitor.log 2>&1" > /etc/cron.d/pr-monitor \
     && chmod 0644 /etc/cron.d/pr-monitor
 
-# Switch to agent user
+# Switch to agent user and install Claude Code
 USER agent
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["/usr/local/bin/setup/run.sh"]

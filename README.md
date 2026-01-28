@@ -171,6 +171,8 @@ Then build and run with your custom Dockerfile:
 
 ## How It Works
 
+CodeMate uses a separate [base image (`codemate-base`)](https://github.com/BoringHappy/CodeMate/pkgs/container/codemate-base) that is rebuilt weekly to keep system packages and development tools up-to-date.
+
 On startup, the container:
 1. Clones/updates repository to `/home/agent/<repo-name>`
 2. Checks out specified branch or PR

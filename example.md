@@ -1,4 +1,4 @@
-# CodeMate Usage Examples
+# Examples
 
 This document provides practical examples of using CodeMate for common development workflows.
 

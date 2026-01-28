@@ -251,6 +251,126 @@ Comments are filtered out if they:
 
 ## Best Practices
 
+### Working with Different Programming Languages
+
+CodeMate comes with pre-installed toolchains for multiple languages. Here are best practices for common project types:
+
+#### Python Projects
+
+**Using uv (recommended for modern Python projects):**
+
+```bash
+# uv is pre-installed in CodeMate
+# Initialize a new project
+uv init my-project
+
+# Install dependencies
+uv pip install -r requirements.txt
+
+# Run scripts with uv
+uv run python script.py
+
+# Create and manage virtual environments
+uv venv
+source .venv/bin/activate
+```
+
+**Using pip and virtualenv:**
+
+```bash
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run tests
+pytest
+```
+
+#### Rust Projects
+
+**Using cargo:**
+
+```bash
+# cargo is pre-installed in CodeMate
+# Create a new project
+cargo new my-project
+
+# Build the project
+cargo build
+
+# Run tests
+cargo test
+
+# Run the project
+cargo run
+
+# Check code without building
+cargo check
+```
+
+#### Node.js Projects
+
+**Using npm:**
+
+```bash
+# Install dependencies
+npm install
+
+# Run scripts
+npm run build
+npm test
+npm start
+```
+
+**Using yarn or pnpm:**
+
+If your project uses yarn or pnpm, install them in a custom Dockerfile:
+
+```dockerfile
+FROM ghcr.io/boringhappy/codemate:latest
+
+# Install yarn
+RUN npm install -g yarn
+
+# Or install pnpm
+RUN npm install -g pnpm
+```
+
+#### Go Projects
+
+**Using go modules:**
+
+```bash
+# Go is pre-installed in CodeMate
+# Initialize a new module
+go mod init github.com/user/project
+
+# Download dependencies
+go mod download
+
+# Build the project
+go build
+
+# Run tests
+go test ./...
+
+# Run the project
+go run main.go
+```
+
+#### Multi-Language Projects
+
+For projects using multiple languages, CodeMate's pre-installed toolchains work together seamlessly:
+
+```bash
+# Example: Full-stack project with Go backend and Node.js frontend
+cd backend && go build
+cd ../frontend && npm install && npm run build
+```
+
 ### Add a Pull Request Template
 
 Create `.github/PULL_REQUEST_TEMPLATE.md` in your target repository to standardize PR descriptions:

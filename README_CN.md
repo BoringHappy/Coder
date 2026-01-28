@@ -251,6 +251,126 @@ Comments 在以下情况下会被过滤掉：
 
 ## 最佳实践
 
+### 使用不同编程语言
+
+CodeMate 预装了多种语言的工具链。以下是常见项目类型的最佳实践：
+
+#### Python 项目
+
+**使用 uv（推荐用于现代 Python 项目）：**
+
+```bash
+# uv 已预装在 CodeMate 中
+# 初始化新项目
+uv init my-project
+
+# 安装依赖
+uv pip install -r requirements.txt
+
+# 使用 uv 运行脚本
+uv run python script.py
+
+# 创建和管理虚拟环境
+uv venv
+source .venv/bin/activate
+```
+
+**使用 pip 和 virtualenv：**
+
+```bash
+# 创建虚拟环境
+python -m venv .venv
+source .venv/bin/activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 运行测试
+pytest
+```
+
+#### Rust 项目
+
+**使用 cargo：**
+
+```bash
+# cargo 已预装在 CodeMate 中
+# 创建新项目
+cargo new my-project
+
+# 构建项目
+cargo build
+
+# 运行测试
+cargo test
+
+# 运行项目
+cargo run
+
+# 检查代码而不构建
+cargo check
+```
+
+#### Node.js 项目
+
+**使用 npm：**
+
+```bash
+# 安装依赖
+npm install
+
+# 运行脚本
+npm run build
+npm test
+npm start
+```
+
+**使用 yarn 或 pnpm：**
+
+如果你的项目使用 yarn 或 pnpm，在自定义 Dockerfile 中安装它们：
+
+```dockerfile
+FROM ghcr.io/boringhappy/codemate:latest
+
+# 安装 yarn
+RUN npm install -g yarn
+
+# 或安装 pnpm
+RUN npm install -g pnpm
+```
+
+#### Go 项目
+
+**使用 go modules：**
+
+```bash
+# Go 已预装在 CodeMate 中
+# 初始化新模块
+go mod init github.com/user/project
+
+# 下载依赖
+go mod download
+
+# 构建项目
+go build
+
+# 运行测试
+go test ./...
+
+# 运行项目
+go run main.go
+```
+
+#### 多语言项目
+
+对于使用多种语言的项目，CodeMate 的预装工具链可以无缝协作：
+
+```bash
+# 示例：使用 Go 后端和 Node.js 前端的全栈项目
+cd backend && go build
+cd ../frontend && npm install && npm run build
+```
+
 ### 添加 Pull Request 模板
 
 在目标仓库中创建 `.github/PULL_REQUEST_TEMPLATE.md` 以标准化 PR 描述：

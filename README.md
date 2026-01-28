@@ -185,7 +185,7 @@ On startup, the container:
 
 ## Skills
 
-CodeMate comes with pre-installed skills from the [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) repository and [agent-browser](https://github.com/vercel-labs/agent-browser). These skills are automatically available when you start the container and provide workflow automation for Git, PR management, and browser interactions.
+[CodeMate](https://github.com/BoringHappy/CodeMate) comes with pre-installed skills from the [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) repository and [agent-browser](https://github.com/vercel-labs/agent-browser). These skills are automatically available when you start the container and provide workflow automation for Git, PR management, and browser interactions.
 
 ### Available Plugins
 

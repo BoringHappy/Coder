@@ -185,7 +185,7 @@ CodeMate 使用单独的[基础镜像（`codemate-base`）](https://github.com/B
 
 ## 技能
 
-CodeMate 预装了来自 [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) 仓库和 [agent-browser](https://github.com/vercel-labs/agent-browser) 的技能。这些技能在启动容器时自动可用，并为 Git、PR 管理和浏览器交互提供工作流自动化。
+[CodeMate](https://github.com/BoringHappy/CodeMate) 预装了来自 [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) 仓库和 [agent-browser](https://github.com/vercel-labs/agent-browser) 的技能。这些技能在启动容器时自动可用，并为 Git、PR 管理和浏览器交互提供工作流自动化。
 
 ### 可用插件
 
@@ -199,8 +199,8 @@ CodeMate 预装了来自 [CodeMatePlugin](https://github.com/BoringHappy/CodeMat
 |---------|-------------|
 | `/pr:get-details` | 获取 PR 信息，包括标题、描述、文件更改和审查评论 |
 | `/pr:fix-comments` | 读取 PR 审查评论，修复问题，提交更改并回复评论 |
-| `/pr:update` | 更新 PR 标题和/或摘要。使用 `--summary-only` 仅更新摘要 |
-| `/pr:ack-comments` | 通过添加 👀 反应确认 PR 问题评论 |
+| `/pr:update` | 更新 PR 标题和摘要。使用 `--summary-only` 仅更新摘要 |
+| `/pr:ack-comments` | 通过添加 👀 表情确认 PR 问题评论 |
 
 **浏览器插件** (`agent-browser`)：
 | 命令 | 描述 |

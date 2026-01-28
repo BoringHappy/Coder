@@ -19,7 +19,7 @@ PR Number:
 !`gh pr view --json number -q .number | cat`
 
 Issue comments (showing comment ID and body):
-!`gh api repos/:owner/:repo/issues/$(gh pr view --json number -q .number)/comments --jq '.[] | "ID: \(.id) | User: \(.user.login) | Body: \(.body[0:100])..."' | cat`
+!`gh api repos/:owner/:repo/issues/$(gh pr view --json number -q .number)/comments --jq '.[] | "ID: \(.id) | User: \(.user.login) | Body: \(.body)"' | cat`
 
 ## Instructions
 

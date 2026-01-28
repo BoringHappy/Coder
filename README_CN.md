@@ -10,7 +10,7 @@
 
 厌倦了在与 AI 结对编程时批准每一个命令？但又不愿在本地机器上授予完全绕过权限？每次 GitHub 交互都需要手动确认会打断你的工作流程。
 
-CodeMate 通过在隔离的 Docker 容器中运行 Claude Code 来解决这个问题，让它可以自由操作而不会危及你的系统。真正的结对编程从这里开始——让 Claude 专注于编码，而你专注于更大的图景。
+CodeMate 通过在隔离的 Docker 容器中运行 Claude Code 来解决这个问题，让它可以自由操作而不会危及你的系统。真正的结对编程从这里开始——让 Claude 专注于编码，而你把握全局方向。
 
 ## 功能特性
 
@@ -18,7 +18,7 @@ CodeMate 通过在隔离的 Docker 容器中运行 Claude Code 来解决这个�
 - 预装：Go、Node.js、Python、Rust、uv
 - 配置 Oh My Zsh 的 zsh
 - 持久化 Claude 配置
-- 内置 Claude Code 技能用于 PR 工作流自动化
+- 内置 Claude Code Skills 用于 PR 工作流自动化
 - Slack 通知（当 Claude 停止时，通过 `SLACK_WEBHOOK`）
 - tmux 会话管理与 PR 评论监控
 

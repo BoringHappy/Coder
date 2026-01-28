@@ -16,10 +16,6 @@ if [ -f "$COMMIT_FILE" ]; then
     fi
 fi
 
-# Get repo name and branch from git
-REPO_NAME=$(basename -s .git "$(git config --get remote.origin.url)" 2>/dev/null || echo "unknown")
-BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-
 # Get PR info using gh CLI
 PR_INFO=$(gh pr view --json number,title,url 2>/dev/null)
 if [ -n "$PR_INFO" ]; then
@@ -33,14 +29,39 @@ fi
 # Get last commit message
 LAST_COMMIT=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "No commit found")
 
-# Build Slack message payload with actual newlines
-MESSAGE="*Repository:* ${REPO_NAME}
-*Branch:* ${BRANCH_NAME}
-*PR Link:* ${PR_URL}
-*PR Title:* ${PR_TITLE}
-*Commit:* ${LAST_COMMIT}"
-
-PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text}')
+# Build Slack message payload using Block Kit for rich formatting
+PAYLOAD=$(jq -n \
+  --arg pr_url "$PR_URL" \
+  --arg pr_title "$PR_TITLE" \
+  --arg commit "$LAST_COMMIT" \
+  '{
+    attachments: [
+      {
+        color: "#36a64f",
+        blocks: [
+          {
+            type: "header",
+            text: { type: "plain_text", text: "Code Changes Pushed", emoji: true }
+          },
+          {
+            type: "section",
+            text: { type: "mrkdwn", text: ("*PR:* " + $pr_title + "\n*Commit:* " + $commit) }
+          },
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: { type: "plain_text", text: "View PR", emoji: true },
+                url: $pr_url,
+                style: "primary"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }')
 
 # Send to Slack webhook
 curl -s -X POST -H 'Content-type: application/json' \

@@ -24,6 +24,12 @@ RUN set -ex \
     && chown -R agent:agent /usr/local/share/npm-global
 
 # Install CLI tools, development packages, Node.js LTS, and agent-browser
+# Optimize apt: use AWS mirror and disable unused repositories (multiverse, backports)
+RUN sed -i 's|http://ports.ubuntu.com|http://us-east-1.ec2.ports.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || \
+    sed -i 's|http://ports.ubuntu.com|http://us-east-1.ec2.ports.ubuntu.com|g' /etc/apt/sources.list \
+    && sed -i '/^Types:/,/^$/{ /Components:/s/ multiverse//g; }' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true \
+    && rm -f /etc/apt/sources.list.d/*backports*
+
 RUN set -euxo pipefail \
     && apt-get update \
     && apt-get install -yy --no-install-recommends ca-certificates curl gnupg locales \

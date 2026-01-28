@@ -6,7 +6,7 @@
 [ -z "$SLACK_WEBHOOK" ] && exit 0
 
 # Check if there are new commits since session start
-COMMIT_FILE="$HOME/.session_commit"
+COMMIT_FILE="/tmp/.session_commit"
 if [ -f "$COMMIT_FILE" ]; then
     LAST_NOTIFIED_COMMIT=$(cat "$COMMIT_FILE")
     CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null)
@@ -69,6 +69,6 @@ curl -s -X POST -H 'Content-type: application/json' \
     "$SLACK_WEBHOOK" > /dev/null 2>&1
 
 # Update commit file with current commit to avoid duplicate notifications
-git rev-parse HEAD 2>/dev/null > "$COMMIT_FILE"
+git rev-parse HEAD 2>/dev/null > "/tmp/.session_commit"
 
 exit 0

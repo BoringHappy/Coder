@@ -37,7 +37,7 @@ session_exists() {
 
 # Function to check if Claude session is stopped
 is_session_stopped() {
-    local status_file="$HOME/.session_status"
+    local status_file="/tmp/.session_status"
     if [ -f "$status_file" ]; then
         local last_line=$(tail -n 10 "$status_file" | grep -v '^$' | tail -n 1)
         if [[ "$last_line" =~ Stop$ ]]; then

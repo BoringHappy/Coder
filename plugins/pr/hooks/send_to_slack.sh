@@ -16,10 +16,6 @@ if [ -f "$COMMIT_FILE" ]; then
     fi
 fi
 
-# Get repo name and branch from git
-REPO_NAME=$(basename -s .git "$(git config --get remote.origin.url)" 2>/dev/null || echo "unknown")
-BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
-
 # Get PR info using gh CLI
 PR_INFO=$(gh pr view --json number,title,url 2>/dev/null)
 if [ -n "$PR_INFO" ]; then
@@ -35,8 +31,6 @@ LAST_COMMIT=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "No commit fou
 
 # Build Slack message payload using Block Kit for rich formatting
 PAYLOAD=$(jq -n \
-  --arg repo "$REPO_NAME" \
-  --arg branch "$BRANCH_NAME" \
   --arg pr_url "$PR_URL" \
   --arg pr_title "$PR_TITLE" \
   --arg commit "$LAST_COMMIT" \
@@ -48,13 +42,6 @@ PAYLOAD=$(jq -n \
           {
             type: "header",
             text: { type: "plain_text", text: "Code Changes Pushed", emoji: true }
-          },
-          {
-            type: "section",
-            fields: [
-              { type: "mrkdwn", text: ("*Repository:*\n" + $repo) },
-              { type: "mrkdwn", text: ("*Branch:*\n" + $branch) }
-            ]
           },
           {
             type: "section",

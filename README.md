@@ -179,27 +179,6 @@ On startup, the container:
 5. Sends initial query to Claude if `--query` is provided
 6. Runs a cron job to monitor PR comments (every minute)
 
-### Session Management
-
-CodeMate runs Claude in a tmux session for better process management:
-
-```bash
-# List tmux sessions
-tmux ls
-
-# Attach to Claude session
-tmux attach -t claude-code
-
-# Kill Claude session
-tmux kill-server
-
-# View PR monitor log
-tail -f /tmp/pr-monitor.log
-
-# View cron jobs
-crontab -l
-```
-
 ## Skills
 
 CodeMate comes with pre-installed skills from the [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) repository and [agent-browser](https://github.com/vercel-labs/agent-browser). These skills are automatically available when you start the container and provide workflow automation for Git, PR management, and browser interactions.

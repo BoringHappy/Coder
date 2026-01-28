@@ -185,7 +185,7 @@ CodeMate 使用单独的[基础镜像（`codemate-base`）](https://github.com/B
 
 ## 技能
 
-[CodeMate](https://github.com/BoringHappy/CodeMate) 预装了来自 [CodeMatePlugin](https://github.com/BoringHappy/CodeMatePlugin) 仓库和 [agent-browser](https://github.com/vercel-labs/agent-browser) 的技能。这些技能在启动容器时自动可用，并为 Git、PR 管理和浏览器交互提供工作流自动化。
+[CodeMate](https://github.com/BoringHappy/CodeMate) 预装了来自 [agent-browser](https://github.com/vercel-labs/agent-browser) 的技能。这些技能在启动容器时自动可用，并为 Git、PR 管理和浏览器交互提供工作流自动化。
 
 ### 可用插件
 

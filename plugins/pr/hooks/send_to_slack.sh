@@ -33,14 +33,51 @@ fi
 # Get last commit message
 LAST_COMMIT=$(git log -1 --pretty=format:"%s" 2>/dev/null || echo "No commit found")
 
-# Build Slack message payload with actual newlines
-MESSAGE="*Repository:* ${REPO_NAME}
-*Branch:* ${BRANCH_NAME}
-*PR Link:* ${PR_URL}
-*PR Title:* ${PR_TITLE}
-*Commit:* ${LAST_COMMIT}"
-
-PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text}')
+# Build Slack message payload using Block Kit for rich formatting
+PAYLOAD=$(jq -n \
+  --arg repo "$REPO_NAME" \
+  --arg branch "$BRANCH_NAME" \
+  --arg pr_url "$PR_URL" \
+  --arg pr_title "$PR_TITLE" \
+  --arg commit "$LAST_COMMIT" \
+  '{
+    attachments: [
+      {
+        color: "#36a64f",
+        blocks: [
+          {
+            type: "header",
+            text: { type: "plain_text", text: "Code Changes Pushed", emoji: true }
+          },
+          {
+            type: "section",
+            fields: [
+              { type: "mrkdwn", text: ("*Repository:*\n" + $repo) },
+              { type: "mrkdwn", text: ("*Branch:*\n" + $branch) }
+            ]
+          },
+          {
+            type: "section",
+            fields: [
+              { type: "mrkdwn", text: ("*PR Title:*\n" + $pr_title) },
+              { type: "mrkdwn", text: ("*Latest Commit:*\n" + $commit) }
+            ]
+          },
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: { type: "plain_text", text: "View PR", emoji: true },
+                url: $pr_url,
+                style: "primary"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }')
 
 # Send to Slack webhook
 curl -s -X POST -H 'Content-type: application/json' \

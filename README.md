@@ -62,6 +62,9 @@ chmod +x start.sh
 # Run with existing PR
 ./start.sh --pr 123
 
+# Run with GitHub issue (creates branch issue-NUMBER)
+./start.sh --issue 456
+
 # Run with custom volume mounts (optional)
 ./start.sh --branch feature/xyz --mount ~/data:/data
 
@@ -161,6 +164,9 @@ Then build and run with your custom Dockerfile:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GIT_REPO_URL` | No | Repository URL (defaults to current repo's remote) |
+| `BRANCH_NAME` | No | Branch to work on |
+| `PR_NUMBER` | No | Existing PR number to work on |
+| `ISSUE_NUMBER` | No | GitHub issue number (creates branch `issue-NUMBER` and uses `/pr:read-issue` skill) |
 | `GITHUB_TOKEN` | Auto | GitHub personal access token (defaults to `gh auth token` if not provided) |
 | `GIT_USER_NAME` | Auto | Git commit author name (defaults to `git config user.name` if not provided) |
 | `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
@@ -201,11 +207,39 @@ On startup, the container:
 | `/pr:fix-comments` | Read PR review comments, fix the issues, commit changes, and reply to comments |
 | `/pr:update` | Update PR title and/or summary. Use `--summary-only` to update only the summary |
 | `/pr:ack-comments` | Acknowledge PR issue comments by adding 👀 reaction |
+| `/pr:read-issue` | Read GitHub issue details including title, description, labels, and comments |
 
 **Browser Plugin** (`agent-browser`):
 | Command | Description |
 |---------|-------------|
 | `/agent-browser` | Automate browser interactions for web testing, form filling, screenshots, and data extraction |
+
+## Issue-Based Workflow
+
+CodeMate supports starting work directly from a GitHub issue using the `--issue` flag. This workflow automatically:
+
+1. Creates a branch named `issue-{NUMBER}` (or uses existing branch if it already exists)
+2. Sends an initial query to Claude to read and address the issue using `/pr:read-issue` skill
+3. Claude analyzes the issue details (title, description, labels, comments)
+4. Claude implements the requested changes
+5. Creates a PR when you're ready to commit
+
+**Example:**
+
+```bash
+# Start working on issue #456
+./start.sh --issue 456
+```
+
+This is equivalent to:
+```bash
+./start.sh --branch issue-456 --query "Please use /pr:read-issue skill to read and address issue #456"
+```
+
+**When to use:**
+- Starting new work from a GitHub issue
+- Implementing feature requests tracked as issues
+- Fixing bugs documented in issues
 
 ## PR Comment Monitoring
 

@@ -27,7 +27,7 @@ Automatically address feedback from GitHub pull request comments.
 if [ ! -s /tmp/.pr_status ]; then
     echo "❌ Error: No PR has been created yet."
     echo ""
-    echo "Please create a PR first using /pr:create skill"
+    echo "Please create a PR first"
     exit 1
 fi
 ```

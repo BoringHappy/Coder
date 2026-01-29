@@ -158,7 +158,7 @@ def main():
                 # Check if fork workflow (upstream exists)
                 if upstream_repo_url:
                     # Fork workflow: Don't create PR yet, let user create it when ready
-                    print(f"  {YELLOW}Branch created locally. Use /pr:create when ready to submit PR.{RESET}")
+                    print(f"  {YELLOW}Branch created locally. Create PR when ready.{RESET}")
                     pr_url = ""
                 else:
                     # Standard workflow: Create PR immediately
@@ -194,7 +194,7 @@ def main():
         if pr_url:
             print(f"  {GREEN}✓ PR status saved to {pr_status_file}{RESET}")
         else:
-            print(f"  {YELLOW}No PR exists yet. Create one when ready using /pr:create{RESET}")
+            print(f"  {YELLOW}No PR exists yet. Create one when ready.{RESET}")
     except Exception as e:
         print(f"  {YELLOW}Warning: Failed to write PR status file: {e}{RESET}")
         # Clean up temp file if it exists

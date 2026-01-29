@@ -2,6 +2,10 @@
 
 <!-- Briefly describe what this PR does -->
 
+## Related Issues
+
+<!-- Link related issues using #issue_number or "Closes #issue_number" to auto-close -->
+
 ## Changes
 
 <!-- List the key changes made -->

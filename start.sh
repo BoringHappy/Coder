@@ -679,9 +679,6 @@ main() {
         fi
 
         print_info "Working on issue #${ISSUE_NUMBER} using branch: ${BRANCH_NAME}"
-        if [ -n "$UPSTREAM_REPO_URL" ]; then
-            print_info "Reading issue from upstream repository"
-        fi
     fi
 
     # Validate required parameters

@@ -160,3 +160,22 @@ jobs:
           docker buildx imagetools create \
             $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $SOURCES
+
+  cleanup:
+    runs-on: ubuntu-24.04
+    needs: merge
+    permissions:
+      packages: write
+
+    steps:
+      - name: Set lowercase image name
+        id: image
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-base" >> $GITHUB_OUTPUT
+
+      - name: Delete untagged images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ steps.image.outputs.name }}
+          package-type: container
+          min-versions-to-keep: 0
+          delete-only-untagged-versions: true

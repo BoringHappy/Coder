@@ -421,8 +421,8 @@ Options:
   --pr-title TITLE     PR title (optional)
   --issue NUMBER       GitHub issue number to work on (creates branch issue-NUMBER)
   --query QUERY        Initial query to send to Claude after startup
-  --repo URL           Git repository URL (your fork for open-source contributions)
-  --upstream URL       Upstream repository URL (for fork-based workflows)
+  --repo URL           Git repository URL (can be your own repo or a fork)
+  --upstream URL       Upstream repository URL (optional, for fork-based workflows)
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
   --image IMAGE        Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
                        Note: Ignored when --build is used
@@ -465,9 +465,12 @@ Examples:
   # Run with GitHub issue
   $0 --issue 456
 
-  # Open-source contribution workflow (fork-based)
+  # Fork-based workflow (for open-source contributions)
   $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
   $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
+
+  # Multi-repo workflow (for your own repos, e.g., microservices)
+  $0 --repo https://github.com/yourname/frontend.git --upstream https://github.com/yourname/backend.git --branch sync-api
 
   # Run with custom volume mounts
   $0 --branch feature/xyz --mount /local/path:/container/path

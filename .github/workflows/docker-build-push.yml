@@ -177,7 +177,7 @@ jobs:
     steps:
       - name: Set lowercase image name
         id: image
-        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')\" >> $GITHUB_OUTPUT
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Delete untagged images
         uses: actions/delete-package-versions@v5

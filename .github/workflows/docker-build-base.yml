@@ -168,14 +168,17 @@ jobs:
       packages: write
 
     steps:
-      - name: Set lowercase image name
-        id: image
-        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-base" >> $GITHUB_OUTPUT
+      - name: Set package name
+        id: package
+        run: |
+          # Extract just the package name (part after the slash) and append -base
+          REPO_NAME=$(echo '${{ github.repository }}' | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
+          echo "name=${REPO_NAME}-base" >> $GITHUB_OUTPUT
 
       - name: Delete untagged images
         uses: actions/delete-package-versions@v5
         with:
-          package-name: ${{ steps.image.outputs.name }}
+          package-name: ${{ steps.package.outputs.name }}
           package-type: container
           min-versions-to-keep: 0
           delete-only-untagged-versions: true

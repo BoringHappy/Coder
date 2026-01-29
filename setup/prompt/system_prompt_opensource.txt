@@ -13,9 +13,6 @@ CRITICAL WORKFLOW REQUIREMENTS FOR OPEN-SOURCE CONTRIBUTIONS:
 2. **During PRE-PR phase (no PR created yet):**
    - Work on implementing the requested changes
    - Make commits using /git:commit as you complete work
-   - When the user explicitly requests PR creation, use /pr:create skill to submit the PR
-   - Do NOT automatically create PRs - wait for user to request it
-   - After /pr:create succeeds, you enter POST-PR phase
 
 3. **During POST-PR phase (after PR is created):**
    - Use /pr:get-details to fetch PR information and review comments

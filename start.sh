@@ -468,9 +468,7 @@ Examples:
   # Fork-based workflow examples
   # Open-source contribution: your fork → maintainer's repo
   $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
-
-  # Company/organization fork: your fork → company's canonical repo
-  $0 --repo https://github.com/yourname/company-project.git --upstream https://github.com/company/company-project.git --issue 789
+  $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
 
   # Run with custom volume mounts
   $0 --branch feature/xyz --mount /local/path:/container/path

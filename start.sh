@@ -505,30 +505,65 @@ main() {
                 update_script
                 ;;
             --branch)
+                if [ -z "$2" ]; then
+                    print_error "--branch requires a branch name"
+                    show_usage
+                    exit 1
+                fi
                 BRANCH_NAME="$2"
                 shift 2
                 ;;
             --pr)
+                if [ -z "$2" ]; then
+                    print_error "--pr requires a PR number"
+                    show_usage
+                    exit 1
+                fi
                 PR_NUMBER="$2"
                 shift 2
                 ;;
             --pr-title)
+                if [ -z "$2" ]; then
+                    print_error "--pr-title requires a title"
+                    show_usage
+                    exit 1
+                fi
                 PR_TITLE="$2"
                 shift 2
                 ;;
             --issue)
+                if [ -z "$2" ]; then
+                    print_error "--issue requires an issue number"
+                    show_usage
+                    exit 1
+                fi
                 ISSUE_NUMBER="$2"
                 shift 2
                 ;;
             --query)
+                if [ -z "$2" ]; then
+                    print_error "--query requires a query string"
+                    show_usage
+                    exit 1
+                fi
                 QUERY="$2"
                 shift 2
                 ;;
             --repo)
+                if [ -z "$2" ]; then
+                    print_error "--repo requires a repository URL"
+                    show_usage
+                    exit 1
+                fi
                 GIT_REPO_URL="$2"
                 shift 2
                 ;;
             --upstream)
+                if [ -z "$2" ]; then
+                    print_error "--upstream requires a repository URL"
+                    show_usage
+                    exit 1
+                fi
                 UPSTREAM_REPO_URL="$2"
                 shift 2
                 ;;

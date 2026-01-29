@@ -465,12 +465,12 @@ Examples:
   # Run with GitHub issue
   $0 --issue 456
 
-  # Fork-based workflow (for open-source contributions)
+  # Fork-based workflow examples
+  # Open-source contribution: your fork → maintainer's repo
   $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
-  $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
 
-  # Multi-repo workflow (for your own repos, e.g., microservices)
-  $0 --repo https://github.com/yourname/frontend.git --upstream https://github.com/yourname/backend.git --branch sync-api
+  # Company/organization fork: your fork → company's canonical repo
+  $0 --repo https://github.com/yourname/company-project.git --upstream https://github.com/company/company-project.git --issue 789
 
   # Run with custom volume mounts
   $0 --branch feature/xyz --mount /local/path:/container/path

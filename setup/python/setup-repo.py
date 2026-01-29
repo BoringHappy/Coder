@@ -48,6 +48,7 @@ def get_pr_template(workspace):
 
 def main():
     git_repo_url = os.environ["GIT_REPO_URL"]
+    upstream_repo_url = os.getenv("UPSTREAM_REPO_URL", "")
     pr_title = os.getenv("PR_TITLE", "")
 
     branch_name = os.getenv("BRANCH_NAME", "")
@@ -83,6 +84,13 @@ def main():
         print(f"  Using existing repository")
         os.chdir(workspace)
         run("git fetch origin")
+
+    # Add upstream remote if fork workflow
+    if upstream_repo_url:
+        print(f"  {MAGENTA}Fork workflow detected{RESET}")
+        print(f"  Adding upstream remote: {BLUE}{upstream_repo_url}{RESET}")
+        run(f"git remote add upstream {upstream_repo_url}", check=False)
+        run("git fetch upstream", check=False)
 
     # Additional validation: check against repository's default branch
     if branch_name:
@@ -127,18 +135,38 @@ def main():
             else:
                 print(f"  Creating new branch: {BLUE}{branch_name}{RESET}")
                 run(f"git checkout -b {branch_name}")
-                run(f"git commit --allow-empty -m 'Initial commit for {branch_name}'")
-                run(f"git push -u origin {branch_name}")
 
-                print(f"  {MAGENTA}Creating pull request{RESET}")
-                pr_body = get_pr_template(workspace)
-                title = pr_title if pr_title else branch_name.replace("-", " ")
-                result = run(f"gh pr create --title '{title}' --body '{pr_body}'")
-                pr_url = result.stdout.strip()
+                # Check if fork workflow (upstream exists)
+                if upstream_repo_url:
+                    # Fork workflow: Don't create PR yet, let user create it when ready
+                    print(f"  {YELLOW}Branch created locally. Use /pr:create when ready to submit PR.{RESET}")
+                    pr_url = ""
+                else:
+                    # Standard workflow: Create PR immediately
+                    run(f"git commit --allow-empty -m 'Initial commit for {branch_name}'")
+                    run(f"git push -u origin {branch_name}")
+
+                    print(f"  {MAGENTA}Creating pull request{RESET}")
+                    pr_body = get_pr_template(workspace)
+                    title = pr_title if pr_title else branch_name.replace("-", " ")
+                    result = run(f"gh pr create --title '{title}' --body '{pr_body}'")
+                    pr_url = result.stdout.strip()
 
     print(f"{GREEN}✓ Git setup completed successfully{RESET}")
     if pr_url:
         print(f"  PR URL: {BLUE}{pr_url}{RESET}")
+
+    # Write PR status to file for skills to check
+    pr_status_file = "/tmp/.pr_status"
+    if pr_url:
+        with open(pr_status_file, "w") as f:
+            f.write(pr_url)
+        print(f"  {GREEN}✓ PR status saved to {pr_status_file}{RESET}")
+    else:
+        # No PR exists, ensure file is empty
+        with open(pr_status_file, "w") as f:
+            f.write("")
+        print(f"  {YELLOW}No PR exists yet. Create one when ready using /pr:create{RESET}")
 
 
 if __name__ == "__main__":

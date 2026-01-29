@@ -180,6 +180,7 @@ jobs:
         run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Delete untagged images
+        continue-on-error: true
         uses: actions/delete-package-versions@v5
         with:
           package-name: ${{ steps.image.outputs.name }}

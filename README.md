@@ -67,6 +67,10 @@ chmod +x start.sh
 # Run with GitHub issue (creates branch issue-NUMBER)
 ./start.sh --issue 456
 
+# Fork-based workflow (for open-source contributions)
+./start.sh --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
+./start.sh --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
+
 # Run with custom volume mounts (optional)
 ./start.sh --branch feature/xyz --mount ~/data:/data
 
@@ -166,6 +170,7 @@ Then build and run with your custom Dockerfile:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GIT_REPO_URL` | No | Repository URL (defaults to current repo's remote) |
+| `UPSTREAM_REPO_URL` | No | Upstream repository URL (for fork-based workflows) |
 | `BRANCH_NAME` | No | Branch to work on |
 | `PR_NUMBER` | No | Existing PR number to work on |
 | `ISSUE_NUMBER` | No | GitHub issue number (creates branch `issue-NUMBER` and uses `/pr:read-issue` skill) |

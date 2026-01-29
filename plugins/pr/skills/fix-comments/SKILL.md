@@ -20,12 +20,12 @@ Automatically address feedback from GitHub pull request comments.
 ## Prerequisites
 
 **Check PR Status:**
-!`if [ -s /tmp/.pr_status ]; then echo "✓ PR exists: $(cat /tmp/.pr_status)"; else echo "✗ No PR created yet"; fi`
+!`if [ -s /tmp/.pr_status ]; then echo "[OK] PR exists: $(cat /tmp/.pr_status)"; else echo "[WARN] No PR created yet"; fi`
 
 **Before proceeding, verify PR exists:**
 ```bash
 if [ ! -s /tmp/.pr_status ]; then
-    echo "❌ Error: No PR has been created yet."
+    echo "[ERROR] No PR has been created yet."
     exit 1
 fi
 ```

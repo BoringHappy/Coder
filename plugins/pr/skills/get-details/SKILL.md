@@ -16,8 +16,6 @@ Retrieves and displays pull request information including title, description, ch
 ```bash
 if [ ! -s /tmp/.pr_status ]; then
     echo "❌ Error: No PR has been created yet."
-    echo ""
-    echo "Please create a PR first"
     exit 1
 fi
 ```

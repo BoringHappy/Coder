@@ -1,0 +1,127 @@
+---
+name: create
+description: Creates a pull request from current branch to target repository. Supports both standard and fork workflows. Use when ready to submit changes for review.
+context: fork
+---
+
+# Create Pull Request
+
+Creates a pull request with an appropriate title and description based on your commits.
+
+## Current State
+
+Current branch:
+!`git branch --show-current`
+
+Upstream remote (for fork workflow):
+!`git remote get-url upstream 2>/dev/null || echo "No upstream configured (standard workflow)"`
+
+Origin remote:
+!`git remote get-url origin`
+
+Recent commits to include in PR:
+!`git log origin/$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")..HEAD --oneline 2>/dev/null || git log --oneline -5`
+
+Diff summary:
+!`git diff --stat HEAD~1..HEAD 2>/dev/null || echo "No commits yet"`
+
+## PR Template
+
+!`if [ -f .github/PULL_REQUEST_TEMPLATE.md ]; then cat .github/PULL_REQUEST_TEMPLATE.md; elif [ -f .github/pull_request_template.md ]; then cat .github/pull_request_template.md; elif [ -f pull_request_template.md ]; then cat pull_request_template.md; else echo "No template found - will use default format"; fi`
+
+## Instructions
+
+### 1. Verify Changes Are Pushed
+
+Ensure your branch is pushed to origin:
+```bash
+CURRENT_BRANCH=$(git branch --show-current)
+git push -u origin "$CURRENT_BRANCH"
+```
+
+### 2. Generate PR Title and Description
+
+Based on the commits and changes above:
+- **Title**: Create a concise title (50-72 characters) that clearly describes the main change
+  - Use imperative mood (e.g., "Add feature" not "Added feature")
+  - Be specific and descriptive
+- **Description**: Write a clear description that:
+  - Follows the PR template format if one exists
+  - Explains what changes were made and why
+  - Highlights key technical details
+  - Includes any relevant context
+
+### 3. Detect Workflow Type and Create PR
+
+**Check if this is a fork workflow:**
+```bash
+if git remote get-url upstream &>/dev/null; then
+    echo "Fork workflow detected"
+    WORKFLOW="fork"
+else
+    echo "Standard workflow detected"
+    WORKFLOW="standard"
+fi
+```
+
+**For Fork Workflow:**
+```bash
+# Extract repository information
+UPSTREAM_REPO=$(git remote get-url upstream | sed 's/.*github.com[:/]//' | sed 's/.git$//')
+ORIGIN_URL=$(git remote get-url origin)
+FORK_OWNER=$(echo "$ORIGIN_URL" | sed 's/.*github.com[:/]//' | sed 's/.git$//' | cut -d'/' -f1)
+CURRENT_BRANCH=$(git branch --show-current)
+
+# Get default branch of upstream
+DEFAULT_BRANCH=$(gh api repos/$UPSTREAM_REPO --jq .default_branch)
+
+# Create cross-repo PR
+gh pr create \
+  --repo "$UPSTREAM_REPO" \
+  --head "$FORK_OWNER:$CURRENT_BRANCH" \
+  --base "$DEFAULT_BRANCH" \
+  --title "Your generated title here" \
+  --body "Your generated description here"
+
+# Capture PR URL
+PR_URL=$(gh pr view --repo "$UPSTREAM_REPO" --json url -q .url)
+```
+
+**For Standard Workflow:**
+```bash
+# Create PR in same repository
+gh pr create \
+  --title "Your generated title here" \
+  --body "Your generated description here"
+
+# Capture PR URL
+PR_URL=$(gh pr view --json url -q .url)
+```
+
+### 4. Update PR Status File
+
+**IMPORTANT**: After successfully creating the PR, update the status file:
+```bash
+echo "$PR_URL" > /tmp/.pr_status
+echo "✓ PR created and status saved: $PR_URL"
+```
+
+### 5. Display Success Message
+
+Show the user:
+- PR URL
+- PR number
+- Next steps (e.g., "PR created successfully! Reviewers will be notified.")
+
+## Prerequisites
+
+- Must have commits to include in PR
+- Branch must be pushed to origin
+- For fork workflow: upstream remote must be configured
+- GitHub CLI (`gh`) must be authenticated
+
+## Notes
+
+- This skill handles both standard and fork workflows automatically
+- For fork workflows, it creates a cross-repo PR from your fork to the upstream repository
+- The PR status is saved to `/tmp/.pr_status` for other skills to use

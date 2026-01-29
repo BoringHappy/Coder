@@ -22,7 +22,19 @@ fi
 
 # Start Claude Code in a detached tmux session
 printf "${GREEN}Starting Claude Code in tmux session: $CLAUDE_SESSION${RESET}\n"
-tmux new-session -d -s "$CLAUDE_SESSION" "claude --dangerously-skip-permissions --append-system-prompt \"\$(cat /usr/local/bin/setup/prompt/system_prompt.txt)\""
+
+# Choose system prompt based on workflow type
+if [ -n "$UPSTREAM_REPO_URL" ]; then
+    # Open-source workflow: use opensource system prompt
+    SYSTEM_PROMPT_FILE="/usr/local/bin/setup/prompt/system_prompt_opensource.txt"
+    printf "${CYAN}Using open-source workflow system prompt${RESET}\n"
+else
+    # Standard workflow: use default system prompt
+    SYSTEM_PROMPT_FILE="/usr/local/bin/setup/prompt/system_prompt.txt"
+    printf "${CYAN}Using standard workflow system prompt${RESET}\n"
+fi
+
+tmux new-session -d -s "$CLAUDE_SESSION" "claude --dangerously-skip-permissions --append-system-prompt \"\$(cat $SYSTEM_PROMPT_FILE)\""
 
 # Send initial query if provided
 if [ -n "$QUERY" ]; then

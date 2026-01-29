@@ -14,6 +14,7 @@ NC='\033[0m' # No Color
 
 # Default values
 GIT_REPO_URL="${GIT_REPO_URL:-$(git config --get remote.origin.url 2>/dev/null || echo '')}"
+UPSTREAM_REPO_URL="${UPSTREAM_REPO_URL:-}"
 BRANCH_NAME="${BRANCH_NAME:-}"
 PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
@@ -388,6 +389,7 @@ run_codemate() {
         "${volume_mounts[@]}"
         $env_file_flag
         -e "GIT_REPO_URL=$GIT_REPO_URL"
+        -e "UPSTREAM_REPO_URL=$UPSTREAM_REPO_URL"
         -e "BRANCH_NAME=$BRANCH_NAME"
         -e "PR_NUMBER=$PR_NUMBER"
         -e "PR_TITLE=$PR_TITLE"
@@ -419,7 +421,8 @@ Options:
   --pr-title TITLE     PR title (optional)
   --issue NUMBER       GitHub issue number to work on (creates branch issue-NUMBER)
   --query QUERY        Initial query to send to Claude after startup
-  --repo URL           Git repository URL
+  --repo URL           Git repository URL (can be your own repo or a fork)
+  --upstream URL       Upstream repository URL (optional, for fork-based workflows)
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
   --image IMAGE        Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
                        Note: Ignored when --build is used
@@ -431,6 +434,7 @@ Options:
 
 Environment Variables:
   GIT_REPO_URL         Repository URL (defaults to current repo's remote)
+  UPSTREAM_REPO_URL    Upstream repository URL (for fork workflows)
   BRANCH_NAME          Branch to work on
   PR_NUMBER            Existing PR number
   PR_TITLE             PR title
@@ -460,6 +464,11 @@ Examples:
 
   # Run with GitHub issue
   $0 --issue 456
+
+  # Fork-based workflow examples
+  # Open-source contribution: your fork → maintainer's repo
+  $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
+  $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
 
   # Run with custom volume mounts
   $0 --branch feature/xyz --mount /local/path:/container/path
@@ -497,27 +506,66 @@ main() {
                 update_script
                 ;;
             --branch)
+                if [ -z "$2" ]; then
+                    print_error "--branch requires a branch name"
+                    show_usage
+                    exit 1
+                fi
                 BRANCH_NAME="$2"
                 shift 2
                 ;;
             --pr)
+                if [ -z "$2" ]; then
+                    print_error "--pr requires a PR number"
+                    show_usage
+                    exit 1
+                fi
                 PR_NUMBER="$2"
                 shift 2
                 ;;
             --pr-title)
+                if [ -z "$2" ]; then
+                    print_error "--pr-title requires a title"
+                    show_usage
+                    exit 1
+                fi
                 PR_TITLE="$2"
                 shift 2
                 ;;
             --issue)
+                if [ -z "$2" ]; then
+                    print_error "--issue requires an issue number"
+                    show_usage
+                    exit 1
+                fi
                 ISSUE_NUMBER="$2"
                 shift 2
                 ;;
             --query)
+                if [ -z "$2" ]; then
+                    print_error "--query requires a query string"
+                    show_usage
+                    exit 1
+                fi
                 QUERY="$2"
                 shift 2
                 ;;
             --repo)
+                if [ -z "$2" ]; then
+                    print_error "--repo requires a repository URL"
+                    show_usage
+                    exit 1
+                fi
                 GIT_REPO_URL="$2"
+                shift 2
+                ;;
+            --upstream)
+                if [ -z "$2" ]; then
+                    print_error "--upstream requires a repository URL"
+                    show_usage
+                    exit 1
+                fi
+                UPSTREAM_REPO_URL="$2"
                 shift 2
                 ;;
             --mount)
@@ -613,10 +661,13 @@ main() {
             print_warning "Branch issue-${ISSUE_NUMBER} already exists"
         fi
 
-        # Extract repo owner and name from GIT_REPO_URL for issue URL
-        if [ -n "$GIT_REPO_URL" ]; then
+        # Determine which repo to read the issue from (upstream if set, otherwise fork/origin)
+        ISSUE_REPO_URL="${UPSTREAM_REPO_URL:-$GIT_REPO_URL}"
+
+        # Extract repo owner and name for issue URL
+        if [ -n "$ISSUE_REPO_URL" ]; then
             # Remove .git suffix and extract owner/repo
-            REPO_PATH=$(echo "$GIT_REPO_URL" | sed 's/\.git$//' | sed 's|.*github\.com[:/]||')
+            REPO_PATH=$(echo "$ISSUE_REPO_URL" | sed 's/\.git$//' | sed 's|.*github\.com[:/]||')
             ISSUE_URL="https://github.com/${REPO_PATH}/issues/${ISSUE_NUMBER}"
 
             # Set initial query if not already set

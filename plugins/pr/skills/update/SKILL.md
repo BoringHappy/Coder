@@ -24,6 +24,19 @@ $ARGUMENTS
 4. **Generates improved title**: Creates a concise, descriptive title based on the changes (unless `--summary-only` is specified)
 5. **Updates the PR**: Uses `gh api` REST API to update the PR
 
+## Prerequisites
+
+**Check PR Status:**
+!`if [ -s /tmp/.pr_status ]; then echo "✓ PR exists: $(cat /tmp/.pr_status)"; else echo "✗ No PR created yet"; fi`
+
+**Before proceeding, verify PR exists:**
+```bash
+if [ ! -s /tmp/.pr_status ]; then
+    echo "❌ Error: No PR has been created yet."
+    exit 1
+fi
+```
+
 ## Current PR Information
 
 **IMPORTANT**: Before proceeding, you MUST use the `/pr:get-details` skill to fetch the current PR information including:

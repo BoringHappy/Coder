@@ -7,6 +7,19 @@ description: Gets details of a GitHub pull request including title, description,
 
 Retrieves and displays pull request information including title, description, changed files, and review comments.
 
+## Prerequisites
+
+**Check PR Status:**
+!`if [ -s /tmp/.pr_status ]; then echo "✓ PR exists: $(cat /tmp/.pr_status)"; else echo "✗ No PR created yet"; fi`
+
+**Before proceeding, verify PR exists:**
+```bash
+if [ ! -s /tmp/.pr_status ]; then
+    echo "❌ Error: No PR has been created yet."
+    exit 1
+fi
+```
+
 ## PR Information
 
 Title:

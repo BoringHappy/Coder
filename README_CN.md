@@ -32,7 +32,7 @@ https://github.com/user-attachments/assets/bb0c68ef-da05-401a-adb3-ea8ccc22667c
 - GitHub CLI (`gh`) 已认证
 - Anthropic API key
 
-运行 `./start.sh --setup` 创建所需的配置文件（`.env`、`settings.json` 等）
+运行 `codemate --setup` 创建所需的配置文件（全局配置在 `~/.codemate/`，项目 `.env`）
 
 #### Mac 用户
 
@@ -41,49 +41,67 @@ https://github.com/user-attachments/assets/bb0c68ef-da05-401a-adb3-ea8ccc22667c
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** - 官方 Docker GUI 应用
 - **[Colima](https://github.com/abiosoft/colima)** - 轻量级 Docker runtime（推荐 CLI 用户使用）
 
-### 使用方法
+### 安装
 
-#### 使用 start.sh（推荐）
+#### 全局安装（推荐）
 
-从任何目录运行 CodeMate 的最简单方法：
+全局安装 `codemate` 以便在任何地方使用：
 
 ```bash
-# 下载 start.sh 脚本
-curl -O https://raw.githubusercontent.com/BoringHappy/CodeMate/main/start.sh
-chmod +x start.sh
+# 直接安装到 /usr/local/bin（需要 sudo）
+sudo curl -fsSL https://raw.githubusercontent.com/BoringHappy/CodeMate/main/codemate -o /usr/local/bin/codemate && sudo chmod +x /usr/local/bin/codemate
 
-# 首次设置 - 在当前目录创建配置文件
-./start.sh --setup
+# 或不使用 sudo 安装到 ~/bin（确保 ~/bin 在你的 PATH 中）
+mkdir -p ~/bin && curl -fsSL https://raw.githubusercontent.com/BoringHappy/CodeMate/main/codemate -o ~/bin/codemate && chmod +x ~/bin/codemate
 
-# 使用明确的仓库 URL 运行
-./start.sh --repo https://github.com/your-org/your-repo.git --branch feature/xyz
+# 一次性全局设置
+codemate --setup
 
-# 使用分支名称运行（自动检测仓库来源：--repo > .env > 当前目录的 git remote）
-./start.sh --branch feature/your-branch
-
-# 使用现有 PR 运行
-./start.sh --pr 123
-
-# 使用自定义卷挂载运行（可选）
-./start.sh --branch feature/xyz --mount ~/data:/data
-
-# 使用初始查询运行 Claude
-./start.sh --branch feature/xyz --query "请审查代码并修复任何问题"
-
-# 从本地 Dockerfile 构建并运行
-./start.sh --build --branch feature/xyz
-
-# 使用自定义 Dockerfile 路径和标签构建
-./start.sh --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
-
-# 中国用户：使用 DaoCloud 镜像加速镜像拉取
-./start.sh --branch feature/xyz --image ghcr.m.daocloud.io/boringhappy/codemate:latest
+# 更新到最新版本
+codemate --update
 ```
 
-脚本将：
-1. 如果配置文件不存在，提示你创建
-2. 在当前目录创建 `.claude_in_docker/`、`.claude_in_docker.json`、`settings.json` 和 `.env`
-3. 使用你的配置运行 CodeMate 容器
+### 使用方法
+
+#### 基本命令
+
+```bash
+# 首次设置 - 创建全局配置和项目 .env
+codemate --setup
+
+# 使用明确的仓库 URL 运行
+codemate --repo https://github.com/your-org/your-repo.git --branch feature/xyz
+
+# 使用分支名称运行（自动检测仓库来源：--repo > .env > 当前目录的 git remote）
+codemate --branch feature/your-branch
+
+# 使用现有 PR 运行
+codemate --pr 123
+
+# 使用自定义卷挂载运行（可选）
+codemate --branch feature/xyz --mount ~/data:/data
+
+# 使用初始查询运行 Claude
+codemate --branch feature/xyz --query "请审查代码并修复任何问题"
+
+# 从本地 Dockerfile 构建并运行
+codemate --build --branch feature/xyz
+
+# 使用自定义 Dockerfile 路径和标签构建
+codemate --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+
+# 中国用户：使用 DaoCloud 镜像加速镜像拉取
+codemate --branch feature/xyz --image ghcr.m.daocloud.io/boringhappy/codemate:latest
+```
+
+设置命令将：
+1. 在 `~/.codemate/` 创建全局配置（Claude 配置和设置）
+2. 在当前目录创建项目特定的 `.env` 文件
+3. 提示你输入 Anthropic API token 和其他设置
+
+**配置结构：**
+- **全局配置**：`~/.codemate/` - Claude 配置和设置（所有项目共享）
+- **项目配置**：每个项目目录中的 `.env` - 项目特定的密钥和设置
 
 **仓库 URL 解析**：脚本按以下优先级确定仓库 URL：
 1. `--repo` 命令行参数（最高优先级）
@@ -101,16 +119,16 @@ chmod +x start.sh
 
 ```bash
 # 从当前目录的默认 Dockerfile 构建
-./start.sh --build --branch feature/xyz
+codemate --build --branch feature/xyz
 
 # 从自定义 Dockerfile 路径构建
-./start.sh --build -f ./path/to/Dockerfile --branch feature/xyz
+codemate --build -f ./path/to/Dockerfile --branch feature/xyz
 
 # 使用自定义镜像标签构建
-./start.sh --build --tag my-codemate:dev --branch feature/xyz
+codemate --build --tag my-codemate:dev --branch feature/xyz
 
 # 组合所有选项
-./start.sh --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+codemate --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
 ```
 
 **选项：**
@@ -153,12 +171,12 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 然后使用自定义 Dockerfile 构建并运行：
 
 ```bash
-./start.sh --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/xyz
+codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/xyz
 ```
 
 ## 环境变量
 
-> **注意：** 使用 `start.sh` 时，这些变量通过设置过程自动处理。此参考主要用于高级 Docker 使用或故障排除。
+> **注意：** 使用 `codemate` 时，这些变量通过设置过程自动处理。此参考主要用于高级 Docker 使用或故障排除。
 
 | 变量 | 必需 | 描述 |
 |----------|----------|-------------|

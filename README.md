@@ -32,7 +32,7 @@ https://github.com/user-attachments/assets/bb0c68ef-da05-401a-adb3-ea8ccc22667c
 - GitHub CLI (`gh`) authenticated
 - Anthropic API key
 
-Run `./start.sh --setup` to create the required configuration files (`.env`, `settings.json`, etc.)
+Run `codemate --setup` to create the required configuration files (global config in `~/.codemate/` and project `.env`).
 
 #### Mac Users
 
@@ -41,56 +41,74 @@ On macOS, you need a Docker runtime since Docker doesn't run natively. Choose on
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** - Official Docker GUI application
 - **[Colima](https://github.com/abiosoft/colima)** - Lightweight Docker runtime (recommended for CLI users)
 
-### Usage
+### Installation
 
-#### Using start.sh (Recommended)
+#### Global Installation (Recommended)
 
-The easiest way to run CodeMate from any directory:
+Install `codemate` globally to use it from anywhere:
 
 ```bash
-# Download the start.sh script
-curl -O https://raw.githubusercontent.com/BoringHappy/CodeMate/main/start.sh
-chmod +x start.sh
+# Install directly to /usr/local/bin (requires sudo)
+sudo curl -fsSL https://raw.githubusercontent.com/BoringHappy/CodeMate/main/codemate -o /usr/local/bin/codemate && sudo chmod +x /usr/local/bin/codemate
 
-# First time setup - creates configuration files in current directory
-./start.sh --setup
+# Or install to ~/bin without sudo (ensure ~/bin is in your PATH)
+mkdir -p ~/bin && curl -fsSL https://raw.githubusercontent.com/BoringHappy/CodeMate/main/codemate -o ~/bin/codemate && chmod +x ~/bin/codemate
 
-# Run with explicit repo URL
-./start.sh --repo https://github.com/your-org/your-repo.git --branch feature/xyz
+# One-time global setup
+codemate --setup
 
-# Run with branch name (auto-detects repo from: --repo > .env > current directory's git remote)
-./start.sh --branch feature/your-branch
-
-# Run with existing PR
-./start.sh --pr 123
-
-# Run with GitHub issue (creates branch issue-NUMBER)
-./start.sh --issue 456
-
-# Fork-based workflow (for open-source contributions)
-./start.sh --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
-./start.sh --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
-
-# Run with custom volume mounts (optional)
-./start.sh --branch feature/xyz --mount ~/data:/data
-
-# Run with initial query to Claude
-./start.sh --branch feature/xyz --query "Please review the code and fix any issues"
-
-# Build and run from local Dockerfile
-./start.sh --build --branch feature/xyz
-
-# Build with custom Dockerfile path and tag
-./start.sh --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
-
-# For Chinese users: Use DaoCloud mirror for faster image pulls
-./start.sh --branch feature/xyz --image ghcr.m.daocloud.io/boringhappy/codemate:latest
+# Update to latest version
+codemate --update
 ```
 
-The script will:
-1. Prompt you to create configuration files if they don't exist
-2. Create `.claude_in_docker/`, `.claude_in_docker.json`, `settings.json`, and `.env` in your current directory
-3. Run the CodeMate container with your configuration
+### Usage
+
+#### Basic Commands
+
+```bash
+# First time setup - creates global config and project .env
+codemate --setup
+
+# Run with explicit repo URL
+codemate --repo https://github.com/your-org/your-repo.git --branch feature/xyz
+
+# Run with branch name (auto-detects repo from: --repo > .env > current directory's git remote)
+codemate --branch feature/your-branch
+
+# Run with existing PR
+codemate --pr 123
+
+# Run with GitHub issue (creates branch issue-NUMBER)
+codemate --issue 456
+
+# Fork-based workflow (for open-source contributions)
+codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
+codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
+
+# Run with custom volume mounts (optional)
+codemate --branch feature/xyz --mount ~/data:/data
+
+# Run with initial query to Claude
+codemate --branch feature/xyz --query "Please review the code and fix any issues"
+
+# Build and run from local Dockerfile
+codemate --build --branch feature/xyz
+
+# Build with custom Dockerfile path and tag
+codemate --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+
+# For Chinese users: Use DaoCloud mirror for faster image pulls
+codemate --branch feature/xyz --image ghcr.m.daocloud.io/boringhappy/codemate:latest
+```
+
+The setup command will:
+1. Create global configuration in `~/.codemate/` (Claude config and settings)
+2. Create project-specific `.env` file in your current directory
+3. Prompt you for Anthropic API token and other settings
+
+**Configuration Structure:**
+- **Global config**: `~/.codemate/` - Claude configuration and settings (shared across all projects)
+- **Project config**: `.env` in each project directory - Project-specific secrets and settings
 
 **Repository URL Resolution**: The script determines the repository URL in this priority order:
 1. `--repo` command-line argument (highest priority)
@@ -108,16 +126,16 @@ For development or customization, you can build CodeMate from a local Dockerfile
 
 ```bash
 # Build from default Dockerfile in current directory
-./start.sh --build --branch feature/xyz
+codemate --build --branch feature/xyz
 
 # Build from custom Dockerfile path
-./start.sh --build -f ./path/to/Dockerfile --branch feature/xyz
+codemate --build -f ./path/to/Dockerfile --branch feature/xyz
 
 # Build with custom image tag
-./start.sh --build --tag my-codemate:dev --branch feature/xyz
+codemate --build --tag my-codemate:dev --branch feature/xyz
 
 # Combine all options
-./start.sh --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+codemate --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
 ```
 
 **Options:**
@@ -160,12 +178,12 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 Then build and run with your custom Dockerfile:
 
 ```bash
-./start.sh --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/xyz
+codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/xyz
 ```
 
 ## Environment Variables
 
-> **Note:** When using `start.sh`, these variables are handled automatically through the setup process. This reference is primarily for advanced Docker usage or troubleshooting.
+> **Note:** When using `codemate`, these variables are handled automatically through the setup process. This reference is primarily for advanced Docker usage or troubleshooting.
 
 | Variable | Required | Description |
 |----------|----------|-------------|

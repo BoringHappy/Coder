@@ -149,6 +149,8 @@ update_script() {
     local script_real_path
     script_real_path=$(readlink -f "$script_path" 2>/dev/null || realpath "$script_path" 2>/dev/null || echo "$script_path")
 
+    print_info "Updating codemate at: $script_real_path"
+
     # Replace the current script
     if ! mv "$temp_file" "$script_real_path"; then
         print_error "Failed to replace script"

@@ -8,51 +8,20 @@ body:
       value: |
         Thanks for helping improve our documentation!
 
-  - type: dropdown
-    id: doc-type
-    attributes:
-      label: Documentation Type
-      description: What type of documentation issue is this?
-      options:
-        - Missing documentation
-        - Incorrect/outdated documentation
-        - Unclear documentation
-        - Typo or formatting issue
-        - New documentation needed
-    validations:
-      required: true
-
-  - type: textarea
-    id: location
-    attributes:
-      label: Documentation Location
-      description: Where is the documentation issue located?
-      placeholder: |
-        - File: README.md
-        - Section: "Running CodeMate"
-        - URL: https://github.com/...
-    validations:
-      required: true
-
   - type: textarea
     id: issue
     attributes:
-      label: Issue Description
-      description: Describe the documentation issue
-      placeholder: The documentation says... but it should say...
+      label: What's the documentation issue?
+      description: Describe the issue and where it's located
+      placeholder: |
+        In README.md, the "Running CodeMate" section says... but it should say...
+        Or: The documentation is missing information about...
     validations:
       required: true
 
   - type: textarea
     id: suggestion
     attributes:
-      label: Suggested Improvement
-      description: How should the documentation be improved?
-      placeholder: I suggest changing it to...
-
-  - type: textarea
-    id: additional
-    attributes:
-      label: Additional Context
-      description: Add any other context or screenshots
-      placeholder: Any additional information...
+      label: How should it be improved? (optional)
+      description: Suggest specific changes or additions
+      placeholder: I suggest adding/changing...

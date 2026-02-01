@@ -2,6 +2,10 @@
 # PR Monitor Script - Standalone script for monitoring PR comments and git changes
 # Designed to be run via cron (no loop, single execution)
 
+# Source common utilities
+SCRIPT_DIR="$(dirname "$0")"
+source "$SCRIPT_DIR/common.sh"
+
 # Import environment variables from the container's init process (PID 1)
 # Cron doesn't inherit Docker runtime env vars, but /proc/1/environ has them
 if [ -r /proc/1/environ ]; then
@@ -172,6 +176,8 @@ check_issue_comments() {
             # Send the comment content to Claude with instruction to acknowledge
             tmux send-keys -t "$CLAUDE_SESSION" "PR Comment from $comment_user: $comment_body (After addressing, use /pr:ack-comments skill to add 👀 reaction)"
             tmux send-keys -t "$CLAUDE_SESSION" C-m
+            # Check if the command was submitted with retry mechanism
+            check_and_retry_submit "$CLAUDE_SESSION" 3
             LAST_ISSUE_COMMENT_ID="$comment_id"
             return 1  # Signal that we sent a comment
         fi
@@ -211,6 +217,8 @@ main() {
             if session_exists "$CLAUDE_SESSION"; then
                 tmux send-keys -t "$CLAUDE_SESSION" "Please use /git:commit skill to submit changes to github"
                 tmux send-keys -t "$CLAUDE_SESSION" C-m
+                # Check if the command was submitted with retry mechanism
+                check_and_retry_submit "$CLAUDE_SESSION" 3
                 GIT_CHANGES_NOTIFIED="true"
             fi
         fi
@@ -250,6 +258,8 @@ main() {
         if session_exists "$CLAUDE_SESSION"; then
             tmux send-keys -t "$CLAUDE_SESSION" "Please Use /fix-comments skill to address comments"
             tmux send-keys -t "$CLAUDE_SESSION" C-m
+            # Check if the command was submitted with retry mechanism
+            check_and_retry_submit "$CLAUDE_SESSION" 3
         fi
         LAST_CHECK_TIME=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
     fi

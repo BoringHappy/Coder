@@ -114,13 +114,6 @@ EOF
     print_success "Created $settings_file"
 }
 
-# Function to create .claude_in_docker.json
-create_claude_json() {
-    local claude_json="$1"
-    echo '{}' > "$claude_json"
-    print_success "Created $claude_json"
-}
-
 # Function to update start.sh script
 update_script() {
     local script_path="$0"

@@ -96,7 +96,7 @@ send_and_verify_command() {
     local command="$2"
     local max_attempts="${3:-3}"
     local attempt=1
-    local SESSION_STATUS_FILE="$HOME/.config/claude-code/.session_status"
+    local SESSION_STATUS_FILE="/tmp/.session_status"
 
     # Send the command
     tmux send-keys -t "$session_name" "$command"

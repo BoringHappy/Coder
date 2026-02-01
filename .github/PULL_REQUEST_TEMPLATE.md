@@ -25,26 +25,11 @@
 
 ## Testing
 
-<!-- Describe how you tested these changes. Be specific about the testing environment and scenarios -->
+<!-- Describe how you tested these changes -->
 
-**Docker/Container Testing:**
-- [ ] Docker image builds successfully
-- [ ] Container starts without errors
-- [ ] Tested with `./start.sh --branch <branch-name>`
-
-**Functionality Testing:**
-- [ ] Manual testing completed for changed functionality
-- [ ] Tested on both amd64 and arm64 (if applicable)
-
-**Plugin Testing (if applicable):**
-- [ ] Plugin installs correctly
-- [ ] Plugin skills work as expected
-- [ ] No conflicts with existing plugins
-
-**Testing Environment:**
-- OS: <!-- e.g., Ubuntu 22.04, macOS 14.0 -->
-- Docker version: <!-- e.g., 24.0.5 -->
-- Architecture: <!-- e.g., amd64, arm64 -->
+- [ ] Tested locally
+- [ ] Docker build/container works (if applicable)
+- [ ] Manual testing completed
 
 ## Checklist
 

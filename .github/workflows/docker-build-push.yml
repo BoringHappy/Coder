@@ -170,7 +170,7 @@ jobs:
   cleanup:
     runs-on: ubuntu-24.04
     needs: merge
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       packages: write
 
@@ -187,5 +187,5 @@ jobs:
         with:
           package-name: ${{ steps.package.outputs.name }}
           package-type: container
-          min-versions-to-keep: 0
+          min-versions-to-keep: 10
           delete-only-untagged-versions: true

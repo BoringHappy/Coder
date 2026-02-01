@@ -30,7 +30,7 @@ if [ -n "$CUSTOM_MARKETPLACES" ]; then
             # Extract marketplace name from path (e.g., "username/repo" -> "repo")
             marketplace_name=$(echo "$marketplace" | sed 's|.*/||')
             add_marketplace "$marketplace_index/$marketplace_count" "$marketplace_name" "$marketplace"
-            ((marketplace_index++))
+            marketplace_index=$((marketplace_index + 1))
         fi
     done
 fi
@@ -52,7 +52,7 @@ if [ -n "$CUSTOM_PLUGINS" ]; then
         plugin=$(echo "$plugin" | xargs)
         if [ -n "$plugin" ]; then
             install_and_verify_plugin "$plugin_index/$plugin_count" "$plugin" ""
-            ((plugin_index++))
+            plugin_index=$((plugin_index + 1))
         fi
     done
 fi

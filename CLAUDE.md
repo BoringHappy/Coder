@@ -44,7 +44,7 @@ CodeMate uses the CodeMatePlugin marketplace to distribute plugins. Plugins are 
 
 The marketplace is fetched from the external repository: `BoringHappy/CodeMatePlugin`
 
-**Available Plugins:**
+**Default Plugins:**
 
 **Git Plugin** (`git@codemate`):
 - `/git:commit` - Stage, commit, and push changes
@@ -53,6 +53,23 @@ The marketplace is fetched from the external repository: `BoringHappy/CodeMatePl
 - `/pr:get-details` - Fetch PR information including comments
 - `/pr:fix-comments` - Address PR review feedback
 - `/pr:update` - Update PR title and summary
+
+**Custom Plugins:**
+
+You can add your own custom plugin marketplaces and plugins by configuring environment variables in the `.env` file:
+
+```bash
+# Add custom marketplaces (comma-separated GitHub repo paths)
+CUSTOM_MARKETPLACES=username/my-marketplace,org/another-marketplace
+
+# Add custom plugins to install (comma-separated plugin names)
+CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
+```
+
+Custom marketplaces and plugins are added/installed after the default ones during container startup. The setup script will automatically:
+1. Add all custom marketplaces to Claude Code
+2. Install all custom plugins from those marketplaces
+3. Skip any that are already installed (idempotent)
 
 ### Key Files
 

@@ -285,12 +285,12 @@ CodeMate supports starting work directly from a GitHub issue using the `--issue`
 
 ```bash
 # Start working on issue #456
-./start.sh --issue 456
+codemate --issue 456
 ```
 
 This is equivalent to:
 ```bash
-./start.sh --branch issue-456 --query "Please use /pr:read-issue skill to read and address issue #456"
+codemate --branch issue-456 --query "Please use /pr:read-issue skill to read and address issue #456"
 ```
 
 **When to use:**

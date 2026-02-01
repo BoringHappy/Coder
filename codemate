@@ -114,7 +114,7 @@ EOF
     print_success "Created $settings_file"
 }
 
-# Function to update start.sh script
+# Function to update codemate script
 update_script() {
     local script_path="$0"
     local temp_file="/tmp/codemate.tmp"
@@ -711,7 +711,7 @@ main() {
         print_error "GIT_REPO_URL not set"
         echo ""
         echo "The repository URL can be provided in three ways (in priority order):"
-        echo "  1. Use --repo option: ./start.sh --repo https://github.com/user/repo.git --branch xyz"
+        echo "  1. Use --repo option: codemate --repo https://github.com/user/repo.git --branch xyz"
         echo "  2. Set GIT_REPO_URL in .env file"
         echo "  3. Run from a git repository directory (auto-detects remote origin)"
         echo ""

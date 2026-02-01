@@ -181,11 +181,11 @@ setup_codemate_files() {
     echo ""
 
     # Create global config directory
-    if [ ! -d "$config_dir" ]; then
-        mkdir -p "$config_dir"
-        print_success "Created global config directory: $config_dir"
+    if [ ! -d "$config_dir/.claude" ]; then
+        mkdir -p "$config_dir/.claude"
+        print_success "Created global config directory: $config_dir/.claude"
     else
-        print_info "Global config directory already exists: $config_dir"
+        print_info "Global config directory already exists: $config_dir/.claude"
     fi
 
     # Create .claude.json
@@ -197,10 +197,10 @@ setup_codemate_files() {
     fi
 
     # Create settings.json
-    if [ ! -f "$config_dir/settings.json" ]; then
-        create_settings_json "$config_dir/settings.json"
+    if [ ! -f "$config_dir/.claude/settings.json" ]; then
+        create_settings_json "$config_dir/.claude/settings.json"
     else
-        print_warning "$config_dir/settings.json already exists"
+        print_warning "$config_dir/.claude/settings.json already exists"
     fi
 
     # Create .env file in current directory (project-specific)
@@ -313,7 +313,7 @@ run_codemate() {
     local config_dir="$HOME/.codemate"
 
     # Check if global config exists
-    if [ ! -d "$config_dir" ] || [ ! -f "$config_dir/.claude.json" ]; then
+    if [ ! -d "$config_dir/.claude" ] || [ ! -f "$config_dir/.claude.json" ]; then
         print_error "CodeMate configuration not found"
         echo ""
         echo "Please run setup first:"
@@ -381,7 +381,7 @@ run_codemate() {
 
     # Build volume mounts using global config
     local volume_mounts=(
-        -v "$config_dir:/home/agent/.claude"
+        -v "$config_dir/.claude:/home/agent/.claude"
         -v "$config_dir/.claude.json:/home/agent/.claude.json"
     )
 
@@ -628,9 +628,9 @@ main() {
     # Check if configuration files exist
     local needs_setup=false
     local config_dir="$HOME/.codemate"
-    if [ ! -d "$config_dir" ] || \
+    if [ ! -d "$config_dir/.claude" ] || \
        [ ! -f "$config_dir/.claude.json" ] || \
-       [ ! -f "$config_dir/settings.json" ]; then
+       [ ! -f "$config_dir/.claude/settings.json" ]; then
         needs_setup=true
     fi
 
@@ -643,9 +643,9 @@ main() {
         if [ "$needs_setup" = true ]; then
             print_warning "Global configuration not found"
             echo "The following will be created:"
-            echo "  1. Global config directory: $config_dir"
+            echo "  1. Global config directory: $config_dir/.claude"
             echo "  2. Claude config file: $config_dir/.claude.json"
-            echo "  3. Settings file: $config_dir/settings.json"
+            echo "  3. Settings file: $config_dir/.claude/settings.json"
             echo "  4. Project .env file: $current_dir/.env"
             echo ""
         fi

@@ -41,11 +41,9 @@ if [ -n "$QUERY" ]; then
     printf "${GREEN}Waiting for Claude to initialize...${RESET}\n"
     sleep 5
     printf "${GREEN}Sending initial query to Claude...${RESET}\n"
-    tmux send-keys -t "$CLAUDE_SESSION" "$QUERY"
-    tmux send-keys -t "$CLAUDE_SESSION" C-m
 
-    # Check if the query was submitted with retry mechanism
-    check_and_retry_submit "$CLAUDE_SESSION" 3
+    # Send command and verify submission with retry mechanism
+    send_and_verify_command "$CLAUDE_SESSION" "$QUERY" 3
 else
     sleep 2
 fi

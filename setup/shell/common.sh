@@ -89,7 +89,46 @@ install_and_verify_plugin() {
     fi
 }
 
-# Function to check session status and retry if needed
+# Function to send command to tmux session and verify submission with retry
+# Usage: send_and_verify_command <session_name> <command> <max_attempts>
+send_and_verify_command() {
+    local session_name="$1"
+    local command="$2"
+    local max_attempts="${3:-3}"
+    local attempt=1
+    local SESSION_STATUS_FILE="$HOME/.config/claude-code/.session_status"
+
+    # Send the command
+    tmux send-keys -t "$session_name" "$command"
+    tmux send-keys -t "$session_name" C-m
+
+    # Verify submission with retry
+    while [ $attempt -le $max_attempts ]; do
+        sleep 3
+
+        if [ -f "$SESSION_STATUS_FILE" ]; then
+            STATUS=$(cat "$SESSION_STATUS_FILE" 2>/dev/null || echo "")
+            if [ "$STATUS" = "UserPromptSubmit" ]; then
+                printf "${GREEN}Command submitted successfully (attempt $attempt)${RESET}\n"
+                return 0
+            else
+                printf "${YELLOW}Command not submitted (status: $STATUS), attempt $attempt/$max_attempts${RESET}\n"
+                if [ $attempt -lt $max_attempts ]; then
+                    tmux send-keys -t "$session_name" C-m
+                fi
+            fi
+        else
+            printf "${YELLOW}Session status file not found on attempt $attempt${RESET}\n"
+        fi
+
+        attempt=$((attempt + 1))
+    done
+
+    printf "${YELLOW}Max retry attempts reached, continuing anyway${RESET}\n"
+    return 1
+}
+
+# Function to check session status and retry if needed (legacy, kept for backward compatibility)
 # Usage: check_and_retry_submit <session_name> <max_attempts>
 check_and_retry_submit() {
     local session_name="$1"

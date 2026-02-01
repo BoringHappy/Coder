@@ -182,6 +182,8 @@ Then build and run with your custom Dockerfile:
 | `ANTHROPIC_AUTH_TOKEN` | No | Anthropic API token (for custom API endpoints) |
 | `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
 | `QUERY` | No | Initial query to send to Claude after startup |
+| `CUSTOM_MARKETPLACES` | No | Comma-separated list of custom plugin marketplace repositories (e.g., `username/repo1,org/repo2`) |
+| `CUSTOM_PLUGINS` | No | Comma-separated list of custom plugins to install (e.g., `plugin1@marketplace1,plugin2@marketplace2`) |
 
 
 ## How It Works
@@ -220,6 +222,38 @@ On startup, the container:
 | Command | Description |
 |---------|-------------|
 | `/agent-browser` | Automate browser interactions for web testing, form filling, screenshots, and data extraction |
+
+### Custom Plugins
+
+You can extend CodeMate with your own custom plugins by adding them to your `.env` file:
+
+```bash
+# Add custom plugin marketplaces (comma-separated GitHub repo paths)
+CUSTOM_MARKETPLACES=username/my-marketplace,org/another-marketplace
+
+# Add custom plugins to install (comma-separated plugin names)
+CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
+```
+
+**How it works:**
+1. Custom marketplaces are added to Claude Code during container startup
+2. Custom plugins are installed from those marketplaces
+3. All custom plugins become available as skills (e.g., `/my-plugin:command`)
+4. The setup is idempotent - already installed plugins are skipped
+
+**Example:**
+
+If you have a custom plugin marketplace at `github.com/myorg/my-plugins` with a plugin called `deploy`, you would configure:
+
+```bash
+CUSTOM_MARKETPLACES=myorg/my-plugins
+CUSTOM_PLUGINS=deploy@my-plugins
+```
+
+Then use it in Claude Code:
+```bash
+/deploy:production
+```
 
 ## Issue-Based Workflow
 

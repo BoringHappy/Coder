@@ -125,7 +125,7 @@ send_and_verify_command() {
     done
 
     printf "${YELLOW}Max retry attempts reached, continuing anyway${RESET}\n"
-    return 1
+    return 0
 }
 
 

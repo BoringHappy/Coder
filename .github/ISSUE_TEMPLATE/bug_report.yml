@@ -1,0 +1,49 @@
+name: Bug Report
+description: Report a bug or issue with CodeMate
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please provide the details below.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected to happen instead
+      placeholder: |
+        When I run ./start.sh --branch my-branch, I get an error...
+        I expected it to start the container successfully.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Run './start.sh --branch test'
+        2. Execute command '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (optional)
+      description: OS, Docker version, architecture, etc.
+      placeholder: |
+        - OS: Ubuntu 22.04
+        - Docker: 24.0.5
+        - Architecture: amd64
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Logs or Additional Context (optional)
+      description: Paste any relevant logs or add screenshots
+      placeholder: Paste logs or add additional information here...
+      render: shell

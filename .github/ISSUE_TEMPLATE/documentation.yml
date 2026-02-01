@@ -1,0 +1,27 @@
+name: Documentation
+description: Report an issue with documentation or suggest improvements
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's the documentation issue?
+      description: Describe the issue and where it's located
+      placeholder: |
+        In README.md, the "Running CodeMate" section says... but it should say...
+        Or: The documentation is missing information about...
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: How should it be improved? (optional)
+      description: Suggest specific changes or additions
+      placeholder: I suggest adding/changing...

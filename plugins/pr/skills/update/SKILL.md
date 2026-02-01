@@ -62,6 +62,7 @@ Create an improved PR summary that:
 - Is clear, concise, and informative
 - Highlights the key changes and their impact
 - Includes relevant technical details
+- **IMPORTANT**: Never modify the text content of checkbox items (e.g., `- [ ] Tests pass locally`). Only change whether checkboxes are checked `[x]` or unchecked `[ ]`. The checkbox text must remain exactly as it appears in the template or existing PR description.
 
 ### For the Title (skip if `--summary-only` argument is provided)
 Create an improved PR title that:

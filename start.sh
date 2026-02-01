@@ -190,10 +190,10 @@ setup_codemate_files() {
     fi
 
     # Create settings.json
-    if [ ! -f "$current_dir/settings.json" ]; then
-        create_settings_json "$current_dir/settings.json"
+    if [ ! -f "$current_dir/.claude_in_docker/settings.json" ]; then
+        create_settings_json "$current_dir/.claude_in_docker/settings.json"
     else
-        print_warning "settings.json already exists"
+        print_warning ".claude_in_docker/settings.json already exists"
     fi
 
     # Create .env file
@@ -208,7 +208,7 @@ setup_codemate_files() {
     echo ""
     print_info "Next steps:"
     echo "  1. Edit .env to add ANTHROPIC_AUTH_TOKEN and ANTHROPIC_BASE_URL (if not set during setup)"
-    echo "  2. Edit settings.json to add necessary config"
+    echo "  2. Edit .claude_in_docker/settings.json to add necessary config"
     echo "  3. Run: ./start.sh --repo <repo-url> --branch <branch-name>"
     echo ""
     echo "Example:"
@@ -357,7 +357,6 @@ run_codemate() {
     local volume_mounts=(
         -v "$current_dir/.claude_in_docker:/home/agent/.claude"
         -v "$current_dir/.claude_in_docker.json:/home/agent/.claude.json"
-        -v "$current_dir/settings.json:/home/agent/.claude/settings.json"
     )
 
     # Mount skills directory if it exists in current directory
@@ -604,7 +603,7 @@ main() {
     local needs_setup=false
     if [ ! -d "$current_dir/.claude_in_docker" ] || \
        [ ! -f "$current_dir/.claude_in_docker.json" ] || \
-       [ ! -f "$current_dir/settings.json" ] || \
+       [ ! -f "$current_dir/.claude_in_docker/settings.json" ] || \
        [ ! -f "$current_dir/.env" ]; then
         needs_setup=true
     fi
@@ -620,7 +619,7 @@ main() {
             echo "The following will be created:"
             echo "  1. .claude_in_docker/ directory"
             echo "  2. .claude_in_docker.json file"
-            echo "  3. settings.json file"
+            echo "  3. .claude_in_docker/settings.json file"
             echo "  4. .env file"
             echo ""
         fi

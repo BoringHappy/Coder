@@ -295,16 +295,16 @@ CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
 
 **示例：**
 
-如果你在 `github.com/myorg/my-plugins` 有一个自定义插件市场，其中有一个名为 `deploy` 的插件，你可以这样配置：
+如果你在 `github.com/myorg/my-plugins` 有一个自定义插件市场，其中有一个名为 `example-skill` 的插件，你可以这样配置：
 
 ```bash
 CUSTOM_MARKETPLACES=myorg/my-plugins
-CUSTOM_PLUGINS=deploy@my-plugins
+CUSTOM_PLUGINS=example-skill@my-plugins
 ```
 
 然后在 Claude Code 中使用：
 ```bash
-/deploy:production
+/example-skill:command
 ```
 
 ## PR Comment 监控

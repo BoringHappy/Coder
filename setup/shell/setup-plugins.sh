@@ -27,6 +27,11 @@ if [ -n "$CUSTOM_MARKETPLACES" ]; then
         # Trim whitespace
         marketplace=$(echo "$marketplace" | xargs)
         if [ -n "$marketplace" ]; then
+            # Validate marketplace format (should be owner/repo)
+            if [[ ! "$marketplace" =~ ^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+$ ]]; then
+                printf "  ${YELLOW}⚠ Skipping invalid marketplace format: '$marketplace' (expected: owner/repo)${RESET}\n"
+                continue
+            fi
             # Extract marketplace name from path (e.g., "username/repo" -> "repo")
             marketplace_name=$(echo "$marketplace" | sed 's|.*/||')
             add_marketplace "$marketplace_index/$marketplace_count" "$marketplace_name" "$marketplace"
@@ -51,6 +56,11 @@ if [ -n "$CUSTOM_PLUGINS" ]; then
         # Trim whitespace
         plugin=$(echo "$plugin" | xargs)
         if [ -n "$plugin" ]; then
+            # Validate plugin format (should be plugin@marketplace)
+            if [[ ! "$plugin" =~ ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+$ ]]; then
+                printf "  ${YELLOW}⚠ Skipping invalid plugin format: '$plugin' (expected: plugin@marketplace)${RESET}\n"
+                continue
+            fi
             install_and_verify_plugin "$plugin_index/$plugin_count" "$plugin" ""
             plugin_index=$((plugin_index + 1))
         fi

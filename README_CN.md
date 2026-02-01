@@ -76,6 +76,13 @@ codemate --branch feature/your-branch
 # 使用现有 PR 运行
 codemate --pr 123
 
+# 使用 GitHub issue 运行（创建分支 issue-NUMBER）
+codemate --issue 456
+
+# Fork 工作流（用于开源贡献）
+codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
+codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
+
 # 使用自定义卷挂载运行（可选）
 codemate --branch feature/xyz --mount ~/data:/data
 
@@ -172,6 +179,42 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/xyz
 ```
 
+## 基于 Issue 的工作流
+
+CodeMate 支持使用 `--issue` 标志直接从 GitHub issue 开始工作。此工作流会自动：
+
+1. 创建名为 `issue-{NUMBER}` 的分支（如果分支已存在则使用现有分支）
+2. 向 Claude 发送初始查询，使用 `/pr:read-issue` skill 读取并处理 issue
+3. Claude 分析 issue 详情（标题、描述、标签、评论）
+4. Claude 实现请求的更改
+5. 当你准备好提交时创建 PR
+
+**示例：**
+
+```bash
+# 开始处理 issue #456
+codemate --issue 456
+```
+
+这等同于：
+```bash
+codemate --branch issue-456 --query "Please use /pr:read-issue skill to read and address issue #456"
+```
+
+**何时使用：**
+- 从 GitHub issue 开始新工作
+- 实现作为 issue 跟踪的功能请求
+- 修复 issue 中记录的 bug
+
+**Fork 工作流：**
+
+对于开源贡献，你可以结合使用 `--issue` 和 `--upstream`：
+
+```bash
+# 从 fork 处理上游仓库的 issue
+codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
+```
+
 ## 环境变量
 
 > **注意：** 使用 `codemate` 时，这些变量通过设置过程自动处理。此参考主要用于高级 Docker 使用或故障排除。
@@ -179,6 +222,10 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | 变量 | 必需 | 描述 |
 |----------|----------|-------------|
 | `GIT_REPO_URL` | 否 | 仓库 URL（默认为当前仓库的 remote） |
+| `UPSTREAM_REPO_URL` | 否 | 上游仓库 URL（用于 fork 工作流） |
+| `BRANCH_NAME` | 否 | 要工作的分支 |
+| `PR_NUMBER` | 否 | 要工作的现有 PR 编号 |
+| `ISSUE_NUMBER` | 否 | GitHub issue 编号（创建分支 `issue-NUMBER` 并使用 `/pr:read-issue` skill） |
 | `GITHUB_TOKEN` | 自动 | GitHub 个人访问令牌（如果未提供，默认为 `gh auth token`） |
 | `GIT_USER_NAME` | 自动 | Git commit author 名称（如果未提供，默认为 `git config user.name`） |
 | `GIT_USER_EMAIL` | 自动 | Git commit author 邮箱（如果未提供，默认为 `git config user.email`） |
@@ -187,6 +234,8 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `ANTHROPIC_AUTH_TOKEN` | 否 | Anthropic API token（用于自定义 API 端点） |
 | `ANTHROPIC_BASE_URL` | 否 | Anthropic API 基础 URL（用于自定义 API 端点） |
 | `QUERY` | 否 | 启动后发送给 Claude 的初始 query |
+| `CUSTOM_MARKETPLACES` | 否 | 逗号分隔的自定义插件市场仓库列表（例如：`username/repo1,org/repo2`） |
+| `CUSTOM_PLUGINS` | 否 | 逗号分隔的要安装的自定义插件列表（例如：`plugin1@marketplace1,plugin2@marketplace2`） |
 
 
 ## 工作原理
@@ -219,11 +268,44 @@ CodeMate 使用单独的[基础镜像（`codemate-base`）](https://github.com/B
 | `/pr:fix-comments` | 读取 PR review comments，修复问题，commit 更改并回复 comments |
 | `/pr:update` | 更新 PR 标题和摘要。使用 `--summary-only` 仅更新摘要 |
 | `/pr:ack-comments` | 通过添加 👀 表情确认 PR issue comments |
+| `/pr:read-issue` | 读取 GitHub issue 详情，包括标题、描述、标签和评论 |
 
 **浏览器插件** (`agent-browser`)：
 | 命令 | 描述 |
 |---------|-------------|
 | `/agent-browser` | 自动化浏览器交互，用于 Web 测试、表单填充、截图和数据提取 |
+
+### 自定义插件
+
+你可以通过在 `.env` 文件中添加自定义插件来扩展 CodeMate：
+
+```bash
+# 添加自定义插件市场（逗号分隔的 GitHub 仓库路径）
+CUSTOM_MARKETPLACES=username/my-marketplace,org/another-marketplace
+
+# 添加要安装的自定义插件（逗号分隔的插件名称）
+CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
+```
+
+**工作原理：**
+1. 在容器启动期间，自定义市场会被添加到 Claude Code
+2. 从这些市场安装自定义插件
+3. 所有自定义插件都可作为 skills 使用（例如：`/my-plugin:command`）
+4. 设置是幂等的 - 已安装的插件会被跳过
+
+**示例：**
+
+如果你在 `github.com/myorg/my-plugins` 有一个自定义插件市场，其中有一个名为 `deploy` 的插件，你可以这样配置：
+
+```bash
+CUSTOM_MARKETPLACES=myorg/my-plugins
+CUSTOM_PLUGINS=deploy@my-plugins
+```
+
+然后在 Claude Code 中使用：
+```bash
+/deploy:production
+```
 
 ## PR Comment 监控
 

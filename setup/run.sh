@@ -43,6 +43,21 @@ if [ -n "$QUERY" ]; then
     printf "${GREEN}Sending initial query to Claude...${RESET}\n"
     tmux send-keys -t "$CLAUDE_SESSION" "$QUERY"
     tmux send-keys -t "$CLAUDE_SESSION" C-m
+
+    # Wait and check if the query was submitted
+    sleep 3
+    SESSION_STATUS_FILE="$HOME/.config/claude-code/.session_status"
+    if [ -f "$SESSION_STATUS_FILE" ]; then
+        STATUS=$(cat "$SESSION_STATUS_FILE" 2>/dev/null || echo "")
+        if [ "$STATUS" != "UserPromptSubmit" ]; then
+            printf "${YELLOW}Query not submitted (status: $STATUS), retrying...${RESET}\n"
+            tmux send-keys -t "$CLAUDE_SESSION" C-m
+        else
+            printf "${GREEN}Query submitted successfully${RESET}\n"
+        fi
+    else
+        printf "${YELLOW}Session status file not found, assuming query was sent${RESET}\n"
+    fi
 else
     sleep 2
 fi

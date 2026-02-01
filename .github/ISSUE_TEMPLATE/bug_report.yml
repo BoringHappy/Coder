@@ -14,7 +14,7 @@ body:
       label: What happened?
       description: Describe the bug and what you expected to happen instead
       placeholder: |
-        When I run ./start.sh --branch my-branch, I get an error...
+        When I run codemate --branch my-branch, I get an error...
         I expected it to start the container successfully.
     validations:
       required: true
@@ -24,7 +24,7 @@ body:
     attributes:
       label: Steps to Reproduce
       placeholder: |
-        1. Run './start.sh --branch test'
+        1. Run 'codemate --branch test'
         2. Execute command '...'
         3. See error
     validations:

@@ -57,6 +57,7 @@ ask_yes_no() {
     done
 }
 
+
 # Function to create .env file
 create_env_file() {
     local env_file="$1"
@@ -123,10 +124,10 @@ create_claude_json() {
 # Function to update start.sh script
 update_script() {
     local script_path="$0"
-    local temp_file="/tmp/start.sh.tmp"
-    local repo_url="https://raw.githubusercontent.com/BoringHappy/CodeMate/main/start.sh"
+    local temp_file="/tmp/codemate.tmp"
+    local repo_url="https://raw.githubusercontent.com/BoringHappy/CodeMate/main/codemate"
 
-    print_info "Updating start.sh from repository..."
+    print_info "Updating codemate from repository..."
 
     # Download the latest version
     if command -v curl &> /dev/null; then
@@ -151,17 +152,21 @@ update_script() {
         exit 1
     fi
 
+    # Detect if running from global installation
+    local script_real_path
+    script_real_path=$(readlink -f "$script_path" 2>/dev/null || realpath "$script_path" 2>/dev/null || echo "$script_path")
+
     # Replace the current script
-    if ! mv "$temp_file" "$script_path"; then
+    if ! mv "$temp_file" "$script_real_path"; then
         print_error "Failed to replace script"
         rm -f "$temp_file"
         exit 1
     fi
 
     # Make it executable
-    chmod +x "$script_path"
+    chmod +x "$script_real_path"
 
-    print_success "start.sh has been updated successfully!"
+    print_success "codemate has been updated successfully!"
     echo ""
     print_info "Please run the script again to use the new version"
     exit 0
@@ -170,49 +175,54 @@ update_script() {
 # Function to setup CodeMate files
 setup_codemate_files() {
     local current_dir="$(pwd)"
+    local config_dir="$HOME/.codemate"
 
-    print_info "Setting up CodeMate configuration files in: $current_dir"
+    print_info "Setting up CodeMate configuration..."
     echo ""
 
-    # Create .claude_in_docker directory
-    if [ ! -d "$current_dir/.claude_in_docker" ]; then
-        mkdir -p "$current_dir/.claude_in_docker"
-        print_success "Created .claude_in_docker directory"
+    # Create global config directory
+    if [ ! -d "$config_dir" ]; then
+        mkdir -p "$config_dir"
+        print_success "Created global config directory: $config_dir"
     else
-        print_warning ".claude_in_docker directory already exists"
+        print_info "Global config directory already exists: $config_dir"
     fi
 
-    # Create .claude_in_docker.json
-    if [ ! -f "$current_dir/.claude_in_docker.json" ]; then
-        create_claude_json "$current_dir/.claude_in_docker.json"
+    # Create .claude.json
+    if [ ! -f "$config_dir/.claude.json" ]; then
+        echo '{}' > "$config_dir/.claude.json"
+        print_success "Created $config_dir/.claude.json"
     else
-        print_warning ".claude_in_docker.json already exists"
+        print_warning "$config_dir/.claude.json already exists"
     fi
 
     # Create settings.json
-    if [ ! -f "$current_dir/.claude_in_docker/settings.json" ]; then
-        create_settings_json "$current_dir/.claude_in_docker/settings.json"
+    if [ ! -f "$config_dir/settings.json" ]; then
+        create_settings_json "$config_dir/settings.json"
     else
-        print_warning ".claude_in_docker/settings.json already exists"
+        print_warning "$config_dir/settings.json already exists"
     fi
 
-    # Create .env file
+    # Create .env file in current directory (project-specific)
     if [ ! -f "$current_dir/.env" ]; then
         create_env_file "$current_dir/.env"
     else
-        print_warning ".env already exists"
+        print_warning ".env already exists in current directory"
     fi
 
     echo ""
     print_success "Setup complete!"
     echo ""
+    print_info "Configuration:"
+    echo "  - Global config: $config_dir"
+    echo "  - Project .env: $current_dir/.env"
+    echo ""
     print_info "Next steps:"
-    echo "  1. Edit .env to add ANTHROPIC_AUTH_TOKEN and ANTHROPIC_BASE_URL (if not set during setup)"
-    echo "  2. Edit .claude_in_docker/settings.json to add necessary config"
-    echo "  3. Run: ./start.sh --repo <repo-url> --branch <branch-name>"
+    echo "  1. Edit $current_dir/.env to add ANTHROPIC_AUTH_TOKEN (if not set during setup)"
+    echo "  2. Run: codemate --repo <repo-url> --branch <branch-name>"
     echo ""
     echo "Example:"
-    echo "  ./start.sh --repo https://github.com/user/repo.git --branch feature/my-feature"
+    echo "  codemate --repo https://github.com/user/repo.git --branch feature/my-feature"
     echo ""
 }
 
@@ -300,12 +310,28 @@ check_prerequisites() {
 run_codemate() {
     local current_dir="$(pwd)"
     local custom_mounts=("$@")
+    local config_dir="$HOME/.codemate"
 
-    # Source .env file if it exists
+    # Check if global config exists
+    if [ ! -d "$config_dir" ] || [ ! -f "$config_dir/.claude.json" ]; then
+        print_error "CodeMate configuration not found"
+        echo ""
+        echo "Please run setup first:"
+        echo "  codemate --setup"
+        echo ""
+        exit 1
+    fi
+
+    print_info "Using global configuration from: $config_dir"
+
+    # Source .env file from current directory (project-specific)
     if [ -f "$current_dir/.env" ]; then
         set -a
         source "$current_dir/.env"
         set +a
+    else
+        print_warning "No .env file found in current directory"
+        echo "Create one with: codemate --setup"
     fi
 
     # Get GitHub token from gh CLI if not already set in .env
@@ -353,10 +379,10 @@ run_codemate() {
     # Create new container
     print_info "Creating new container $CONTAINER_NAME..."
 
-    # Build volume mounts
+    # Build volume mounts using global config
     local volume_mounts=(
-        -v "$current_dir/.claude_in_docker:/home/agent/.claude"
-        -v "$current_dir/.claude_in_docker.json:/home/agent/.claude.json"
+        -v "$config_dir:/home/agent/.claude"
+        -v "$config_dir/.claude.json:/home/agent/.claude.json"
     )
 
     # Mount skills directory if it exists in current directory
@@ -373,7 +399,7 @@ run_codemate() {
         fi
     done
 
-    # Build env file flag if .env exists
+    # Build env file flag if .env exists in current directory
     local env_file_flag=""
     if [ -f "$current_dir/.env" ]; then
         env_file_flag="--env-file $current_dir/.env"
@@ -410,11 +436,11 @@ show_usage() {
     cat << EOF
 CodeMate - Docker-based Claude Code environment
 
-Usage: $0 [OPTIONS]
+Usage: codemate [OPTIONS]
 
 Options:
   --setup              Run setup to create configuration files
-  --update             Update start.sh to the latest version from repository
+  --update             Update codemate to the latest version from repository
   --branch NAME        Branch name to work on
   --pr NUMBER          Existing PR number to work on
   --pr-title TITLE     PR title (optional)
@@ -447,43 +473,43 @@ Environment Variables:
 
 Examples:
   # First time setup
-  $0 --setup
+  codemate --setup
 
-  # Update start.sh to latest version
-  $0 --update
+  # Update to latest version
+  codemate --update
 
   # Run with custom repo
-  $0 --repo https://github.com/user/repo.git --branch feature/xyz
+  codemate --repo https://github.com/user/repo.git --branch feature/xyz
 
   # Run with branch name
-  $0 --branch feature/my-feature
+  codemate --branch feature/my-feature
 
   # Run with existing PR
-  $0 --pr 123
+  codemate --pr 123
 
   # Run with GitHub issue
-  $0 --issue 456
+  codemate --issue 456
 
   # Fork-based workflow examples
   # Open-source contribution: your fork → maintainer's repo
-  $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
-  $0 --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
+  codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
+  codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
 
   # Run with custom volume mounts
-  $0 --branch feature/xyz --mount /local/path:/container/path
-  $0 --branch feature/xyz --mount ~/data:/data --mount ~/config:/config
+  codemate --branch feature/xyz --mount /local/path:/container/path
+  codemate --branch feature/xyz --mount ~/data:/data --mount ~/config:/config
 
   # Run with custom image
-  $0 --branch feature/xyz --image ghcr.io/boringhappy/codemate:v1.0.0
+  codemate --branch feature/xyz --image ghcr.io/boringhappy/codemate:v1.0.0
 
   # Build and run from local Dockerfile
-  $0 --build --branch feature/xyz
+  codemate --build --branch feature/xyz
 
   # Build with custom Dockerfile path and tag
-  $0 --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
+  codemate --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xyz
 
   # Run with initial query
-  $0 --branch feature/xyz --query "Please review the code and fix any issues"
+  codemate --branch feature/xyz --query "Please review the code and fix any issues"
 
 EOF
 }
@@ -601,10 +627,10 @@ main() {
 
     # Check if configuration files exist
     local needs_setup=false
-    if [ ! -d "$current_dir/.claude_in_docker" ] || \
-       [ ! -f "$current_dir/.claude_in_docker.json" ] || \
-       [ ! -f "$current_dir/.claude_in_docker/settings.json" ] || \
-       [ ! -f "$current_dir/.env" ]; then
+    local config_dir="$HOME/.codemate"
+    if [ ! -d "$config_dir" ] || \
+       [ ! -f "$config_dir/.claude.json" ] || \
+       [ ! -f "$config_dir/settings.json" ]; then
         needs_setup=true
     fi
 
@@ -615,16 +641,16 @@ main() {
         echo ""
 
         if [ "$needs_setup" = true ]; then
-            print_warning "Configuration files not found in current directory"
+            print_warning "Global configuration not found"
             echo "The following will be created:"
-            echo "  1. .claude_in_docker/ directory"
-            echo "  2. .claude_in_docker.json file"
-            echo "  3. .claude_in_docker/settings.json file"
-            echo "  4. .env file"
+            echo "  1. Global config directory: $config_dir"
+            echo "  2. Claude config file: $config_dir/.claude.json"
+            echo "  3. Settings file: $config_dir/settings.json"
+            echo "  4. Project .env file: $current_dir/.env"
             echo ""
         fi
 
-        if ask_yes_no "Create CodeMate configuration files in $(pwd)?"; then
+        if ask_yes_no "Create CodeMate configuration files?"; then
             setup_codemate_files
             exit 0
         else

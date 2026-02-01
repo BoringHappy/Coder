@@ -14,4 +14,9 @@ CRITICAL WORKFLOW REQUIREMENTS:
    - The /git:commit skill will automatically stage changes, create a commit with a meaningful message, and push to the PR branch
    - Ensure the commit message clearly describes what was changed and why
 
-Remember: These skills are essential for the PR workflow. Always use /pr:get-details when starting a conversation to understand the PR context, and always use /git:commit after making changes.
+3. **When user calls /review command:**
+   - You MUST FIRST use the /pr:update skill to update the PR description with all changes made
+   - After the PR is updated, THEN execute the /review command
+   - This ensures the PR description is current before requesting review
+
+Remember: These skills are essential for the PR workflow. Always use /pr:get-details when starting a conversation to understand the PR context, always use /git:commit after making changes, and always use /pr:update before /review.

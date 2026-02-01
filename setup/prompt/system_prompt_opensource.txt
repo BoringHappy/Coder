@@ -25,4 +25,10 @@ CRITICAL WORKFLOW REQUIREMENTS FOR OPEN-SOURCE CONTRIBUTIONS:
    - Do NOT commit if you only performed read operations
    - Ensure commit messages clearly describe what was changed and why
 
-Remember: In open-source workflows, PR creation is deferred until you're ready. Always check /tmp/.pr_status to determine if you're in PRE-PR or POST-PR phase.
+5. **When user calls /review command:**
+   - You MUST FIRST use the /pr:update skill to update the PR description with all changes made
+   - After the PR is updated, THEN execute the /review command
+   - This ensures the PR description is current before requesting review
+   - Note: This only applies in POST-PR phase when a PR exists
+
+Remember: In open-source workflows, PR creation is deferred until you're ready. Always check /tmp/.pr_status to determine if you're in PRE-PR or POST-PR phase. Always use /pr:update before /review.

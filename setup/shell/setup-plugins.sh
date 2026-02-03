@@ -42,9 +42,10 @@ fi
 
 # Install default plugins (functions check if already installed)
 printf "\n${CYAN}Installing default plugins:${RESET}\n"
-install_and_verify_plugin "1/3" "agent-browser@agent-browser" "/agent-browser:agent-browser"
-install_and_verify_plugin "2/3" "git@codemate" "/git:commit"
-install_and_verify_plugin "3/3" "pr@codemate" "/pr:get-details, /pr:fix-comments, /pr:update"
+install_and_verify_plugin "1/4" "agent-browser@agent-browser" "/agent-browser:agent-browser"
+install_and_verify_plugin "2/4" "git@codemate" "/git:commit"
+install_and_verify_plugin "3/4" "pr@codemate" "/pr:get-details, /pr:fix-comments, /pr:update"
+install_and_verify_plugin "4/4" "dev@codemate" "/dev:read-env-key"
 
 # Install custom plugins from environment variable
 if [ -n "$CUSTOM_PLUGINS" ]; then

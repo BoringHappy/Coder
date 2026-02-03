@@ -51,6 +51,19 @@ add_marketplace() {
     fi
 }
 
+# Function to update all Claude plugin marketplaces
+# Usage: update_marketplaces
+update_marketplaces() {
+    printf "  Updating marketplaces to fetch latest plugin information...\\n"
+    if claude plugin marketplace update 2>&1; then
+        printf "  ${GREEN}✓ Marketplaces updated successfully${RESET}\\n"
+        return 0
+    else
+        printf "  ${YELLOW}⚠ Failed to update marketplaces${RESET}\\n"
+        return 1
+    fi
+}
+
 # Function to install and verify a Claude plugin (checks if already installed)
 # Usage: install_and_verify_plugin "index/total" "plugin-name" "skill1, skill2, skill3"
 install_and_verify_plugin() {

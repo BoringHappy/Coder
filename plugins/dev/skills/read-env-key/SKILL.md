@@ -1,5 +1,5 @@
 ---
-name: read-key
+name: read-env-key
 description: List environment variable keys without exposing their values. Use when the user wants to see what environment variables are available, check if a specific environment variable exists, or list environment variables matching a pattern. IMPORTANT - This skill only reads keys (names), never values.
 context: fork
 ---

@@ -4,7 +4,7 @@ A CodeMate plugin providing development utilities.
 
 ## Skills
 
-### `/dev:read-key`
+### `/dev:read-env-key`
 
 List environment variable keys without exposing their values.
 
@@ -24,9 +24,9 @@ This plugin is designed to be installed via the CodeMate plugin marketplace.
 
 ```bash
 # List all environment variable keys
-/dev:read-key
+/dev:read-env-key
 
 # Filter for specific patterns
-/dev:read-key GIT
-/dev:read-key TOKEN
+/dev:read-env-key GIT
+/dev:read-env-key TOKEN
 ```

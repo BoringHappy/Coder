@@ -173,7 +173,7 @@ def main():
                     # Use shlex.quote to prevent shell injection
                     safe_title = shlex.quote(title)
                     safe_body = shlex.quote(pr_body)
-                    result = run(f"gh pr create --title {safe_title} --body {safe_body}")
+                    result = run(f"gh pr create --draft --title {safe_title} --body {safe_body}")
                     pr_url = result.stdout.strip()
 
     print(f"{GREEN}✓ Git setup completed successfully{RESET}")

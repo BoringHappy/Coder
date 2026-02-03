@@ -350,12 +350,14 @@ run_codemate() {
         exit 1
     fi
 
-    # Determine container name
-    local branch_for_name="${BRANCH_NAME:-main}"
-    CONTAINER_NAME="codemate-$(echo "$branch_for_name" | sed 's/[^a-zA-Z0-9_-]/-/g')"
-
     # Extract repo name from git URL
     REPO_NAME=$(echo "$GIT_REPO_URL" | sed 's/\.git$//' | sed 's|.*/||')
+
+    # Determine container name (include repo name to avoid conflicts between repos with same branch)
+    local branch_for_name="${BRANCH_NAME:-main}"
+    local repo_for_name=$(echo "$REPO_NAME" | sed 's/[^a-zA-Z0-9_-]/-/g')
+    local branch_sanitized=$(echo "$branch_for_name" | sed 's/[^a-zA-Z0-9_-]/-/g')
+    CONTAINER_NAME="codemate-${repo_for_name}-${branch_sanitized}"
 
     # Detect OS for network flag
     NETWORK_FLAG=""

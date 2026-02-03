@@ -102,17 +102,10 @@ check_pr_comments() {
             . $time_filter |
             group_by(.in_reply_to_id // .id) |
             map(
-                if (
-                    (.[0].body | startswith(\"Claude Replied:\")) or
-                    (.[-1].body | startswith(\"Claude Replied:\"))
-                ) then
+                if (.[-1].body | startswith(\"Claude Replied:\")) then
                     empty
                 else
-                    if .[0].in_reply_to_id == null then
-                        .[0]
-                    else
-                        empty
-                    end
+                    .[-1]
                 end
             )
         " 2>/dev/null)

@@ -60,6 +60,7 @@ load_state() {
         GIT_CHANGES_NOTIFIED="false"
         CONSECUTIVE_FAILURES=0
         LAST_ISSUE_COMMENT_ID=""
+        READY_FOR_REVIEW_NOTIFIED="false"
     fi
 }
 
@@ -70,7 +71,15 @@ LAST_CHECK_TIME="$LAST_CHECK_TIME"
 GIT_CHANGES_NOTIFIED="$GIT_CHANGES_NOTIFIED"
 CONSECUTIVE_FAILURES=$CONSECUTIVE_FAILURES
 LAST_ISSUE_COMMENT_ID="$LAST_ISSUE_COMMENT_ID"
+READY_FOR_REVIEW_NOTIFIED="$READY_FOR_REVIEW_NOTIFIED"
 EOF
+}
+
+# Cleanup and exit
+cleanup_and_exit() {
+    save_state
+    echo "$(date): PR Monitor check completed"
+    exit 0
 }
 
 # Get PR number with retry
@@ -176,6 +185,54 @@ check_issue_comments() {
     return 0
 }
 
+# Check if PR is ready for review (not draft) and doesn't have pr-updated label
+check_pr_ready_for_review() {
+    local pr_number="$1"
+
+    # Skip if we've already notified
+    if [ "$READY_FOR_REVIEW_NOTIFIED" = "true" ]; then
+        return 0
+    fi
+
+    # Fetch PR status and labels in a single API call
+    local pr_data=""
+    for attempt in 1 2 3; do
+        pr_data=$(gh pr view "$pr_number" --json isDraft,labels 2>/dev/null)
+        if [ $? -eq 0 ] && [ -n "$pr_data" ]; then
+            break
+        fi
+        sleep $((attempt * 2))
+    done
+
+    if [ -z "$pr_data" ]; then
+        return 0
+    fi
+
+    # Check if PR is not draft (ready for review)
+    local is_draft=$(echo "$pr_data" | jq -r '.isDraft')
+    if [ "$is_draft" = "true" ]; then
+        return 0
+    fi
+
+    # Check if PR already has pr-updated label
+    local has_label=$(echo "$pr_data" | jq -r '.labels[] | select(.name == "pr-updated") | .name')
+    if [ -n "$has_label" ]; then
+        echo "$(date): PR already has pr-updated label, skipping notification"
+        READY_FOR_REVIEW_NOTIFIED="true"
+        return 0
+    fi
+
+    # PR is ready for review and doesn't have the label
+    echo "$(date): PR is ready for review, notifying Claude"
+    if session_exists "$CLAUDE_SESSION"; then
+        send_and_verify_command "$CLAUDE_SESSION" "The PR is now ready for review. Please use /pr:update skill to update the PR title and description based on all changes made. After updating, add the 'pr-updated' label to the GitHub PR using: gh pr edit --add-label pr-updated" 3
+        READY_FOR_REVIEW_NOTIFIED="true"
+        return 1  # Signal that we sent a notification
+    fi
+
+    return 0
+}
+
 # Main logic (single run)
 main() {
     echo "$(date): PR Monitor check started"
@@ -185,15 +242,13 @@ main() {
     # Check if Claude session is stopped (only act when stopped)
     if ! is_session_stopped; then
         echo "$(date): Claude is busy, skipping"
-        save_state
-        exit 0
+        cleanup_and_exit
     fi
 
     # Get PR number
     pr_number=$(get_pr_number) || {
         echo "$(date): No PR found"
-        save_state
-        exit 0
+        cleanup_and_exit
     }
 
     echo "$(date): Checking PR #$pr_number"
@@ -213,11 +268,20 @@ main() {
         GIT_CHANGES_NOTIFIED="false"
     fi
 
+    # Check if PR is ready for review (not draft) and needs update
+    check_pr_ready_for_review "$pr_number"
+    ready_for_review_sent=$?
+
+    # If we sent a ready-for-review notification, skip other checks this run
+    if [ "$ready_for_review_sent" -eq 1 ]; then
+        echo "$(date): Ready-for-review notification sent to Claude, skipping other checks"
+        cleanup_and_exit
+    fi
+
     # Skip API call if too many failures
     if [ "$CONSECUTIVE_FAILURES" -ge 5 ]; then
         echo "$(date): Too many failures, skipping API call"
-        save_state
-        exit 0
+        cleanup_and_exit
     fi
 
     # Check for new Issue Comments (pure PR comments)
@@ -227,15 +291,12 @@ main() {
     # If we sent an issue comment, skip review comments check this run
     if [ "$issue_comment_sent" -eq 1 ]; then
         echo "$(date): Issue comment sent to Claude, skipping review comments check"
-        save_state
-        echo "$(date): PR Monitor check completed"
-        exit 0
+        cleanup_and_exit
     fi
 
     comments_data=$(check_pr_comments "$pr_number") || {
         echo "$(date): API call failed"
-        save_state
-        exit 0
+        cleanup_and_exit
     }
 
     unsolved_count=$(echo "$comments_data" | jq 'length')

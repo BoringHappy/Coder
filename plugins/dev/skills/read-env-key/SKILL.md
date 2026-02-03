@@ -11,16 +11,16 @@ List environment variable keys without exposing their values. This skill provide
 ## Available Environment Variables
 
 Current environment variable keys:
-!`python3 scripts/list_env_keys.py`
+!`env | cut -d= -f1 | sort`
 
 ## Instructions
 
-Use the provided script to list environment variable keys:
+Use shell commands to list environment variable keys:
 
 ### List all environment variable keys
 
 ```bash
-python3 scripts/list_env_keys.py
+env | cut -d= -f1 | sort
 ```
 
 ### Filter environment variable keys
@@ -28,27 +28,31 @@ python3 scripts/list_env_keys.py
 To filter keys by pattern (case-insensitive):
 
 ```bash
-python3 scripts/list_env_keys.py <pattern>
+env | cut -d= -f1 | grep -i <pattern> | sort
 ```
 
 Examples:
-- `python3 scripts/list_env_keys.py GIT` - List all keys containing "GIT"
-- `python3 scripts/list_env_keys.py GITHUB` - List all keys containing "GITHUB"
-- `python3 scripts/list_env_keys.py TOKEN` - List all keys containing "TOKEN"
+- `env | cut -d= -f1 | grep -i GIT | sort` - List all keys containing "GIT"
+- `env | cut -d= -f1 | grep -i GITHUB | sort` - List all keys containing "GITHUB"
+- `env | cut -d= -f1 | grep -i TOKEN | sort` - List all keys containing "TOKEN"
 
 ### Check if a specific key exists
 
 To check if a specific environment variable key exists:
 
 ```bash
-python3 scripts/check_env_key.py <KEY_NAME>
+if [ -n "${KEY_NAME+x}" ]; then echo "✓ KEY_NAME exists"; else echo "✗ KEY_NAME does not exist"; fi
+```
+
+Or using printenv:
+
+```bash
+if printenv KEY_NAME > /dev/null 2>&1; then echo "✓ KEY_NAME exists"; else echo "✗ KEY_NAME does not exist"; fi
 ```
 
 Examples:
-- `python3 scripts/check_env_key.py GITHUB_TOKEN` - Check if GITHUB_TOKEN exists
-- `python3 scripts/check_env_key.py API_KEY` - Check if API_KEY exists
-
-The script exits with code 0 if the key exists, 1 if it doesn't.
+- `if [ -n "${GITHUB_TOKEN+x}" ]; then echo "✓ GITHUB_TOKEN exists"; else echo "✗ GITHUB_TOKEN does not exist"; fi`
+- `if printenv API_KEY > /dev/null 2>&1; then echo "✓ API_KEY exists"; else echo "✗ API_KEY does not exist"; fi`
 
 ## Security Note
 
@@ -56,5 +60,5 @@ This skill is designed to ONLY read environment variable keys (names), never the
 
 ## Prerequisites
 
-- Python 3 must be available
-- Must be run in an environment with environment variables set
+- Must be run in a shell environment with environment variables set
+

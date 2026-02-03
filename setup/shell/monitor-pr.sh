@@ -75,6 +75,13 @@ READY_FOR_REVIEW_NOTIFIED="$READY_FOR_REVIEW_NOTIFIED"
 EOF
 }
 
+# Cleanup and exit
+cleanup_and_exit() {
+    save_state
+    echo "$(date): PR Monitor check completed"
+    exit 0
+}
+
 # Get PR number with retry
 get_pr_number() {
     local pr_number=""
@@ -235,15 +242,13 @@ main() {
     # Check if Claude session is stopped (only act when stopped)
     if ! is_session_stopped; then
         echo "$(date): Claude is busy, skipping"
-        save_state
-        exit 0
+        cleanup_and_exit
     fi
 
     # Get PR number
     pr_number=$(get_pr_number) || {
         echo "$(date): No PR found"
-        save_state
-        exit 0
+        cleanup_and_exit
     }
 
     echo "$(date): Checking PR #$pr_number"
@@ -270,16 +275,13 @@ main() {
     # If we sent a ready-for-review notification, skip other checks this run
     if [ "$ready_for_review_sent" -eq 1 ]; then
         echo "$(date): Ready-for-review notification sent to Claude, skipping other checks"
-        save_state
-        echo "$(date): PR Monitor check completed"
-        exit 0
+        cleanup_and_exit
     fi
 
     # Skip API call if too many failures
     if [ "$CONSECUTIVE_FAILURES" -ge 5 ]; then
         echo "$(date): Too many failures, skipping API call"
-        save_state
-        exit 0
+        cleanup_and_exit
     fi
 
     # Check for new Issue Comments (pure PR comments)
@@ -289,15 +291,12 @@ main() {
     # If we sent an issue comment, skip review comments check this run
     if [ "$issue_comment_sent" -eq 1 ]; then
         echo "$(date): Issue comment sent to Claude, skipping review comments check"
-        save_state
-        echo "$(date): PR Monitor check completed"
-        exit 0
+        cleanup_and_exit
     fi
 
     comments_data=$(check_pr_comments "$pr_number") || {
         echo "$(date): API call failed"
-        save_state
-        exit 0
+        cleanup_and_exit
     }
 
     unsolved_count=$(echo "$comments_data" | jq 'length')

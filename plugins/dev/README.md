@@ -1,10 +1,10 @@
-# Environment Variable Keys Plugin
+# Dev Plugin
 
-A CodeMate plugin for safely reading environment variable keys without exposing their values.
+A CodeMate plugin providing development utilities.
 
 ## Skills
 
-### `/env-keys:read-key`
+### `/dev:read-key`
 
 List environment variable keys without exposing their values.
 
@@ -24,9 +24,9 @@ This plugin is designed to be installed via the CodeMate plugin marketplace.
 
 ```bash
 # List all environment variable keys
-/env-keys:read-key
+/dev:read-key
 
 # Filter for specific patterns
-/env-keys:read-key GIT
-/env-keys:read-key TOKEN
+/dev:read-key GIT
+/dev:read-key TOKEN
 ```

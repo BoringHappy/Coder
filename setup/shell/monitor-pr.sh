@@ -87,7 +87,7 @@ get_pr_number() {
     return 1
 }
 
-# Check for unsolved PR comments
+# Check for unsolved PR comments and return both count and details
 check_pr_comments() {
     local pr_number="$1"
     local time_filter=""
@@ -96,9 +96,9 @@ check_pr_comments() {
         time_filter="| map(select(.created_at > \"$LAST_CHECK_TIME\"))"
     fi
 
-    local unsolved_count=""
+    local comments_data=""
     for attempt in 1 2 3; do
-        unsolved_count=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
+        comments_data=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
             . $time_filter |
             group_by(.in_reply_to_id // .id) |
             map(
@@ -109,17 +109,17 @@ check_pr_comments() {
                     empty
                 else
                     if .[0].in_reply_to_id == null then
-                        .
+                        .[0]
                     else
                         empty
                     end
                 end
-            ) | length
+            )
         " 2>/dev/null)
 
-        if [ $? -eq 0 ] && [ -n "$unsolved_count" ]; then
+        if [ $? -eq 0 ] && [ -n "$comments_data" ]; then
             CONSECUTIVE_FAILURES=0
-            echo "$unsolved_count"
+            echo "$comments_data"
             return 0
         fi
 
@@ -239,18 +239,30 @@ main() {
         exit 0
     fi
 
-    unsolved_count=$(check_pr_comments "$pr_number") || {
+    comments_data=$(check_pr_comments "$pr_number") || {
         echo "$(date): API call failed"
         save_state
         exit 0
     }
 
+    unsolved_count=$(echo "$comments_data" | jq 'length')
     echo "$(date): unsolved_count=$unsolved_count"
 
     if [ "$unsolved_count" -gt 0 ]; then
         echo "$(date): Unsolved PR comments detected ($unsolved_count)"
         if session_exists "$CLAUDE_SESSION"; then
-            send_and_verify_command "$CLAUDE_SESSION" "Please Use /fix-comments skill to address comments" 3
+            # Format comment details for Claude
+            comment_summary=$(echo "$comments_data" | jq -r '
+                map(
+                    "- \(.path):\(.line // .original_line) by @\(.user.login):\n  \(.body | split("\n") | join("\n  "))"
+                ) | join("\n\n")
+            ')
+
+            # Send command with comment context
+            local message="Please use /fix-comments skill to address the following PR review comments:
+
+$comment_summary"
+            send_and_verify_command "$CLAUDE_SESSION" "$message" 3
         fi
         LAST_CHECK_TIME=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
     fi

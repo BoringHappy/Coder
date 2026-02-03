@@ -40,6 +40,10 @@ if [ -n "$CUSTOM_MARKETPLACES" ]; then
     done
 fi
 
+# Update marketplaces to fetch latest plugin information
+printf "\n${CYAN}Updating marketplaces:${RESET}\n"
+update_marketplaces
+
 # Install default plugins (functions check if already installed)
 printf "\n${CYAN}Installing default plugins:${RESET}\n"
 install_and_verify_plugin "1/4" "agent-browser@agent-browser" "/agent-browser:agent-browser"

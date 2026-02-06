@@ -270,6 +270,24 @@ check_ci_status() {
     fi
 
     # Get check status for the PR
+    # First, check if any CI checks are configured using statusCheckRollup
+    local check_count=""
+    for attempt in 1 2 3; do
+        check_count=$(gh pr view "$pr_number" --json statusCheckRollup -q '.statusCheckRollup | length' 2>/dev/null)
+        if [ $? -eq 0 ]; then
+            break
+        fi
+        sleep $((attempt * 2))
+    done
+
+    if [ "$check_count" = "0" ] || [ -z "$check_count" ]; then
+        # No CI checks configured for this PR, skip future checks
+        echo "$(date): No CI checks configured for this PR, skipping future CI checks"
+        NO_CI_CONFIGURED="true"
+        return 0
+    fi
+
+    # Get detailed check status
     local checks_output=""
     for attempt in 1 2 3; do
         checks_output=$(gh pr checks "$pr_number" 2>/dev/null)
@@ -280,9 +298,6 @@ check_ci_status() {
     done
 
     if [ -z "$checks_output" ]; then
-        # No CI checks configured for this PR, skip future checks
-        echo "$(date): No CI checks configured for this PR, skipping future CI checks"
-        NO_CI_CONFIGURED="true"
         return 0
     fi
 

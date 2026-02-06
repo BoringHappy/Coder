@@ -61,6 +61,8 @@ load_state() {
         CONSECUTIVE_FAILURES=0
         LAST_ISSUE_COMMENT_ID=""
         READY_FOR_REVIEW_NOTIFIED="false"
+        CI_FAILURE_NOTIFIED="false"
+        LAST_CI_RUN_ID=""
     fi
 }
 
@@ -72,6 +74,8 @@ GIT_CHANGES_NOTIFIED="$GIT_CHANGES_NOTIFIED"
 CONSECUTIVE_FAILURES=$CONSECUTIVE_FAILURES
 LAST_ISSUE_COMMENT_ID="$LAST_ISSUE_COMMENT_ID"
 READY_FOR_REVIEW_NOTIFIED="$READY_FOR_REVIEW_NOTIFIED"
+CI_FAILURE_NOTIFIED="$CI_FAILURE_NOTIFIED"
+LAST_CI_RUN_ID="$LAST_CI_RUN_ID"
 EOF
 }
 
@@ -233,6 +237,86 @@ check_pr_ready_for_review() {
     return 0
 }
 
+# Check for CI failures and notify Claude
+check_ci_status() {
+    local pr_number="$1"
+
+    # Skip if we've already notified about current failure
+    if [ "$CI_FAILURE_NOTIFIED" = "true" ]; then
+        # Check if there's a new run (CI was re-triggered)
+        local latest_run_id=$(gh run list --branch "$(git branch --show-current)" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
+        if [ "$latest_run_id" = "$LAST_CI_RUN_ID" ]; then
+            return 0
+        fi
+        # New run detected, reset notification flag
+        CI_FAILURE_NOTIFIED="false"
+    fi
+
+    # Get check status for the PR
+    local checks_output=""
+    for attempt in 1 2 3; do
+        checks_output=$(gh pr checks "$pr_number" 2>/dev/null)
+        if [ $? -eq 0 ]; then
+            break
+        fi
+        sleep $((attempt * 2))
+    done
+
+    if [ -z "$checks_output" ]; then
+        return 0
+    fi
+
+    # Check for failures (look for "fail" in output)
+    local failed_checks=$(echo "$checks_output" | grep -i "fail" || true)
+
+    if [ -z "$failed_checks" ]; then
+        CI_FAILURE_NOTIFIED="false"
+        return 0
+    fi
+
+    echo "$(date): CI failures detected"
+
+    # Get the failed workflow run details
+    local failed_run=$(gh run list --branch "$(git branch --show-current)" --status failure --limit 1 --json databaseId,name,conclusion -q '.[0]' 2>/dev/null)
+
+    if [ -z "$failed_run" ] || [ "$failed_run" = "null" ]; then
+        return 0
+    fi
+
+    local run_id=$(echo "$failed_run" | jq -r '.databaseId')
+    local run_name=$(echo "$failed_run" | jq -r '.name')
+
+    # Store run ID to track if it changes
+    LAST_CI_RUN_ID="$run_id"
+
+    # Get failed jobs from the run
+    local failed_jobs=$(gh run view "$run_id" --json jobs -q '.jobs[] | select(.conclusion == "failure") | .name' 2>/dev/null)
+
+    # Get logs for the failed run (last 100 lines of failed job)
+    local failure_logs=""
+    failure_logs=$(gh run view "$run_id" --log-failed 2>/dev/null | tail -100)
+
+    if session_exists "$CLAUDE_SESSION"; then
+        local message="CI check failed for this PR. Please analyze and fix the issue.
+
+Workflow: $run_name
+Failed jobs: $failed_jobs
+
+Recent failure logs:
+\`\`\`
+$failure_logs
+\`\`\`
+
+Please fix the CI failure and commit the changes using /git:commit skill."
+
+        send_and_verify_command "$CLAUDE_SESSION" "$message" 3
+        CI_FAILURE_NOTIFIED="true"
+        return 1  # Signal that we sent a notification
+    fi
+
+    return 0
+}
+
 # Main logic (single run)
 main() {
     echo "$(date): PR Monitor check started"
@@ -266,6 +350,16 @@ main() {
         fi
     else
         GIT_CHANGES_NOTIFIED="false"
+    fi
+
+    # Check for CI failures
+    check_ci_status "$pr_number"
+    ci_failure_sent=$?
+
+    # If we sent a CI failure notification, skip other checks this run
+    if [ "$ci_failure_sent" -eq 1 ]; then
+        echo "$(date): CI failure notification sent to Claude, skipping other checks"
+        cleanup_and_exit
     fi
 
     # Check if PR is ready for review (not draft) and needs update

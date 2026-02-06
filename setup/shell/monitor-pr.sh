@@ -276,11 +276,17 @@ check_ci_status() {
         return 0
     fi
 
+    # Check if CI is still running (don't update state while pending)
+    local pending_checks=$(echo "$checks_output" | grep -iE "pending|running|queued" || true)
+    if [ -n "$pending_checks" ]; then
+        return 0
+    fi
+
     # Check for failures (look for "fail" in output)
     local failed_checks=$(echo "$checks_output" | grep -i "fail" || true)
 
     if [ -z "$failed_checks" ]; then
-        # No failures, update last checked commit
+        # No failures and CI completed, update last checked commit
         CI_FAILURE_NOTIFIED="false"
         LAST_CI_CHECK_COMMIT="$current_commit"
         return 0

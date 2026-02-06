@@ -63,6 +63,7 @@ load_state() {
         READY_FOR_REVIEW_NOTIFIED="false"
         CI_FAILURE_NOTIFIED="false"
         LAST_CI_RUN_ID=""
+        LAST_CI_CHECK_COMMIT=""
     fi
 }
 
@@ -76,6 +77,7 @@ LAST_ISSUE_COMMENT_ID="$LAST_ISSUE_COMMENT_ID"
 READY_FOR_REVIEW_NOTIFIED="$READY_FOR_REVIEW_NOTIFIED"
 CI_FAILURE_NOTIFIED="$CI_FAILURE_NOTIFIED"
 LAST_CI_RUN_ID="$LAST_CI_RUN_ID"
+LAST_CI_CHECK_COMMIT="$LAST_CI_CHECK_COMMIT"
 EOF
 }
 
@@ -241,6 +243,14 @@ check_pr_ready_for_review() {
 check_ci_status() {
     local pr_number="$1"
 
+    # Get current HEAD commit
+    local current_commit=$(git rev-parse HEAD 2>/dev/null)
+
+    # Skip if no new code has been pushed since last check
+    if [ "$current_commit" = "$LAST_CI_CHECK_COMMIT" ]; then
+        return 0
+    fi
+
     # Skip if we've already notified about current failure
     if [ "$CI_FAILURE_NOTIFIED" = "true" ]; then
         # Check if there's a new run (CI was re-triggered)
@@ -270,7 +280,9 @@ check_ci_status() {
     local failed_checks=$(echo "$checks_output" | grep -i "fail" || true)
 
     if [ -z "$failed_checks" ]; then
+        # No failures, update last checked commit
         CI_FAILURE_NOTIFIED="false"
+        LAST_CI_CHECK_COMMIT="$current_commit"
         return 0
     fi
 
@@ -311,6 +323,7 @@ Please fix the CI failure and commit the changes using /git:commit skill."
 
         send_and_verify_command "$CLAUDE_SESSION" "$message" 3
         CI_FAILURE_NOTIFIED="true"
+        LAST_CI_CHECK_COMMIT="$current_commit"
         return 1  # Signal that we sent a notification
     fi
 

@@ -64,6 +64,7 @@ load_state() {
         CI_FAILURE_NOTIFIED="false"
         LAST_CI_RUN_ID=""
         LAST_CI_CHECK_COMMIT=""
+        NO_CI_CONFIGURED="false"
     fi
 }
 
@@ -78,6 +79,7 @@ READY_FOR_REVIEW_NOTIFIED="$READY_FOR_REVIEW_NOTIFIED"
 CI_FAILURE_NOTIFIED="$CI_FAILURE_NOTIFIED"
 LAST_CI_RUN_ID="$LAST_CI_RUN_ID"
 LAST_CI_CHECK_COMMIT="$LAST_CI_CHECK_COMMIT"
+NO_CI_CONFIGURED="$NO_CI_CONFIGURED"
 EOF
 }
 
@@ -243,6 +245,11 @@ check_pr_ready_for_review() {
 check_ci_status() {
     local pr_number="$1"
 
+    # Skip if no CI is configured for this repo
+    if [ "$NO_CI_CONFIGURED" = "true" ]; then
+        return 0
+    fi
+
     # Get current HEAD commit
     local current_commit=$(git rev-parse HEAD 2>/dev/null)
 
@@ -273,6 +280,9 @@ check_ci_status() {
     done
 
     if [ -z "$checks_output" ]; then
+        # No CI checks configured for this PR, skip future checks
+        echo "$(date): No CI checks configured for this PR, skipping future CI checks"
+        NO_CI_CONFIGURED="true"
         return 0
     fi
 

@@ -1,11 +1,10 @@
-name: Build and Push Docker Image
+name: Build and Push Pure Claude Image
 
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'Dockerfile.base'
+    paths:
       - 'Dockerfile.pure-claude'
     tags:
       - 'v*'
@@ -40,7 +39,7 @@ jobs:
 
       - name: Set lowercase image name
         id: image
-        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-pure-claude" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -72,12 +71,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.pure-claude
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.image.outputs.name }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
-          cache-from: type=gha,scope=main-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=main-${{ matrix.arch }}
+          cache-from: type=gha,scope=pure-claude-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=pure-claude-${{ matrix.arch }}
           provenance: false
 
       - name: Export digest
@@ -89,14 +88,13 @@ jobs:
             echo "Error: No digest output from build"
             exit 1
           fi
-          # Store platform info in the digest file for manifest creation
           echo "${{ matrix.platform }}" > "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ matrix.arch }}
+          name: pure-claude-digests-${{ matrix.arch }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -114,12 +112,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
-          pattern: digests-*
+          pattern: pure-claude-digests-*
           merge-multiple: true
 
       - name: Set lowercase image name
         id: image
-        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-pure-claude" >> $GITHUB_OUTPUT
 
       - name: Verify all platforms built
         run: |
@@ -128,7 +126,7 @@ jobs:
             echo "Error: Expected 2 platform digests, found $digest_count"
             exit 1
           fi
-          echo "✓ All platforms built successfully"
+          echo "All platforms built successfully"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -23,14 +23,15 @@ RUN curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | gpg --dearmor -o
 COPY --chmod=755 docker/setup /usr/local/bin/setup
 
 # Copy webhook server and pyproject.toml to a known location
-COPY --chown=agent:agent pyproject.toml webhook_server.py /home/agent/codemate-webhook/
+COPY --chown=agent:agent pyproject.toml /home/agent/codemate-webhook/
+COPY --chown=agent:agent webhook_server/ /home/agent/codemate-webhook/webhook_server/
 
 # Switch to agent user and install Claude Code
 USER agent
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Install webhook server Python dependencies via uv
-RUN cd /home/agent/codemate-webhook && uv sync
+RUN cd /home/agent/codemate-webhook && uv sync --no-dev
 
 # Create workspaces directory for per-issue/per-repo isolation
 RUN mkdir -p /home/agent/workspaces
@@ -38,4 +39,4 @@ RUN mkdir -p /home/agent/workspaces
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/setup/setup-webhook.sh"]
-CMD ["uv", "run", "--project", "/home/agent/codemate-webhook", "python", "/home/agent/codemate-webhook/webhook_server.py"]
+CMD ["uv", "run", "--project", "/home/agent/codemate-webhook", "codemate-webhook"]

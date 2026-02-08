@@ -8,5 +8,14 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+]
+
 [project.scripts]
 codemate-webhook = "webhook_server:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

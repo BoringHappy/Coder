@@ -1,64 +1,13 @@
-#!/usr/bin/env python3
-"""
-GitHub Webhook Server for CodeMate Issue Workflow.
+"""Business logic: shell helpers, tmux management, workspace setup, event handlers."""
 
-Receives GitHub webhook events and spawns Claude Code tmux sessions
-to work on issues automatically. Each issue gets an isolated workspace
-under ~/workspaces/{owner}/{repo}/issue-{N}/, supporting multiple repos
-and branches concurrently.
-
-Run on host:
-  uv run webhook_server.py
-
-Run in Docker (with optional Cloudflare Tunnel):
-  docker build -f docker/Dockerfile.webhook -t codemate-webhook .
-  docker run -p 8080:8080 --env-file .env codemate-webhook
-
-Data flow:
-  GitHub Issue Created -> Webhook -> This server -> new tmux session (claude-{owner}-{repo}-{N})
-  GitHub Issue Comment -> Webhook -> This server -> forwards to existing tmux session
-"""
-
-import hashlib
-import hmac
 import json
-import logging
 import os
 import shlex
 import subprocess
-import sys
 import tempfile
 import time
-from contextlib import asynccontextmanager
-from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException, Request
-
-# Configuration
-PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
-WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "")
-WORKSPACES_ROOT = os.getenv("WORKSPACES_ROOT", str(Path.home() / "workspaces"))
-
-# System prompt: check env, then look relative to this script, then Docker path
-_SCRIPT_DIR = Path(__file__).resolve().parent
-_DEFAULT_PROMPT_PATHS = [
-    _SCRIPT_DIR / "docker" / "setup" / "prompt" / "system_prompt_issue.txt",  # repo root
-    Path("/usr/local/bin/setup/prompt/system_prompt_issue.txt"),               # Docker
-]
-SYSTEM_PROMPT_FILE = os.getenv("SYSTEM_PROMPT_FILE", "")
-if not SYSTEM_PROMPT_FILE:
-    for p in _DEFAULT_PROMPT_PATHS:
-        if p.exists():
-            SYSTEM_PROMPT_FILE = str(p)
-            break
-
-# Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger("webhook_server")
+from .config import SYSTEM_PROMPT_FILE, WORKSPACES_ROOT, logger
 
 # In-memory session tracking
 # key: "{owner}/{repo}#{issue_number}"
@@ -100,33 +49,6 @@ def parse_repo_owner_name(repo_url: str) -> tuple[str, str]:
     if len(parts) >= 2:
         return parts[-2], parts[-1]
     return "unknown", parts[-1] if parts else "unknown"
-
-
-# --- Signature verification ---
-
-
-def verify_signature(payload_body: bytes, signature_header: str) -> bool:
-    """Verify the GitHub webhook HMAC-SHA256 signature."""
-    if not WEBHOOK_SECRET:
-        logger.warning("GITHUB_WEBHOOK_SECRET not set, skipping signature verification")
-        return True
-
-    if not signature_header:
-        logger.error("No X-Hub-Signature-256 header present")
-        return False
-
-    hash_algorithm, _, signature = signature_header.partition("=")
-    if hash_algorithm != "sha256":
-        logger.error(f"Unexpected hash algorithm: {hash_algorithm}")
-        return False
-
-    expected = hmac.new(
-        WEBHOOK_SECRET.encode("utf-8"),
-        payload_body,
-        hashlib.sha256,
-    ).hexdigest()
-
-    return hmac.compare_digest(signature, expected)
 
 
 # --- Tmux session helpers ---
@@ -282,6 +204,13 @@ def create_draft_pr(owner: str, repo: str, issue_number: int, issue_title: str, 
             logger.error(f"Failed to create PR: {result.stderr}")
 
     # Write PR status for skills (atomic write)
+    _write_pr_status(pr_url)
+
+    return pr_url
+
+
+def _write_pr_status(pr_url: str) -> None:
+    """Write PR URL to status file atomically."""
     pr_status_file = "/tmp/.pr_status"
     try:
         with tempfile.NamedTemporaryFile(mode="w", delete=False, dir="/tmp", prefix=".pr_status_") as f:
@@ -290,8 +219,6 @@ def create_draft_pr(owner: str, repo: str, issue_number: int, issue_title: str, 
         os.rename(temp_path, pr_status_file)
     except Exception as e:
         logger.warning(f"Failed to write PR status: {e}")
-
-    return pr_url
 
 
 # --- Event handlers ---
@@ -389,13 +316,7 @@ def handle_issue_comment(issue_number: int, comment_body: str, comment_user: str
         pr_url = result.stdout.strip() if result.returncode == 0 else ""
 
         # Write PR status for skills
-        try:
-            with tempfile.NamedTemporaryFile(mode="w", delete=False, dir="/tmp", prefix=".pr_status_") as f:
-                f.write(pr_url)
-                temp_path = f.name
-            os.rename(temp_path, "/tmp/.pr_status")
-        except Exception:
-            pass
+        _write_pr_status(pr_url)
 
         _start_claude_session(session_name, session_key, workspace)
         time.sleep(5)
@@ -413,116 +334,3 @@ def handle_issue_comment(issue_number: int, comment_body: str, comment_user: str
             "pr_url": pr_url,
         }
         logger.info(f"Started new session for {session_key} with comment")
-
-
-# --- FastAPI app ---
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info(f"Webhook server starting on port {PORT}")
-    logger.info(f"Health check: http://localhost:{PORT}/health")
-    logger.info(f"Webhook endpoint: http://localhost:{PORT}/webhook")
-    logger.info(f"Workspaces root: {WORKSPACES_ROOT}")
-    if SYSTEM_PROMPT_FILE:
-        logger.info(f"System prompt: {SYSTEM_PROMPT_FILE}")
-    else:
-        logger.warning("No system prompt file found")
-    yield
-    logger.info("Webhook server shutting down")
-
-
-app = FastAPI(title="CodeMate Webhook Server", lifespan=lifespan)
-
-
-@app.get("/health")
-async def health():
-    """Health check endpoint with active session info."""
-    active_sessions = {
-        k: {
-            "session_name": v["session_name"],
-            "branch": v["branch"],
-            "pr_url": v["pr_url"],
-            "tmux_active": session_exists(v["session_name"]),
-        }
-        for k, v in sessions.items()
-    }
-    return {
-        "status": "ok",
-        "active_sessions": active_sessions,
-        "total_sessions": len(sessions),
-    }
-
-
-@app.post("/webhook")
-async def webhook(
-    request: Request,
-    x_hub_signature_256: str = Header(default=""),
-    x_github_event: str = Header(default=""),
-):
-    """GitHub webhook endpoint."""
-    payload_body = await request.body()
-
-    # Verify signature
-    if not verify_signature(payload_body, x_hub_signature_256):
-        raise HTTPException(status_code=401, detail="Signature verification failed")
-
-    # Parse payload
-    try:
-        payload = json.loads(payload_body)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
-
-    action = payload.get("action", "N/A")
-    logger.info(f"Received event: {x_github_event}, action: {action}")
-
-    # Route event
-    if x_github_event == "issues" and action == "opened":
-        issue = payload["issue"]
-        repo_url = payload["repository"]["clone_url"]
-        handle_new_issue(
-            issue_number=issue["number"],
-            issue_title=issue["title"],
-            issue_body=issue.get("body", ""),
-            repo_url=repo_url,
-        )
-        return {"status": "issue handled"}
-
-    elif x_github_event == "issue_comment" and action == "created":
-        issue = payload["issue"]
-        comment = payload["comment"]
-
-        # Skip bot comments to avoid loops
-        if comment["user"].get("type") == "Bot":
-            return {"status": "skipped bot comment"}
-
-        # Only handle comments on issues (not PRs)
-        if "pull_request" in issue:
-            return {"status": "skipped PR comment"}
-
-        repo_url = payload["repository"]["clone_url"]
-        handle_issue_comment(
-            issue_number=issue["number"],
-            comment_body=comment["body"],
-            comment_user=comment["user"]["login"],
-            repo_url=repo_url,
-        )
-        return {"status": "comment handled"}
-
-    return {"status": "event ignored"}
-
-
-def main():
-    """Entry point — run with uvicorn."""
-    import uvicorn
-
-    uvicorn.run(
-        "webhook_server:app",
-        host="0.0.0.0",
-        port=PORT,
-        log_level="info",
-    )
-
-
-if __name__ == "__main__":
-    main()

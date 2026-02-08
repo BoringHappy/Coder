@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import json
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,8 +21,12 @@ def client():
     from webhook_server import security
     security.WEBHOOK_SECRET = ""
 
-    with TestClient(app) as c:
-        yield c
+    with patch("webhook_server.app.auth_manager") as mock_auth:
+        mock_auth.configure_from_env.return_value = None
+        mock_auth.initial_auth.return_value = None
+        mock_auth.set_installation_id_from_webhook.return_value = None
+        with TestClient(app) as c:
+            yield c
 
     config.WEBHOOK_SECRET = original
     security.WEBHOOK_SECRET = original
@@ -38,8 +43,12 @@ def client_with_secret():
     config.WEBHOOK_SECRET = secret
     security.WEBHOOK_SECRET = secret
 
-    with TestClient(app) as c:
-        yield c
+    with patch("webhook_server.app.auth_manager") as mock_auth:
+        mock_auth.configure_from_env.return_value = None
+        mock_auth.initial_auth.return_value = None
+        mock_auth.set_installation_id_from_webhook.return_value = None
+        with TestClient(app) as c:
+            yield c
 
     config.WEBHOOK_SECRET = original
     security.WEBHOOK_SECRET = original

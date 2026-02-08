@@ -7,7 +7,7 @@ on:
     paths:
       - 'docker/Dockerfile.webhook'
       - 'docker/setup/**'
-      - 'webhook_server.py'
+      - 'webhook_server/**'
       - 'pyproject.toml'
     tags:
       - 'v*'

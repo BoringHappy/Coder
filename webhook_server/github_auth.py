@@ -3,10 +3,12 @@
 import json
 import os
 import subprocess
+import threading
 import time
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 
 import jwt
@@ -69,8 +71,14 @@ def _exchange_jwt_for_token(jwt_token: str, installation_id: str) -> tuple[str, 
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read().decode())
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        raise RuntimeError(
+            f"GitHub API error {e.code} exchanging JWT for token: {body}"
+        ) from e
     token = data["token"]
     # Parse ISO 8601 expiry — GitHub returns e.g. "2024-01-01T00:00:00Z"
     expires_str = data.get("expires_at", "")
@@ -99,7 +107,9 @@ def _gh_auth_login(token: str) -> None:
 
 def _gh_setup_git() -> None:
     """Configure git credential helper via gh."""
-    subprocess.run(["gh", "auth", "setup-git"], capture_output=True, text=True)
+    proc = subprocess.run(["gh", "auth", "setup-git"], capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"gh auth setup-git failed: {proc.stderr}")
 
 
 class GitHubAuthManager:
@@ -112,6 +122,7 @@ class GitHubAuthManager:
         self.private_key: str = ""
         self.installation_id: str = ""
         self.token_state: TokenState = TokenState()
+        self._refresh_lock = threading.Lock()
 
     def configure_from_env(self) -> None:
         """Determine auth mode from environment variables."""
@@ -167,7 +178,10 @@ class GitHubAuthManager:
             return self.pat_token
         if self.mode == AuthMode.GITHUB_APP:
             if self.token_state.is_expired():
-                self._refresh_app_token()
+                with self._refresh_lock:
+                    # Double-check after acquiring lock
+                    if self.token_state.is_expired():
+                        self._refresh_app_token()
             return self.token_state.token
         raise RuntimeError("Auth not configured — call configure_from_env() first")
 

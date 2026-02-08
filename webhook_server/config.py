@@ -14,6 +14,7 @@ logger.add(sys.stdout, format="{time:YYYY-MM-DD HH:mm:ss.SSS} [{level}] {message
 PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
 WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "")
 WORKSPACES_ROOT = os.getenv("WORKSPACES_ROOT", str(Path.home() / "workspaces"))
+SESSION_DATA_DIR = os.getenv("SESSION_DATA_DIR", str(Path.home() / ".session-data"))
 
 # System prompt: check env, then look relative to package, then Docker path
 _PACKAGE_DIR = Path(__file__).resolve().parent

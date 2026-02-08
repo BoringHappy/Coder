@@ -1,9 +1,14 @@
 """Configuration constants and logger for the webhook server."""
 
-import logging
 import os
 import sys
 from pathlib import Path
+
+from loguru import logger
+
+# Configure loguru: remove default handler, add stdout with matching format
+logger.remove()
+logger.add(sys.stdout, format="{time:YYYY-MM-DD HH:mm:ss.SSS} [{level}] {message}", level="INFO")
 
 # Server settings
 PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
@@ -22,11 +27,3 @@ if not SYSTEM_PROMPT_FILE:
         if _p.exists():
             SYSTEM_PROMPT_FILE = str(_p)
             break
-
-# Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger("webhook_server")

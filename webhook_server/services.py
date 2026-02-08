@@ -8,6 +8,7 @@ import tempfile
 import time
 
 from .config import SYSTEM_PROMPT_FILE, WORKSPACES_ROOT, logger
+from .github_auth import auth_manager
 
 # In-memory session tracking
 # key: "{owner}/{repo}#{issue_number}"
@@ -242,6 +243,7 @@ def _start_claude_session(session_name: str, session_key: str, workspace: str) -
 
 def handle_new_issue(issue_number: int, issue_title: str, issue_body: str, repo_url: str) -> None:
     """Handle a new issue: create workspace, branch, PR, and start Claude session."""
+    auth_manager.ensure_gh_auth()
     owner, repo = parse_repo_owner_name(repo_url)
     session_name = _make_session_name(owner, repo, issue_number)
     session_key = _make_session_key(owner, repo, issue_number)
@@ -279,6 +281,7 @@ def handle_new_issue(issue_number: int, issue_title: str, issue_body: str, repo_
 
 def handle_issue_comment(issue_number: int, comment_body: str, comment_user: str, repo_url: str) -> None:
     """Handle a new comment on an issue: forward to existing session or start new one."""
+    auth_manager.ensure_gh_auth()
     owner, repo = parse_repo_owner_name(repo_url)
     session_name = _make_session_name(owner, repo, issue_number)
     session_key = _make_session_key(owner, repo, issue_number)

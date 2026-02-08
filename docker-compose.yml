@@ -8,10 +8,16 @@ services:
     env_file:
       - .env
     environment:
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_APP_ID=${GITHUB_APP_ID:-}
+      - GITHUB_APP_PRIVATE_KEY=${GITHUB_APP_PRIVATE_KEY:-}
+      - GITHUB_APP_PRIVATE_KEY_FILE=${GITHUB_APP_PRIVATE_KEY_FILE:-}
+      - GITHUB_APP_INSTALLATION_ID=${GITHUB_APP_INSTALLATION_ID:-}
     volumes:
       - workspaces:/home/agent/workspaces
+      # Uncomment to mount a GitHub App private key file:
+      # - ./your-app.private-key.pem:/home/agent/.github-app-key.pem:ro
     restart: unless-stopped
 
 volumes:

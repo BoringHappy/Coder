@@ -27,3 +27,9 @@ if not SYSTEM_PROMPT_FILE:
         if _p.exists():
             SYSTEM_PROMPT_FILE = str(_p)
             break
+
+# GitHub App authentication (alternative to GITHUB_TOKEN)
+GITHUB_APP_ID = os.getenv("GITHUB_APP_ID", "")
+GITHUB_APP_PRIVATE_KEY = os.getenv("GITHUB_APP_PRIVATE_KEY", "")
+GITHUB_APP_PRIVATE_KEY_FILE = os.getenv("GITHUB_APP_PRIVATE_KEY_FILE", "")
+GITHUB_APP_INSTALLATION_ID = os.getenv("GITHUB_APP_INSTALLATION_ID", "")

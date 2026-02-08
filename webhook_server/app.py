@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Header, HTTPException, Request
 
 from .config import PORT, SYSTEM_PROMPT_FILE, WORKSPACES_ROOT, logger
+from .github_auth import auth_manager
 from .security import verify_signature
 from .services import (
     handle_issue_comment,
@@ -25,6 +26,8 @@ async def lifespan(app: FastAPI):
         logger.info(f"System prompt: {SYSTEM_PROMPT_FILE}")
     else:
         logger.warning("No system prompt file found")
+    auth_manager.configure_from_env()
+    auth_manager.initial_auth()
     yield
     logger.info("Webhook server shutting down")
 
@@ -72,6 +75,8 @@ async def webhook(
 
     action = payload.get("action", "N/A")
     logger.info(f"Received event: {x_github_event}, action: {action}")
+
+    auth_manager.set_installation_id_from_webhook(payload)
 
     # Route event
     if x_github_event == "issues" and action == "opened":

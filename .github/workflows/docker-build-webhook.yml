@@ -7,6 +7,8 @@ on:
     paths:
       - 'docker/Dockerfile.webhook'
       - 'docker/setup/**'
+      - 'webhook_server.py'
+      - 'pyproject.toml'
     tags:
       - 'v*'
   workflow_dispatch:
@@ -71,7 +73,7 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: ./docker
+          context: .
           file: ./docker/Dockerfile.webhook
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}

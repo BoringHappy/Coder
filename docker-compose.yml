@@ -1,0 +1,18 @@
+services:
+  webhook:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.webhook
+    ports:
+      - "${WEBHOOK_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - workspaces:/home/agent/workspaces
+    restart: unless-stopped
+
+volumes:
+  workspaces:

@@ -4,10 +4,15 @@ GitHub Webhook Server for CodeMate Issue Workflow.
 
 Receives GitHub webhook events and spawns Claude Code tmux sessions
 to work on issues automatically. Each issue gets an isolated workspace
-under /home/agent/workspaces/{owner}/{repo}/issue-{N}/, supporting
-multiple repos and branches concurrently.
+under ~/workspaces/{owner}/{repo}/issue-{N}/, supporting multiple repos
+and branches concurrently.
 
-Can run locally (port-forwarded) or behind Cloudflare Tunnel.
+Run on host:
+  uv run webhook_server.py
+
+Run in Docker (with optional Cloudflare Tunnel):
+  docker build -f docker/Dockerfile.webhook -t codemate-webhook .
+  docker run -p 8080:8080 --env-file .env codemate-webhook
 
 Data flow:
   GitHub Issue Created -> Webhook -> This server -> new tmux session (claude-{owner}-{repo}-{N})
@@ -25,17 +30,27 @@ import sys
 import tempfile
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException, Request, Response
+from fastapi import FastAPI, Header, HTTPException, Request
 
 # Configuration
 PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
 WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "")
-SETUP_DIR = os.getenv("SETUP_DIR", "/usr/local/bin/setup")
-SYSTEM_PROMPT_FILE = os.getenv(
-    "SYSTEM_PROMPT_FILE", f"{SETUP_DIR}/prompt/system_prompt_issue.txt"
-)
-WORKSPACES_ROOT = os.getenv("WORKSPACES_ROOT", "/home/agent/workspaces")
+WORKSPACES_ROOT = os.getenv("WORKSPACES_ROOT", str(Path.home() / "workspaces"))
+
+# System prompt: check env, then look relative to this script, then Docker path
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_DEFAULT_PROMPT_PATHS = [
+    _SCRIPT_DIR / "docker" / "setup" / "prompt" / "system_prompt_issue.txt",  # repo root
+    Path("/usr/local/bin/setup/prompt/system_prompt_issue.txt"),               # Docker
+]
+SYSTEM_PROMPT_FILE = os.getenv("SYSTEM_PROMPT_FILE", "")
+if not SYSTEM_PROMPT_FILE:
+    for p in _DEFAULT_PROMPT_PATHS:
+        if p.exists():
+            SYSTEM_PROMPT_FILE = str(p)
+            break
 
 # Logging
 logging.basicConfig(
@@ -285,7 +300,7 @@ def create_draft_pr(owner: str, repo: str, issue_number: int, issue_title: str, 
 def _start_claude_session(session_name: str, session_key: str, workspace: str) -> None:
     """Start a Claude Code tmux session in the given workspace."""
     claude_cmd = f"cd {shlex.quote(workspace)} && claude --dangerously-skip-permissions"
-    if os.path.exists(SYSTEM_PROMPT_FILE):
+    if SYSTEM_PROMPT_FILE and os.path.exists(SYSTEM_PROMPT_FILE):
         claude_cmd += f' --append-system-prompt "$(cat {shlex.quote(SYSTEM_PROMPT_FILE)})"'
 
     safe_status = _safe_filename(session_key)
@@ -409,6 +424,10 @@ async def lifespan(app: FastAPI):
     logger.info(f"Health check: http://localhost:{PORT}/health")
     logger.info(f"Webhook endpoint: http://localhost:{PORT}/webhook")
     logger.info(f"Workspaces root: {WORKSPACES_ROOT}")
+    if SYSTEM_PROMPT_FILE:
+        logger.info(f"System prompt: {SYSTEM_PROMPT_FILE}")
+    else:
+        logger.warning("No system prompt file found")
     yield
     logger.info("Webhook server shutting down")
 

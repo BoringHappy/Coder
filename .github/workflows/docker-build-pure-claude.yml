@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - main
+      - prepare-issue-154
     paths:
-      - 'Dockerfile.pure-claude'
+      - 'docker/Dockerfile.pure-claude'
     tags:
       - 'v*'
   workflow_dispatch:
@@ -70,8 +71,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile.pure-claude
+          context: ./docker
+          file: ./docker/Dockerfile.pure-claude
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.image.outputs.name }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}

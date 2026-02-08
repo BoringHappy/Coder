@@ -138,7 +138,7 @@ codemate --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xy
 
 **Options:**
 - `--build` - Build Docker image from local Dockerfile before running
-- `-f, --dockerfile PATH` - Path to Dockerfile (default: `Dockerfile`)
+- `-f, --dockerfile PATH` - Path to Dockerfile (default: `docker/Dockerfile`)
 - `--tag TAG` - Image tag for local build (default: `codemate:local`)
   - **Note:** Only works with `--build`. To use a pre-built image, use `--image` instead
 

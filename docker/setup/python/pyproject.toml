@@ -1,0 +1,9 @@
+[project]
+name = "codemate-webhook"
+version = "0.1.0"
+description = "GitHub webhook server for CodeMate issue-driven workflow"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+]

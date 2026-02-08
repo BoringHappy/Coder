@@ -6,7 +6,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 if [ -z "$CLOUDFLARE_TUNNEL_TOKEN" ]; then
-    printf "${RED}Error: CLOUDFLARE_TUNNEL_TOKEN environment variable is required${RESET}\n"
+    printf "${YELLOW}CLOUDFLARE_TUNNEL_TOKEN not set, skipping Cloudflare Tunnel${RESET}\n"
+    exit 0
+fi
+
+# Check if cloudflared is installed
+if ! command -v cloudflared &>/dev/null; then
+    printf "${RED}Error: cloudflared is not installed${RESET}\n"
+    printf "${YELLOW}Install it or run without Cloudflare Tunnel${RESET}\n"
     exit 1
 fi
 

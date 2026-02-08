@@ -38,6 +38,8 @@ Parameters:
 4. `setup/python/setup-repo.py` clones repo, checks out branch/PR, creates PR if needed
 5. Claude Code starts with system prompt from `setup/prompt/system_prompt.txt`
 
+Note: All setup scripts live under `docker/setup/` in the repository, but are copied to `/usr/local/bin/setup/` inside the container.
+
 ### Plugin Marketplace
 
 CodeMate uses the CodeMatePlugin marketplace to distribute plugins. Plugins are installed at runtime during container startup via `setup/shell/setup-plugins.sh` using the `claude plugin` CLI commands.
@@ -73,9 +75,12 @@ Custom marketplaces and plugins are added/installed after the default ones durin
 
 ### Key Files
 
-- `Dockerfile` - Container definition, uses `docker/sandbox-templates:claude-code` base
+- `docker/Dockerfile` - Main container definition, uses `codemate-base` image
+- `docker/Dockerfile.base` - Base image with system packages and development tools
+- `docker/Dockerfile.pure-claude` - Minimal Claude Code image
+- `docker/setup/` - Container setup scripts (copied into container at build time)
 - `codemate` - Main script to run CodeMate with configuration management (installed globally or run locally)
-- `setup/python/setup-repo.py` - Main repo/PR setup logic, reads PR template from `.github/PULL_REQUEST_TEMPLATE.md`
+- `docker/setup/python/setup-repo.py` - Main repo/PR setup logic, reads PR template from `.github/PULL_REQUEST_TEMPLATE.md`
 
 ## Development Notes
 

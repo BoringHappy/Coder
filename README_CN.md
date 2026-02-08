@@ -138,7 +138,7 @@ codemate --build -f ./custom/Dockerfile --tag my-codemate:v1 --branch feature/xy
 
 **选项：**
 - `--build` - 运行前从本地 Dockerfile 构建 Docker image
-- `-f, --dockerfile PATH` - Dockerfile 路径（默认：`Dockerfile`）
+- `-f, --dockerfile PATH` - Dockerfile 路径（默认：`docker/Dockerfile`）
 - `--tag TAG` - 本地构建的 image tag（默认：`codemate:local`）
   - **注意：** 仅与 `--build` 一起使用。要使用预构建 image，请使用 `--image`
 

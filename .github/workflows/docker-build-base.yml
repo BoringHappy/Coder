@@ -8,7 +8,7 @@ on:
     branches:
       - main
     paths:
-      - 'Dockerfile.base'
+      - 'docker/Dockerfile.base'
   workflow_dispatch:
 
 concurrency:
@@ -69,8 +69,8 @@ jobs:
         id: build
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile.base
+          context: ./docker
+          file: ./docker/Dockerfile.base
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.image.outputs.name }},push-by-digest=true,name-canonical=true,push=true

@@ -2,11 +2,15 @@
 """
 GitHub Webhook Server for CodeMate Issue Workflow.
 
-Receives GitHub webhook events via Cloudflare Tunnel and spawns
-Claude Code tmux sessions to work on issues automatically.
+Receives GitHub webhook events and spawns Claude Code tmux sessions
+to work on issues automatically. Each issue gets an isolated workspace
+under /home/agent/workspaces/{owner}/{repo}/issue-{N}/, supporting
+multiple repos and branches concurrently.
+
+Can run locally (port-forwarded) or behind Cloudflare Tunnel.
 
 Data flow:
-  GitHub Issue Created -> Webhook -> This server -> new tmux session (claude-issue-{N})
+  GitHub Issue Created -> Webhook -> This server -> new tmux session (claude-{owner}-{repo}-{N})
   GitHub Issue Comment -> Webhook -> This server -> forwards to existing tmux session
 """
 
@@ -20,14 +24,18 @@ import subprocess
 import sys
 import tempfile
 import time
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Header, HTTPException, Request, Response
 
 # Configuration
 PORT = int(os.getenv("WEBHOOK_PORT", "8080"))
 WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET", "")
-GIT_REPO_URL = os.getenv("GIT_REPO_URL", "")
-SETUP_DIR = "/usr/local/bin/setup"
-SYSTEM_PROMPT_FILE = f"{SETUP_DIR}/prompt/system_prompt_issue.txt"
+SETUP_DIR = os.getenv("SETUP_DIR", "/usr/local/bin/setup")
+SYSTEM_PROMPT_FILE = os.getenv(
+    "SYSTEM_PROMPT_FILE", f"{SETUP_DIR}/prompt/system_prompt_issue.txt"
+)
+WORKSPACES_ROOT = os.getenv("WORKSPACES_ROOT", "/home/agent/workspaces")
 
 # Logging
 logging.basicConfig(
@@ -38,11 +46,15 @@ logging.basicConfig(
 logger = logging.getLogger("webhook_server")
 
 # In-memory session tracking
-# {issue_number: {session_name, branch, workspace, pr_url}}
-sessions = {}
+# key: "{owner}/{repo}#{issue_number}"
+# value: {session_name, branch, workspace, pr_url}
+sessions: dict[str, dict] = {}
 
 
-def run(cmd, check=True, cwd=None):
+# --- Shell helpers ---
+
+
+def run(cmd: str, check: bool = True, cwd: str | None = None) -> subprocess.CompletedProcess:
     """Run a shell command and return the result."""
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
     if check and result.returncode != 0:
@@ -50,15 +62,36 @@ def run(cmd, check=True, cwd=None):
     return result
 
 
-def get_repo_name_from_url(git_url):
-    """Extract repository name from git URL."""
-    if git_url.endswith(".git"):
-        git_url = git_url[:-4]
-    return git_url.rstrip("/").split("/")[-1]
+def parse_repo_owner_name(repo_url: str) -> tuple[str, str]:
+    """Extract owner and repo name from a git URL.
+
+    Handles:
+      https://github.com/owner/repo.git
+      https://github.com/owner/repo
+      git@github.com:owner/repo.git
+    """
+    url = repo_url.rstrip("/")
+    if url.endswith(".git"):
+        url = url[:-4]
+
+    if ":" in url and url.startswith("git@"):
+        # git@github.com:owner/repo
+        path = url.split(":")[-1]
+    else:
+        # https://github.com/owner/repo
+        path = "/".join(url.split("/")[-2:])
+
+    parts = path.split("/")
+    if len(parts) >= 2:
+        return parts[-2], parts[-1]
+    return "unknown", parts[-1] if parts else "unknown"
 
 
-def verify_signature(payload_body, signature_header):
-    """Verify the GitHub webhook signature."""
+# --- Signature verification ---
+
+
+def verify_signature(payload_body: bytes, signature_header: str) -> bool:
+    """Verify the GitHub webhook HMAC-SHA256 signature."""
     if not WEBHOOK_SECRET:
         logger.warning("GITHUB_WEBHOOK_SECRET not set, skipping signature verification")
         return True
@@ -72,24 +105,27 @@ def verify_signature(payload_body, signature_header):
         logger.error(f"Unexpected hash algorithm: {hash_algorithm}")
         return False
 
-    expected_signature = hmac.new(
+    expected = hmac.new(
         WEBHOOK_SECRET.encode("utf-8"),
         payload_body,
         hashlib.sha256,
     ).hexdigest()
 
-    return hmac.compare_digest(signature, expected_signature)
+    return hmac.compare_digest(signature, expected)
 
 
-def session_exists(session_name):
+# --- Tmux session helpers ---
+
+
+def session_exists(session_name: str) -> bool:
     """Check if a tmux session exists."""
     result = run(f"tmux has-session -t {shlex.quote(session_name)}", check=False)
     return result.returncode == 0
 
 
-def is_session_stopped(issue_number):
+def is_session_stopped(session_key: str) -> bool:
     """Check if a Claude session is stopped (waiting for input)."""
-    status_file = f"/tmp/.session_status_issue_{issue_number}"
+    status_file = f"/tmp/.session_status_{_safe_filename(session_key)}"
     if not os.path.exists(status_file):
         return False
     try:
@@ -102,15 +138,12 @@ def is_session_stopped(issue_number):
     return False
 
 
-def send_command_to_session(session_name, command, max_attempts=3):
+def send_command_to_session(session_name: str, command: str, session_key: str, max_attempts: int = 3) -> bool:
     """Send a command to a tmux session and verify submission."""
-    safe_command = command.replace("'", "'\\''")
-    run(f"tmux send-keys -t {shlex.quote(session_name)} {shlex.quote(safe_command)}")
+    run(f"tmux send-keys -t {shlex.quote(session_name)} {shlex.quote(command)}")
     run(f"tmux send-keys -t {shlex.quote(session_name)} C-m")
 
-    # Extract issue number from session name for status file
-    issue_num = session_name.replace("claude-issue-", "")
-    status_file = f"/tmp/.session_status_issue_{issue_num}"
+    status_file = f"/tmp/.session_status_{_safe_filename(session_key)}"
 
     for attempt in range(1, max_attempts + 1):
         time.sleep(3)
@@ -132,19 +165,36 @@ def send_command_to_session(session_name, command, max_attempts=3):
     return True
 
 
-def setup_issue_workspace(issue_number, repo_url):
-    """Clone repo, create branch, push, and create a draft PR."""
-    repo_name = get_repo_name_from_url(repo_url)
-    branch_name = f"issue-{issue_number}"
-    workspace = f"/home/agent/issues/{repo_name}-{issue_number}"
+def _safe_filename(key: str) -> str:
+    """Convert a session key like 'owner/repo#123' to a safe filename component."""
+    return key.replace("/", "_").replace("#", "_")
 
-    os.makedirs("/home/agent/issues", exist_ok=True)
+
+def _make_session_name(owner: str, repo: str, issue_number: int) -> str:
+    """Build a tmux session name: claude-{owner}-{repo}-{N}."""
+    return f"claude-{owner}-{repo}-{issue_number}"
+
+
+def _make_session_key(owner: str, repo: str, issue_number: int) -> str:
+    """Build the in-memory tracking key: {owner}/{repo}#{N}."""
+    return f"{owner}/{repo}#{issue_number}"
+
+
+# --- Workspace management ---
+
+
+def setup_issue_workspace(owner: str, repo: str, issue_number: int, repo_url: str) -> tuple[str, str]:
+    """Clone repo, create branch, push, and return (workspace, branch_name)."""
+    branch_name = f"issue-{issue_number}"
+    workspace = os.path.join(WORKSPACES_ROOT, owner, repo, f"issue-{issue_number}")
+
+    os.makedirs(os.path.dirname(workspace), exist_ok=True)
 
     if not os.path.exists(f"{workspace}/.git"):
-        logger.info(f"Cloning repository for issue #{issue_number}")
+        logger.info(f"Cloning {owner}/{repo} for issue #{issue_number}")
         run(f"git clone {shlex.quote(repo_url)} {shlex.quote(workspace)}")
     else:
-        logger.info(f"Using existing workspace for issue #{issue_number}")
+        logger.info(f"Using existing workspace for {owner}/{repo}#{issue_number}")
         run("git fetch origin", cwd=workspace)
 
     # Create and push branch
@@ -178,18 +228,20 @@ def setup_issue_workspace(issue_number, repo_url):
     return workspace, branch_name
 
 
-def create_draft_pr(issue_number, issue_title, workspace):
-    """Create a draft PR for the issue."""
+def create_draft_pr(owner: str, repo: str, issue_number: int, issue_title: str, workspace: str) -> str:
+    """Create a draft PR for the issue. Returns the PR URL."""
     branch_name = f"issue-{issue_number}"
     safe_title = shlex.quote(f"Fix #{issue_number}: {issue_title}")
 
-    # Read PR template if available
     template_path = f"{workspace}/.github/PULL_REQUEST_TEMPLATE.md"
     if os.path.exists(template_path):
         with open(template_path, "r") as f:
             pr_body = f.read()
     else:
-        pr_body = f"## Summary\n\nResolves #{issue_number}\n\n## Test plan\n- [ ] Review and test changes\n"
+        pr_body = (
+            f"## Summary\n\nResolves #{issue_number}\n\n"
+            f"## Test plan\n- [ ] Review and test changes\n"
+        )
 
     safe_body = shlex.quote(pr_body)
     result = run(
@@ -203,7 +255,6 @@ def create_draft_pr(issue_number, issue_title, workspace):
         pr_url = result.stdout.strip()
         logger.info(f"Created draft PR: {pr_url}")
     else:
-        # PR might already exist
         result = run(
             f"gh pr list --head {shlex.quote(branch_name)} --json url -q '.[0].url'",
             check=False,
@@ -215,12 +266,10 @@ def create_draft_pr(issue_number, issue_title, workspace):
         else:
             logger.error(f"Failed to create PR: {result.stderr}")
 
-    # Write PR status for skills
-    pr_status_file = f"{workspace}/.pr_status"
+    # Write PR status for skills (atomic write)
+    pr_status_file = "/tmp/.pr_status"
     try:
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False, dir=workspace, prefix=".pr_status_"
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, dir="/tmp", prefix=".pr_status_") as f:
             f.write(pr_url)
             temp_path = f.name
         os.rename(temp_path, pr_status_file)
@@ -230,92 +279,78 @@ def create_draft_pr(issue_number, issue_title, workspace):
     return pr_url
 
 
-def handle_new_issue(issue_number, issue_title, issue_body, repo_url):
+# --- Event handlers ---
+
+
+def _start_claude_session(session_name: str, session_key: str, workspace: str) -> None:
+    """Start a Claude Code tmux session in the given workspace."""
+    claude_cmd = f"cd {shlex.quote(workspace)} && claude --dangerously-skip-permissions"
+    if os.path.exists(SYSTEM_PROMPT_FILE):
+        claude_cmd += f' --append-system-prompt "$(cat {shlex.quote(SYSTEM_PROMPT_FILE)})"'
+
+    safe_status = _safe_filename(session_key)
+    session_env = f"SESSION_STATUS_FILE=/tmp/.session_status_{safe_status}"
+    tmux_cmd = (
+        f"tmux new-session -d -s {shlex.quote(session_name)} "
+        f"-e {shlex.quote(session_env)} {shlex.quote(claude_cmd)}"
+    )
+    run(tmux_cmd)
+    logger.info(f"Started tmux session: {session_name}")
+
+
+def handle_new_issue(issue_number: int, issue_title: str, issue_body: str, repo_url: str) -> None:
     """Handle a new issue: create workspace, branch, PR, and start Claude session."""
-    session_name = f"claude-issue-{issue_number}"
+    owner, repo = parse_repo_owner_name(repo_url)
+    session_name = _make_session_name(owner, repo, issue_number)
+    session_key = _make_session_key(owner, repo, issue_number)
 
     if session_exists(session_name):
         logger.info(f"Session {session_name} already exists, skipping")
         return
 
-    logger.info(f"Handling new issue #{issue_number}: {issue_title}")
+    logger.info(f"Handling new issue {owner}/{repo}#{issue_number}: {issue_title}")
 
-    # Setup workspace and branch
-    workspace, branch_name = setup_issue_workspace(issue_number, repo_url)
+    workspace, branch_name = setup_issue_workspace(owner, repo, issue_number, repo_url)
+    pr_url = create_draft_pr(owner, repo, issue_number, issue_title, workspace)
 
-    # Create draft PR
-    pr_url = create_draft_pr(issue_number, issue_title, workspace)
-
-    # Write PR status to /tmp for skills (symlink or copy)
-    try:
-        pr_tmp_status = "/tmp/.pr_status"
-        # Each session needs its own status tracking, but skills read from /tmp/.pr_status
-        # We'll set it before starting the session
-        with open(pr_tmp_status, "w") as f:
-            f.write(pr_url)
-    except Exception as e:
-        logger.warning(f"Failed to write /tmp/.pr_status: {e}")
-
-    # Read system prompt
-    system_prompt = ""
-    if os.path.exists(SYSTEM_PROMPT_FILE):
-        with open(SYSTEM_PROMPT_FILE, "r") as f:
-            system_prompt = f.read()
-
-    # Create tmux session with Claude Code
-    claude_cmd = (
-        f"cd {shlex.quote(workspace)} && "
-        f"claude --dangerously-skip-permissions"
-    )
-    if system_prompt:
-        claude_cmd += f' --append-system-prompt "$(cat {shlex.quote(SYSTEM_PROMPT_FILE)})"'
-
-    # Set session-specific status file via environment
-    session_env = f"SESSION_STATUS_FILE=/tmp/.session_status_issue_{issue_number}"
-    tmux_cmd = f"tmux new-session -d -s {shlex.quote(session_name)} -e {shlex.quote(session_env)} {shlex.quote(claude_cmd)}"
-    run(tmux_cmd)
-
-    logger.info(f"Started tmux session: {session_name}")
+    _start_claude_session(session_name, session_key, workspace)
 
     # Wait for Claude to initialize
     time.sleep(5)
 
-    # Send the issue as the initial query
     initial_query = (
         f"GitHub Issue #{issue_number}: {issue_title}\n\n{issue_body}\n\n"
         f"Please implement a solution for this issue. "
         f"The repository is already cloned and you are on branch {branch_name}. "
         f"A draft PR has been created{f': {pr_url}' if pr_url else '.'}."
     )
-    send_command_to_session(session_name, initial_query)
+    send_command_to_session(session_name, initial_query, session_key)
 
-    # Track session
-    sessions[issue_number] = {
+    sessions[session_key] = {
         "session_name": session_name,
         "branch": branch_name,
         "workspace": workspace,
         "pr_url": pr_url,
     }
+    logger.info(f"Issue {session_key} session started and query sent")
 
-    logger.info(f"Issue #{issue_number} session started and query sent")
 
-
-def handle_issue_comment(issue_number, comment_body, comment_user):
+def handle_issue_comment(issue_number: int, comment_body: str, comment_user: str, repo_url: str) -> None:
     """Handle a new comment on an issue: forward to existing session or start new one."""
-    session_name = f"claude-issue-{issue_number}"
+    owner, repo = parse_repo_owner_name(repo_url)
+    session_name = _make_session_name(owner, repo, issue_number)
+    session_key = _make_session_key(owner, repo, issue_number)
 
-    logger.info(f"Handling comment on issue #{issue_number} from {comment_user}")
+    logger.info(f"Handling comment on {session_key} from {comment_user}")
 
     if session_exists(session_name):
-        # Check if session is stopped (waiting for input)
-        if is_session_stopped(issue_number):
+        if is_session_stopped(session_key):
             message = f"Issue comment from @{comment_user}:\n\n{comment_body}"
-            send_command_to_session(session_name, message)
+            send_command_to_session(session_name, message, session_key)
             logger.info(f"Forwarded comment to existing session {session_name}")
         else:
             logger.info(f"Session {session_name} is busy, comment will be queued")
-            # Write comment to a queue file for later processing
-            queue_file = f"/tmp/.issue_comment_queue_{issue_number}"
+            queue_file = f"/tmp/.issue_comment_queue_{_safe_filename(session_key)}"
             try:
                 with open(queue_file, "a") as f:
                     f.write(json.dumps({
@@ -327,17 +362,10 @@ def handle_issue_comment(issue_number, comment_body, comment_user):
             except Exception as e:
                 logger.error(f"Failed to queue comment: {e}")
     else:
-        # No session exists - could be after container restart
-        logger.info(f"No session for issue #{issue_number}, starting new one")
+        logger.info(f"No session for {session_key}, starting new one")
 
-        if not GIT_REPO_URL:
-            logger.error("GIT_REPO_URL not set, cannot start new session")
-            return
+        workspace, branch_name = setup_issue_workspace(owner, repo, issue_number, repo_url)
 
-        # Reconstruct workspace
-        workspace, branch_name = setup_issue_workspace(issue_number, GIT_REPO_URL)
-
-        # Check for existing PR
         result = run(
             f"gh pr list --head issue-{issue_number} --json url -q '.[0].url'",
             check=False,
@@ -345,178 +373,136 @@ def handle_issue_comment(issue_number, comment_body, comment_user):
         )
         pr_url = result.stdout.strip() if result.returncode == 0 else ""
 
-        # Write PR status
+        # Write PR status for skills
         try:
-            with open("/tmp/.pr_status", "w") as f:
+            with tempfile.NamedTemporaryFile(mode="w", delete=False, dir="/tmp", prefix=".pr_status_") as f:
                 f.write(pr_url)
+                temp_path = f.name
+            os.rename(temp_path, "/tmp/.pr_status")
         except Exception:
             pass
 
-        # Read system prompt
-        system_prompt_file = SYSTEM_PROMPT_FILE
-        claude_cmd = (
-            f"cd {shlex.quote(workspace)} && "
-            f"claude --dangerously-skip-permissions"
-        )
-        if os.path.exists(system_prompt_file):
-            claude_cmd += f' --append-system-prompt "$(cat {shlex.quote(system_prompt_file)})"'
-
-        session_env = f"SESSION_STATUS_FILE=/tmp/.session_status_issue_{issue_number}"
-        tmux_cmd = f"tmux new-session -d -s {shlex.quote(session_name)} -e {shlex.quote(session_env)} {shlex.quote(claude_cmd)}"
-        run(tmux_cmd)
-
+        _start_claude_session(session_name, session_key, workspace)
         time.sleep(5)
 
-        message = f"Issue comment from @{comment_user}:\n\n{comment_body}\n\nPlease address this feedback. You are on branch issue-{issue_number}."
-        send_command_to_session(session_name, message)
+        message = (
+            f"Issue comment from @{comment_user}:\n\n{comment_body}\n\n"
+            f"Please address this feedback. You are on branch issue-{issue_number}."
+        )
+        send_command_to_session(session_name, message, session_key)
 
-        sessions[issue_number] = {
+        sessions[session_key] = {
             "session_name": session_name,
             "branch": branch_name,
             "workspace": workspace,
             "pr_url": pr_url,
         }
+        logger.info(f"Started new session for {session_key} with comment")
 
-        logger.info(f"Started new session for issue #{issue_number} with comment")
+
+# --- FastAPI app ---
 
 
-class WebhookHandler(BaseHTTPRequestHandler):
-    """HTTP request handler for GitHub webhooks."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info(f"Webhook server starting on port {PORT}")
+    logger.info(f"Health check: http://localhost:{PORT}/health")
+    logger.info(f"Webhook endpoint: http://localhost:{PORT}/webhook")
+    logger.info(f"Workspaces root: {WORKSPACES_ROOT}")
+    yield
+    logger.info("Webhook server shutting down")
 
-    def log_message(self, format, *args):
-        """Override to use our logger."""
-        logger.info(f"{self.address_string()} - {format % args}")
 
-    def do_GET(self):
-        """Handle GET requests (health check)."""
-        if self.path == "/health":
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
+app = FastAPI(title="CodeMate Webhook Server", lifespan=lifespan)
 
-            active_sessions = {
-                str(k): {
-                    "session_name": v["session_name"],
-                    "branch": v["branch"],
-                    "pr_url": v["pr_url"],
-                    "tmux_active": session_exists(v["session_name"]),
-                }
-                for k, v in sessions.items()
-            }
 
-            health = {
-                "status": "ok",
-                "active_sessions": active_sessions,
-                "total_sessions": len(sessions),
-            }
-            self.wfile.write(json.dumps(health).encode())
-        else:
-            self.send_response(404)
-            self.end_headers()
+@app.get("/health")
+async def health():
+    """Health check endpoint with active session info."""
+    active_sessions = {
+        k: {
+            "session_name": v["session_name"],
+            "branch": v["branch"],
+            "pr_url": v["pr_url"],
+            "tmux_active": session_exists(v["session_name"]),
+        }
+        for k, v in sessions.items()
+    }
+    return {
+        "status": "ok",
+        "active_sessions": active_sessions,
+        "total_sessions": len(sessions),
+    }
 
-    def do_POST(self):
-        """Handle POST requests (webhook events)."""
-        if self.path != "/webhook":
-            self.send_response(404)
-            self.end_headers()
-            return
 
-        # Read request body
-        content_length = int(self.headers.get("Content-Length", 0))
-        payload_body = self.rfile.read(content_length)
+@app.post("/webhook")
+async def webhook(
+    request: Request,
+    x_hub_signature_256: str = Header(default=""),
+    x_github_event: str = Header(default=""),
+):
+    """GitHub webhook endpoint."""
+    payload_body = await request.body()
 
-        # Verify signature
-        signature = self.headers.get("X-Hub-Signature-256", "")
-        if not verify_signature(payload_body, signature):
-            logger.error("Webhook signature verification failed")
-            self.send_response(401)
-            self.end_headers()
-            self.wfile.write(b"Signature verification failed")
-            return
+    # Verify signature
+    if not verify_signature(payload_body, x_hub_signature_256):
+        raise HTTPException(status_code=401, detail="Signature verification failed")
 
-        # Parse event
-        event_type = self.headers.get("X-GitHub-Event", "")
-        try:
-            payload = json.loads(payload_body)
-        except json.JSONDecodeError:
-            self.send_response(400)
-            self.end_headers()
-            self.wfile.write(b"Invalid JSON")
-            return
+    # Parse payload
+    try:
+        payload = json.loads(payload_body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
 
-        logger.info(f"Received event: {event_type}, action: {payload.get('action', 'N/A')}")
+    action = payload.get("action", "N/A")
+    logger.info(f"Received event: {x_github_event}, action: {action}")
 
-        # Route event
-        try:
-            if event_type == "issues" and payload.get("action") == "opened":
-                issue = payload["issue"]
-                repo_url = payload["repository"]["clone_url"]
-                handle_new_issue(
-                    issue_number=issue["number"],
-                    issue_title=issue["title"],
-                    issue_body=issue.get("body", ""),
-                    repo_url=repo_url,
-                )
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b"Issue handled")
+    # Route event
+    if x_github_event == "issues" and action == "opened":
+        issue = payload["issue"]
+        repo_url = payload["repository"]["clone_url"]
+        handle_new_issue(
+            issue_number=issue["number"],
+            issue_title=issue["title"],
+            issue_body=issue.get("body", ""),
+            repo_url=repo_url,
+        )
+        return {"status": "issue handled"}
 
-            elif event_type == "issue_comment" and payload.get("action") == "created":
-                issue = payload["issue"]
-                comment = payload["comment"]
+    elif x_github_event == "issue_comment" and action == "created":
+        issue = payload["issue"]
+        comment = payload["comment"]
 
-                # Skip bot comments to avoid loops
-                if comment["user"].get("type") == "Bot":
-                    self.send_response(200)
-                    self.end_headers()
-                    self.wfile.write(b"Skipped bot comment")
-                    return
+        # Skip bot comments to avoid loops
+        if comment["user"].get("type") == "Bot":
+            return {"status": "skipped bot comment"}
 
-                # Only handle comments on issues (not PRs)
-                # PR comments have a "pull_request" key in the issue object
-                if "pull_request" in issue:
-                    logger.info("Skipping PR comment (not an issue comment)")
-                    self.send_response(200)
-                    self.end_headers()
-                    self.wfile.write(b"Skipped PR comment")
-                    return
+        # Only handle comments on issues (not PRs)
+        if "pull_request" in issue:
+            return {"status": "skipped PR comment"}
 
-                handle_issue_comment(
-                    issue_number=issue["number"],
-                    comment_body=comment["body"],
-                    comment_user=comment["user"]["login"],
-                )
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b"Comment handled")
+        repo_url = payload["repository"]["clone_url"]
+        handle_issue_comment(
+            issue_number=issue["number"],
+            comment_body=comment["body"],
+            comment_user=comment["user"]["login"],
+            repo_url=repo_url,
+        )
+        return {"status": "comment handled"}
 
-            else:
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(b"Event ignored")
-
-        except Exception as e:
-            logger.exception(f"Error handling event: {e}")
-            self.send_response(500)
-            self.end_headers()
-            self.wfile.write(f"Internal error: {e}".encode())
+    return {"status": "event ignored"}
 
 
 def main():
-    """Start the webhook server."""
-    if not GIT_REPO_URL:
-        logger.warning("GIT_REPO_URL not set - new issues will use repo URL from webhook payload")
+    """Entry point — run with uvicorn."""
+    import uvicorn
 
-    server = HTTPServer(("0.0.0.0", PORT), WebhookHandler)
-    logger.info(f"Webhook server listening on port {PORT}")
-    logger.info(f"Health check: http://localhost:{PORT}/health")
-    logger.info(f"Webhook endpoint: http://localhost:{PORT}/webhook")
-
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        logger.info("Shutting down webhook server")
-        server.server_close()
+    uvicorn.run(
+        "webhook_server:app",
+        host="0.0.0.0",
+        port=PORT,
+        log_level="info",
+    )
 
 
 if __name__ == "__main__":

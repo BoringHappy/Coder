@@ -1,19 +1,11 @@
-# CodeMate Webhook - GitHub webhook receiver with Cloudflare Tunnel
-# Spawns Claude Code tmux sessions per issue automatically
+# CodeMate Webhook - GitHub webhook receiver for issue-driven workflow
+# Spawns Claude Code tmux sessions per issue automatically.
+# Can run locally (port-forwarded) or behind Cloudflare Tunnel.
 ARG BASE_IMAGE=ghcr.io/boringhappy/codemate-base:latest
 FROM ${BASE_IMAGE}
 
 # Switch to root for setup operations
 USER root
-
-# Install cloudflared
-RUN curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | gpg --dearmor -o /usr/share/keyrings/cloudflare-main.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" \
-       > /etc/apt/sources.list.d/cloudflared.list \
-    && apt-get update \
-    && apt-get install -yy --no-install-recommends cloudflared \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy setup scripts as root (755 allows agent user to read/execute)
 COPY --chmod=755 setup /usr/local/bin/setup
@@ -22,10 +14,13 @@ COPY --chmod=755 setup /usr/local/bin/setup
 USER agent
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Create issues directory for per-issue workspaces
-RUN mkdir -p /home/agent/issues
+# Install webhook server Python dependencies via uv
+RUN cd /usr/local/bin/setup/python && uv sync
+
+# Create workspaces directory for per-issue/per-repo isolation
+RUN mkdir -p /home/agent/workspaces
 
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/setup/setup-webhook.sh"]
-CMD ["python3", "/usr/local/bin/setup/python/webhook_server.py"]
+CMD ["uv", "run", "--project", "/usr/local/bin/setup/python", "python", "/usr/local/bin/setup/python/webhook_server.py"]

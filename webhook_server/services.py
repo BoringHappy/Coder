@@ -140,6 +140,44 @@ def _make_session_key(owner: str, repo: str, issue_number: int) -> str:
     return f"{owner}/{repo}#{issue_number}"
 
 
+def _drain_comment_queue(session_name: str, session_key: str) -> int:
+    """Deliver all queued comments to a stopped session. Returns count delivered."""
+    queue_file = _session_queue_path(session_key)
+    if not os.path.exists(queue_file):
+        return 0
+
+    try:
+        with open(queue_file, "r") as f:
+            lines = [line.strip() for line in f if line.strip()]
+    except Exception as e:
+        logger.error(f"Failed to read comment queue: {e}")
+        return 0
+
+    if not lines:
+        return 0
+
+    # Remove the queue file before delivering to avoid re-processing
+    try:
+        os.remove(queue_file)
+    except OSError:
+        pass
+
+    delivered = 0
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            logger.warning(f"Skipping malformed queue entry: {line[:80]}")
+            continue
+
+        message = f"Issue comment from @{entry['user']}:\n\n{entry['body']}"
+        send_command_to_session(session_name, message, session_key)
+        delivered += 1
+        logger.info(f"Delivered queued comment from @{entry['user']}")
+
+    return delivered
+
+
 # --- Workspace management ---
 
 
@@ -315,6 +353,10 @@ def handle_issue_comment(issue_number: int, comment_body: str, comment_user: str
 
     if session_exists(session_name):
         if is_session_stopped(session_key):
+            # Deliver any queued comments first, then the new one
+            delivered = _drain_comment_queue(session_name, session_key)
+            if delivered:
+                logger.info(f"Drained {delivered} queued comment(s) before new comment")
             message = f"Issue comment from @{comment_user}:\n\n{comment_body}"
             send_command_to_session(session_name, message, session_key)
             logger.info(f"Forwarded comment to existing session {session_name}")

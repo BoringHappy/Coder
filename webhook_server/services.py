@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 import time
 
-from .config import SYSTEM_PROMPT_FILE, WORKSPACES_ROOT, logger
+from .config import SESSION_DATA_DIR, SYSTEM_PROMPT_FILE, WORKSPACES_ROOT, logger
 from .github_auth import auth_manager
 
 # In-memory session tracking
@@ -63,7 +63,7 @@ def session_exists(session_name: str) -> bool:
 
 def is_session_stopped(session_key: str) -> bool:
     """Check if a Claude session is stopped (waiting for input)."""
-    status_file = f"/tmp/.session_status_{_safe_filename(session_key)}"
+    status_file = _session_status_path(session_key)
     if not os.path.exists(status_file):
         return False
     try:
@@ -81,7 +81,7 @@ def send_command_to_session(session_name: str, command: str, session_key: str, m
     run(f"tmux send-keys -t {shlex.quote(session_name)} {shlex.quote(command)}")
     run(f"tmux send-keys -t {shlex.quote(session_name)} C-m")
 
-    status_file = f"/tmp/.session_status_{_safe_filename(session_key)}"
+    status_file = _session_status_path(session_key)
 
     for attempt in range(1, max_attempts + 1):
         time.sleep(3)
@@ -106,6 +106,28 @@ def send_command_to_session(session_name: str, command: str, session_key: str, m
 def _safe_filename(key: str) -> str:
     """Convert a session key like 'owner/repo#123' to a safe filename component."""
     return key.replace("/", "_").replace("#", "_")
+
+
+def _session_data_path(session_key: str) -> str:
+    """Return the per-session data directory, creating it if needed."""
+    path = os.path.join(SESSION_DATA_DIR, _safe_filename(session_key))
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def _session_status_path(session_key: str) -> str:
+    """Return the session status file path."""
+    return os.path.join(_session_data_path(session_key), "status")
+
+
+def _session_commit_path(session_key: str) -> str:
+    """Return the session commit file path."""
+    return os.path.join(_session_data_path(session_key), "commit")
+
+
+def _session_queue_path(session_key: str) -> str:
+    """Return the comment queue file path."""
+    return os.path.join(_session_data_path(session_key), "comment_queue")
 
 
 def _make_session_name(owner: str, repo: str, issue_number: int) -> str:
@@ -231,11 +253,14 @@ def _start_claude_session(session_name: str, session_key: str, workspace: str) -
     if SYSTEM_PROMPT_FILE and os.path.exists(SYSTEM_PROMPT_FILE):
         claude_cmd += f' --append-system-prompt "$(cat {shlex.quote(SYSTEM_PROMPT_FILE)})"'
 
-    safe_status = _safe_filename(session_key)
-    session_env = f"SESSION_STATUS_FILE=/tmp/.session_status_{safe_status}"
+    status_file = _session_status_path(session_key)
+    commit_file = _session_commit_path(session_key)
+    env_status = f"SESSION_STATUS_FILE={status_file}"
+    env_commit = f"SESSION_COMMIT_FILE={commit_file}"
     tmux_cmd = (
         f"tmux new-session -d -s {shlex.quote(session_name)} "
-        f"-e {shlex.quote(session_env)} {shlex.quote(claude_cmd)}"
+        f"-e {shlex.quote(env_status)} -e {shlex.quote(env_commit)} "
+        f"{shlex.quote(claude_cmd)}"
     )
     run(tmux_cmd)
     logger.info(f"Started tmux session: {session_name}")
@@ -295,7 +320,7 @@ def handle_issue_comment(issue_number: int, comment_body: str, comment_user: str
             logger.info(f"Forwarded comment to existing session {session_name}")
         else:
             logger.info(f"Session {session_name} is busy, comment will be queued")
-            queue_file = f"/tmp/.issue_comment_queue_{_safe_filename(session_key)}"
+            queue_file = _session_queue_path(session_key)
             try:
                 with open(queue_file, "a") as f:
                     f.write(json.dumps({

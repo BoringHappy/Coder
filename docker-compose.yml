@@ -20,5 +20,14 @@ services:
       # - ./your-app.private-key.pem:/home/agent/.github-app-key.pem:ro
     restart: unless-stopped
 
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - webhook
+    restart: unless-stopped
+    profiles:
+      - tunnel
+
 volumes:
   workspaces:

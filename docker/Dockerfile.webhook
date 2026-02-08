@@ -1,6 +1,5 @@
 # CodeMate Webhook - GitHub webhook receiver for issue-driven workflow
 # Spawns Claude Code tmux sessions per issue automatically.
-# Includes Cloudflare Tunnel for exposing the webhook endpoint.
 #
 # Build from repo root:
 #   docker build -f docker/Dockerfile.webhook -t codemate-webhook .
@@ -9,15 +8,6 @@ FROM ${BASE_IMAGE}
 
 # Switch to root for setup operations
 USER root
-
-# Install cloudflared
-RUN curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | gpg --dearmor -o /usr/share/keyrings/cloudflare-main.gpg \
-    && echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" \
-       > /etc/apt/sources.list.d/cloudflared.list \
-    && apt-get update \
-    && apt-get install -yy --no-install-recommends cloudflared \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy setup scripts as root (755 allows agent user to read/execute)
 COPY --chmod=755 docker/setup /usr/local/bin/setup

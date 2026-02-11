@@ -36,8 +36,9 @@ RUN set -euxo pipefail \
     && locale-gen C.UTF-8 \
     && update-locale LANG=C.UTF-8 \
     && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
-    && apt-get install -yy --no-install-recommends \
+    && apt-get install -yy --no-install-recommends --fix-missing \
         bc \
+        build-essential \
         cron \
         dnsutils \
         gh \
@@ -80,8 +81,10 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 RUN npx playwright install chromium \
     && echo 'agent-browser() { if [ -n "$HTTPS_PROXY" ]; then command agent-browser --proxy "$HTTPS_PROXY" "$@"; else command agent-browser "$@"; fi; }' >> /home/agent/.zshrc
 
-# Install Rust, cargo, and uv
+# Install Rust, cargo, rust-script, and uv
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
     && echo 'source $HOME/.cargo/env' >> /home/agent/.zshrc \
+    && . $HOME/.cargo/env \
+    && cargo install rust-script \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/agent/.zshrc

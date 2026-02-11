@@ -39,6 +39,7 @@ RUN set -euxo pipefail \
     && apt-get install -yy --no-install-recommends --fix-missing \
         bc \
         build-essential \
+        cmake \
         cron \
         dnsutils \
         gh \
@@ -46,10 +47,13 @@ RUN set -euxo pipefail \
         golang \
         jq \
         less \
+        libclang-dev \
+        libssl-dev \
         lsof \
         make \
         man-db \
         nodejs \
+        pkg-config \
         procps \
         psmisc \
         python3 \

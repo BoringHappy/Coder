@@ -12,6 +12,9 @@ USER root
 # Copy setup scripts as root (755 allows agent user to read/execute)
 COPY --chmod=755 docker/setup /usr/local/bin/setup
 
+# Create webhook server directory with proper ownership
+RUN mkdir -p /home/agent/codemate-webhook && chown agent:agent /home/agent/codemate-webhook
+
 # Copy webhook server and pyproject.toml to a known location
 COPY --chown=agent:agent pyproject.toml /home/agent/codemate-webhook/
 COPY --chown=agent:agent webhook_server/ /home/agent/codemate-webhook/webhook_server/

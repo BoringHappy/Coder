@@ -198,8 +198,8 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `ANTHROPIC_AUTH_TOKEN` | No | Anthropic API token (for custom API endpoints) |
 | `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
 | `QUERY` | No | Initial query to send to Claude after startup |
-| `INSTALL_DEFAULT_MARKETPLACES` | No | Install default marketplaces (default: `true`, set to `false` to disable) |
-| `INSTALL_DEFAULT_PLUGINS` | No | Install default plugins (default: `true`, set to `false` to disable) |
+| `DEFAULT_MARKETPLACES` | No | Comma-separated default plugin marketplaces (default: `vercel-labs/agent-browser,BoringHappy/CodeMate`) |
+| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate`) |
 | `CUSTOM_MARKETPLACES` | No | Comma-separated list of custom plugin marketplace repositories (e.g., `username/repo1,org/repo2`) |
 | `CUSTOM_PLUGINS` | No | Comma-separated list of custom plugins to install (e.g., `plugin1@marketplace1,plugin2@marketplace2`) |
 
@@ -246,9 +246,15 @@ On startup, the container:
 You can extend CodeMate with your own custom plugins by adding them to your `.env` file:
 
 ```bash
-# Disable default marketplaces and plugins (optional)
-INSTALL_DEFAULT_MARKETPLACES=false
-INSTALL_DEFAULT_PLUGINS=false
+# Override default marketplaces (optional)
+DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
+
+# Override default plugins (optional)
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate
+
+# Set to empty to disable all defaults (optional)
+DEFAULT_MARKETPLACES=
+DEFAULT_PLUGINS=
 
 # Add custom plugin marketplaces (comma-separated GitHub repo paths)
 CUSTOM_MARKETPLACES=username/my-marketplace,org/another-marketplace
@@ -258,11 +264,11 @@ CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
 ```
 
 **How it works:**
-1. By default, CodeMate installs default marketplaces (`vercel-labs/agent-browser`, `codemate`) and plugins (`agent-browser`, `git`, `pr`, `dev`)
-2. You can disable default marketplaces/plugins by setting `INSTALL_DEFAULT_MARKETPLACES=false` or `INSTALL_DEFAULT_PLUGINS=false`
-3. Custom marketplaces are added to Claude Code during container startup
-4. Custom plugins are installed from those marketplaces
-5. All custom plugins become available as skills (e.g., `/my-plugin:command`)
+1. By default, CodeMate installs marketplaces from `DEFAULT_MARKETPLACES` and plugins from `DEFAULT_PLUGINS`
+2. You can override these defaults by setting the environment variables to different values
+3. You can disable all defaults by setting them to empty strings
+4. Custom marketplaces and plugins are added after defaults during container startup
+5. All plugins become available as skills (e.g., `/my-plugin:command`)
 6. The setup is idempotent - already installed plugins are skipped
 
 **Example:**

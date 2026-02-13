@@ -16,8 +16,8 @@ RUN echo "* * * * * agent /usr/local/bin/setup/shell/monitor-pr.sh >> /tmp/pr-mo
     && chmod 0644 /etc/cron.d/pr-monitor
 
 # Environment variables for plugin configuration
-ENV INSTALL_DEFAULT_MARKETPLACES=true
-ENV INSTALL_DEFAULT_PLUGINS=true
+ENV DEFAULT_MARKETPLACES="vercel-labs/agent-browser,BoringHappy/CodeMate"
+ENV DEFAULT_PLUGINS="agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate"
 
 # Switch to agent user and install Claude Code
 USER agent

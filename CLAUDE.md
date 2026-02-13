@@ -66,21 +66,25 @@ The marketplace is fetched from the external repository: `BoringHappy/CodeMatePl
 **Dev Plugin** (`dev@codemate`):
 - `/dev:read-env-key` - List environment variable keys
 
-**Controlling Default Plugins:**
+**Configuring Default Plugins:**
 
-You can disable default marketplaces and plugins by setting environment variables in the `.env` file:
+You can customize which marketplaces and plugins are installed by default using environment variables in the `.env` file:
 
 ```bash
-# Disable default marketplaces (default: true)
-INSTALL_DEFAULT_MARKETPLACES=false
+# Override default marketplaces (comma-separated GitHub repo paths)
+DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
 
-# Disable default plugins (default: true)
-INSTALL_DEFAULT_PLUGINS=false
+# Override default plugins (comma-separated plugin@marketplace)
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate
+
+# Set to empty to disable all defaults
+DEFAULT_MARKETPLACES=
+DEFAULT_PLUGINS=
 ```
 
 **Custom Plugins:**
 
-You can add your own custom plugin marketplaces and plugins by configuring environment variables in the `.env` file:
+You can add additional custom plugin marketplaces and plugins by configuring environment variables in the `.env` file:
 
 ```bash
 # Add custom marketplaces (comma-separated GitHub repo paths)
@@ -91,8 +95,8 @@ CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
 ```
 
 Custom marketplaces and plugins are added/installed after the default ones during container startup. The setup script will automatically:
-1. Add all custom marketplaces to Claude Code
-2. Install all custom plugins from those marketplaces
+1. Add all default and custom marketplaces to Claude Code
+2. Install all default and custom plugins from those marketplaces
 3. Skip any that are already installed (idempotent)
 
 ### Key Files

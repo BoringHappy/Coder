@@ -12,13 +12,27 @@ printf "  Creating temp directory at /home/agent/.claude/tmp\n"
 mkdir -p /home/agent/.claude/tmp
 export TMPDIR=/home/agent/.claude/tmp
 
-# Add default marketplaces (functions check if already added)
-if [ "${INSTALL_DEFAULT_MARKETPLACES:-true}" = "true" ]; then
+# Add default marketplaces from environment variable (functions check if already added)
+if [ -n "$DEFAULT_MARKETPLACES" ]; then
     printf "\n${CYAN}Adding default marketplaces:${RESET}\n"
-    add_marketplace "1/2" "vercel-labs/agent-browser" "vercel-labs/agent-browser"
-    add_marketplace "2/2" "codemate" "BoringHappy/CodeMate"
-else
-    printf "\n${YELLOW}Skipping default marketplaces (INSTALL_DEFAULT_MARKETPLACES=false)${RESET}\n"
+    IFS=',' read -ra MARKETPLACE_ARRAY <<< "$DEFAULT_MARKETPLACES"
+    marketplace_count=${#MARKETPLACE_ARRAY[@]}
+    marketplace_index=1
+    for marketplace in "${MARKETPLACE_ARRAY[@]}"; do
+        # Trim whitespace
+        marketplace=$(echo "$marketplace" | xargs)
+        if [ -n "$marketplace" ]; then
+            # Validate marketplace format (should be owner/repo)
+            if [[ ! "$marketplace" =~ ^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+$ ]]; then
+                printf "  ${YELLOW}⚠ Skipping invalid marketplace format: '$marketplace' (expected: owner/repo)${RESET}\n"
+                continue
+            fi
+            # Extract marketplace name from path (e.g., "username/repo" -> "repo")
+            marketplace_name=$(echo "$marketplace" | sed 's|.*/||')
+            add_marketplace "$marketplace_index/$marketplace_count" "$marketplace_name" "$marketplace"
+            marketplace_index=$((marketplace_index + 1))
+        fi
+    done
 fi
 
 # Add custom marketplaces from environment variable
@@ -48,15 +62,25 @@ fi
 printf "\n${CYAN}Updating marketplaces:${RESET}\n"
 update_marketplaces
 
-# Install default plugins (functions check if already installed)
-if [ "${INSTALL_DEFAULT_PLUGINS:-true}" = "true" ]; then
+# Install default plugins from environment variable (functions check if already installed)
+if [ -n "$DEFAULT_PLUGINS" ]; then
     printf "\n${CYAN}Installing default plugins:${RESET}\n"
-    install_and_verify_plugin "1/4" "agent-browser@agent-browser" "/agent-browser:agent-browser"
-    install_and_verify_plugin "2/4" "git@codemate" "/git:commit"
-    install_and_verify_plugin "3/4" "pr@codemate" "/pr:get-details, /pr:fix-comments, /pr:update"
-    install_and_verify_plugin "4/4" "dev@codemate" "/dev:read-env-key"
-else
-    printf "\n${YELLOW}Skipping default plugins (INSTALL_DEFAULT_PLUGINS=false)${RESET}\n"
+    IFS=',' read -ra PLUGIN_ARRAY <<< "$DEFAULT_PLUGINS"
+    plugin_count=${#PLUGIN_ARRAY[@]}
+    plugin_index=1
+    for plugin in "${PLUGIN_ARRAY[@]}"; do
+        # Trim whitespace
+        plugin=$(echo "$plugin" | xargs)
+        if [ -n "$plugin" ]; then
+            # Validate plugin format (should be plugin@marketplace)
+            if [[ ! "$plugin" =~ ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+$ ]]; then
+                printf "  ${YELLOW}⚠ Skipping invalid plugin format: '$plugin' (expected: plugin@marketplace)${RESET}\n"
+                continue
+            fi
+            install_and_verify_plugin "$plugin_index/$plugin_count" "$plugin" ""
+            plugin_index=$((plugin_index + 1))
+        fi
+    done
 fi
 
 # Install custom plugins from environment variable

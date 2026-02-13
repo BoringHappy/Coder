@@ -46,7 +46,14 @@ CodeMate uses the CodeMatePlugin marketplace to distribute plugins. Plugins are 
 
 The marketplace is fetched from the external repository: `BoringHappy/CodeMatePlugin`
 
+**Default Marketplaces:**
+- `vercel-labs/agent-browser` - Browser automation tools
+- `codemate` (BoringHappy/CodeMate) - CodeMate plugins
+
 **Default Plugins:**
+
+**Agent Browser** (`agent-browser@agent-browser`):
+- `/agent-browser:agent-browser` - Browser automation CLI for AI agents
 
 **Git Plugin** (`git@codemate`):
 - `/git:commit` - Stage, commit, and push changes
@@ -56,9 +63,28 @@ The marketplace is fetched from the external repository: `BoringHappy/CodeMatePl
 - `/pr:fix-comments` - Address PR review feedback
 - `/pr:update` - Update PR title and summary
 
+**Dev Plugin** (`dev@codemate`):
+- `/dev:read-env-key` - List environment variable keys
+
+**Configuring Default Plugins:**
+
+You can customize which marketplaces and plugins are installed by default using environment variables in the `.env` file:
+
+```bash
+# Override default marketplaces (comma-separated GitHub repo paths)
+DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
+
+# Override default plugins (comma-separated plugin@marketplace)
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate
+
+# Set to empty to disable all defaults
+DEFAULT_MARKETPLACES=
+DEFAULT_PLUGINS=
+```
+
 **Custom Plugins:**
 
-You can add your own custom plugin marketplaces and plugins by configuring environment variables in the `.env` file:
+You can add additional custom plugin marketplaces and plugins by configuring environment variables in the `.env` file:
 
 ```bash
 # Add custom marketplaces (comma-separated GitHub repo paths)
@@ -69,8 +95,8 @@ CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
 ```
 
 Custom marketplaces and plugins are added/installed after the default ones during container startup. The setup script will automatically:
-1. Add all custom marketplaces to Claude Code
-2. Install all custom plugins from those marketplaces
+1. Add all default and custom marketplaces to Claude Code
+2. Install all default and custom plugins from those marketplaces
 3. Skip any that are already installed (idempotent)
 
 ### Key Files

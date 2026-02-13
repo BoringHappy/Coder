@@ -198,6 +198,8 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `ANTHROPIC_AUTH_TOKEN` | No | Anthropic API token (for custom API endpoints) |
 | `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
 | `QUERY` | No | Initial query to send to Claude after startup |
+| `DEFAULT_MARKETPLACES` | No | Comma-separated default plugin marketplaces (default: `vercel-labs/agent-browser,BoringHappy/CodeMate`) |
+| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate`) |
 | `CUSTOM_MARKETPLACES` | No | Comma-separated list of custom plugin marketplace repositories (e.g., `username/repo1,org/repo2`) |
 | `CUSTOM_PLUGINS` | No | Comma-separated list of custom plugins to install (e.g., `plugin1@marketplace1,plugin2@marketplace2`) |
 
@@ -244,6 +246,16 @@ On startup, the container:
 You can extend CodeMate with your own custom plugins by adding them to your `.env` file:
 
 ```bash
+# Override default marketplaces (optional)
+DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
+
+# Override default plugins (optional)
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate
+
+# Set to empty to disable all defaults (optional)
+DEFAULT_MARKETPLACES=
+DEFAULT_PLUGINS=
+
 # Add custom plugin marketplaces (comma-separated GitHub repo paths)
 CUSTOM_MARKETPLACES=username/my-marketplace,org/another-marketplace
 
@@ -252,10 +264,12 @@ CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
 ```
 
 **How it works:**
-1. Custom marketplaces are added to Claude Code during container startup
-2. Custom plugins are installed from those marketplaces
-3. All custom plugins become available as skills (e.g., `/my-plugin:command`)
-4. The setup is idempotent - already installed plugins are skipped
+1. By default, CodeMate installs marketplaces from `DEFAULT_MARKETPLACES` and plugins from `DEFAULT_PLUGINS`
+2. You can override these defaults by setting the environment variables to different values
+3. You can disable all defaults by setting them to empty strings
+4. Custom marketplaces and plugins are added after defaults during container startup
+5. All plugins become available as skills (e.g., `/my-plugin:command`)
+6. The setup is idempotent - already installed plugins are skipped
 
 **Example:**
 

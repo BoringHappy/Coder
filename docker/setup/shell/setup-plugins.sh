@@ -12,15 +12,20 @@ printf "  Creating temp directory at /home/agent/.claude/tmp\n"
 mkdir -p /home/agent/.claude/tmp
 export TMPDIR=/home/agent/.claude/tmp
 
-# Add default marketplaces (functions check if already added)
-printf "\n${CYAN}Adding default marketplaces:${RESET}\n"
-add_marketplace "1/2" "vercel-labs/agent-browser" "vercel-labs/agent-browser"
-add_marketplace "2/2" "codemate" "BoringHappy/CodeMate"
-
-# Add custom marketplaces from environment variable
+# Combine default and custom marketplaces
+ALL_MARKETPLACES="${DEFAULT_MARKETPLACES}"
 if [ -n "$CUSTOM_MARKETPLACES" ]; then
-    printf "\n${CYAN}Adding custom marketplaces:${RESET}\n"
-    IFS=',' read -ra MARKETPLACE_ARRAY <<< "$CUSTOM_MARKETPLACES"
+    if [ -n "$ALL_MARKETPLACES" ]; then
+        ALL_MARKETPLACES="${ALL_MARKETPLACES},${CUSTOM_MARKETPLACES}"
+    else
+        ALL_MARKETPLACES="${CUSTOM_MARKETPLACES}"
+    fi
+fi
+
+# Add all marketplaces (functions check if already added)
+if [ -n "$ALL_MARKETPLACES" ]; then
+    printf "\n${CYAN}Adding marketplaces:${RESET}\n"
+    IFS=',' read -ra MARKETPLACE_ARRAY <<< "$ALL_MARKETPLACES"
     marketplace_count=${#MARKETPLACE_ARRAY[@]}
     marketplace_index=1
     for marketplace in "${MARKETPLACE_ARRAY[@]}"; do
@@ -44,17 +49,20 @@ fi
 printf "\n${CYAN}Updating marketplaces:${RESET}\n"
 update_marketplaces
 
-# Install default plugins (functions check if already installed)
-printf "\n${CYAN}Installing default plugins:${RESET}\n"
-install_and_verify_plugin "1/4" "agent-browser@agent-browser" "/agent-browser:agent-browser"
-install_and_verify_plugin "2/4" "git@codemate" "/git:commit"
-install_and_verify_plugin "3/4" "pr@codemate" "/pr:get-details, /pr:fix-comments, /pr:update"
-install_and_verify_plugin "4/4" "dev@codemate" "/dev:read-env-key"
-
-# Install custom plugins from environment variable
+# Combine default and custom plugins
+ALL_PLUGINS="${DEFAULT_PLUGINS}"
 if [ -n "$CUSTOM_PLUGINS" ]; then
-    printf "\n${CYAN}Installing custom plugins:${RESET}\n"
-    IFS=',' read -ra PLUGIN_ARRAY <<< "$CUSTOM_PLUGINS"
+    if [ -n "$ALL_PLUGINS" ]; then
+        ALL_PLUGINS="${ALL_PLUGINS},${CUSTOM_PLUGINS}"
+    else
+        ALL_PLUGINS="${CUSTOM_PLUGINS}"
+    fi
+fi
+
+# Install all plugins (functions check if already installed)
+if [ -n "$ALL_PLUGINS" ]; then
+    printf "\n${CYAN}Installing plugins:${RESET}\n"
+    IFS=',' read -ra PLUGIN_ARRAY <<< "$ALL_PLUGINS"
     plugin_count=${#PLUGIN_ARRAY[@]}
     plugin_index=1
     for plugin in "${PLUGIN_ARRAY[@]}"; do

@@ -234,6 +234,8 @@ codemate --repo https://github.com/yourname/project.git --upstream https://githu
 | `ANTHROPIC_AUTH_TOKEN` | 否 | Anthropic API token（用于自定义 API 端点） |
 | `ANTHROPIC_BASE_URL` | 否 | Anthropic API 基础 URL（用于自定义 API 端点） |
 | `QUERY` | 否 | 启动后发送给 Claude 的初始 query |
+| `DEFAULT_MARKETPLACES` | 否 | 逗号分隔的默认插件市场（默认：`vercel-labs/agent-browser,BoringHappy/CodeMate`） |
+| `DEFAULT_PLUGINS` | 否 | 逗号分隔的默认插件（默认：`agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate`） |
 | `CUSTOM_MARKETPLACES` | 否 | 逗号分隔的自定义插件市场仓库列表（例如：`username/repo1,org/repo2`） |
 | `CUSTOM_PLUGINS` | 否 | 逗号分隔的要安装的自定义插件列表（例如：`plugin1@marketplace1,plugin2@marketplace2`） |
 
@@ -280,6 +282,16 @@ CodeMate 使用单独的[基础镜像（`codemate-base`）](https://github.com/B
 你可以通过在 `.env` 文件中添加自定义插件来扩展 CodeMate：
 
 ```bash
+# 覆盖默认市场（可选）
+DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
+
+# 覆盖默认插件（可选）
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate
+
+# 设置为空以禁用所有默认值（可选）
+DEFAULT_MARKETPLACES=
+DEFAULT_PLUGINS=
+
 # 添加自定义插件市场（逗号分隔的 GitHub 仓库路径）
 CUSTOM_MARKETPLACES=username/my-marketplace,org/another-marketplace
 
@@ -288,10 +300,12 @@ CUSTOM_PLUGINS=my-plugin@my-marketplace,another-plugin@my-marketplace
 ```
 
 **工作原理：**
-1. 在容器启动期间，自定义市场会被添加到 Claude Code
-2. 从这些市场安装自定义插件
-3. 所有自定义插件都可作为 skills 使用（例如：`/my-plugin:command`）
-4. 设置是幂等的 - 已安装的插件会被跳过
+1. 默认情况下，CodeMate 会从 `DEFAULT_MARKETPLACES` 安装市场，从 `DEFAULT_PLUGINS` 安装插件
+2. 你可以通过设置环境变量为不同的值来覆盖这些默认值
+3. 你可以通过将它们设置为空字符串来禁用所有默认值
+4. 在容器启动期间，自定义市场和插件会在默认值之后添加
+5. 所有插件都可作为 skills 使用（例如：`/my-plugin:command`）
+6. 设置是幂等的 - 已安装的插件会被跳过
 
 **示例：**
 

@@ -13,9 +13,13 @@ mkdir -p /home/agent/.claude/tmp
 export TMPDIR=/home/agent/.claude/tmp
 
 # Add default marketplaces (functions check if already added)
-printf "\n${CYAN}Adding default marketplaces:${RESET}\n"
-add_marketplace "1/2" "vercel-labs/agent-browser" "vercel-labs/agent-browser"
-add_marketplace "2/2" "codemate" "BoringHappy/CodeMate"
+if [ "${INSTALL_DEFAULT_MARKETPLACES:-true}" = "true" ]; then
+    printf "\n${CYAN}Adding default marketplaces:${RESET}\n"
+    add_marketplace "1/2" "vercel-labs/agent-browser" "vercel-labs/agent-browser"
+    add_marketplace "2/2" "codemate" "BoringHappy/CodeMate"
+else
+    printf "\n${YELLOW}Skipping default marketplaces (INSTALL_DEFAULT_MARKETPLACES=false)${RESET}\n"
+fi
 
 # Add custom marketplaces from environment variable
 if [ -n "$CUSTOM_MARKETPLACES" ]; then
@@ -45,11 +49,15 @@ printf "\n${CYAN}Updating marketplaces:${RESET}\n"
 update_marketplaces
 
 # Install default plugins (functions check if already installed)
-printf "\n${CYAN}Installing default plugins:${RESET}\n"
-install_and_verify_plugin "1/4" "agent-browser@agent-browser" "/agent-browser:agent-browser"
-install_and_verify_plugin "2/4" "git@codemate" "/git:commit"
-install_and_verify_plugin "3/4" "pr@codemate" "/pr:get-details, /pr:fix-comments, /pr:update"
-install_and_verify_plugin "4/4" "dev@codemate" "/dev:read-env-key"
+if [ "${INSTALL_DEFAULT_PLUGINS:-true}" = "true" ]; then
+    printf "\n${CYAN}Installing default plugins:${RESET}\n"
+    install_and_verify_plugin "1/4" "agent-browser@agent-browser" "/agent-browser:agent-browser"
+    install_and_verify_plugin "2/4" "git@codemate" "/git:commit"
+    install_and_verify_plugin "3/4" "pr@codemate" "/pr:get-details, /pr:fix-comments, /pr:update"
+    install_and_verify_plugin "4/4" "dev@codemate" "/dev:read-env-key"
+else
+    printf "\n${YELLOW}Skipping default plugins (INSTALL_DEFAULT_PLUGINS=false)${RESET}\n"
+fi
 
 # Install custom plugins from environment variable
 if [ -n "$CUSTOM_PLUGINS" ]; then

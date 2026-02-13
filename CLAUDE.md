@@ -46,7 +46,14 @@ CodeMate uses the CodeMatePlugin marketplace to distribute plugins. Plugins are 
 
 The marketplace is fetched from the external repository: `BoringHappy/CodeMatePlugin`
 
+**Default Marketplaces:**
+- `vercel-labs/agent-browser` - Browser automation tools
+- `codemate` (BoringHappy/CodeMate) - CodeMate plugins
+
 **Default Plugins:**
+
+**Agent Browser** (`agent-browser@agent-browser`):
+- `/agent-browser:agent-browser` - Browser automation CLI for AI agents
 
 **Git Plugin** (`git@codemate`):
 - `/git:commit` - Stage, commit, and push changes
@@ -55,6 +62,21 @@ The marketplace is fetched from the external repository: `BoringHappy/CodeMatePl
 - `/pr:get-details` - Fetch PR information including comments
 - `/pr:fix-comments` - Address PR review feedback
 - `/pr:update` - Update PR title and summary
+
+**Dev Plugin** (`dev@codemate`):
+- `/dev:read-env-key` - List environment variable keys
+
+**Controlling Default Plugins:**
+
+You can disable default marketplaces and plugins by setting environment variables in the `.env` file:
+
+```bash
+# Disable default marketplaces (default: true)
+INSTALL_DEFAULT_MARKETPLACES=false
+
+# Disable default plugins (default: true)
+INSTALL_DEFAULT_PLUGINS=false
+```
 
 **Custom Plugins:**
 

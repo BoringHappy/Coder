@@ -76,8 +76,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.image.outputs.name }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
-          cache-from: type=gha,scope=main-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=main-${{ matrix.arch }}
+          no-cache: true
           provenance: false
 
       - name: Export digest

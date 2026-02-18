@@ -21,9 +21,6 @@ ENV DEFAULT_PLUGINS="agent-browser@agent-browser,git@codemate,pr@codemate,dev@co
 
 # Switch to agent user and install Claude Code
 USER agent
-# Cache-busting ARG to force fresh installation of Claude Code
-# Pass --build-arg CACHEBUST=$(date +%s) to force rebuild of this layer
-ARG CACHEBUST=1
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]

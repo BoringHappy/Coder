@@ -23,7 +23,7 @@ Retrieves and displays GitHub issue information including title, description, la
 
 **IMPORTANT: You MUST output a summary to the user.** After gathering the issue information above, display a formatted summary that includes:
 
-1. **Issue Number** - The issue number
+1. **Issue Number** - The issue number (from `$ARGUMENTS` or `$ISSUE_NUMBER`)
 2. **Title** - The issue title
 3. **State** - Whether the issue is open or closed
 4. **Labels** - Any labels attached to the issue

@@ -38,6 +38,19 @@ gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"' | cat
 
 echo "--- Tasks to sync ---"
 grep -E "^  - title:|^    issue_url:" "$SPEC" | cat
+
+# Read issue template into context
+echo ""
+echo "--- Issue template ---"
+if [ -f ".github/ISSUE_TEMPLATE/feature_request.yml" ]; then
+  echo "Using template: feature_request.yml"
+  cat .github/ISSUE_TEMPLATE/feature_request.yml
+elif [ -f ".github/ISSUE_TEMPLATE/feature_request.md" ]; then
+  echo "Using template: feature_request.md"
+  cat .github/ISSUE_TEMPLATE/feature_request.md
+else
+  echo "No issue template found, will use default format"
+fi
 `
 
 ## Instructions
@@ -46,24 +59,9 @@ grep -E "^  - title:|^    issue_url:" "$SPEC" | cat
 
 2. **For tasks that already have an `issue_url`**, skip them (already synced). Report which ones are skipped.
 
-3. **Check for an issue template** and read its content:
+3. **Use the issue template** read in the Preflight above. If a template was found, use its section structure as the body format for each issue, filling each section with content derived from the task and spec.
 
-```bash
-# Read template content into context
-if [ -f ".github/ISSUE_TEMPLATE/feature_request.yml" ]; then
-  echo "Using template: feature_request.yml"
-  cat .github/ISSUE_TEMPLATE/feature_request.yml
-elif [ -f ".github/ISSUE_TEMPLATE/feature_request.md" ]; then
-  echo "Using template: feature_request.md"
-  cat .github/ISSUE_TEMPLATE/feature_request.md
-else
-  echo "No issue template found, using default format"
-fi
-```
-
-If a template was found above, use its **section structure** as the body format for each issue, filling each section with content derived from the task and spec.
-
-If no template exists, use this default body format:
+If no template was found, use this default body format:
 
 ```
 ## What would you like to see?
@@ -91,7 +89,8 @@ For each unsynced task, create the issue:
 gh issue create \
   --title "<task title>" \
   --body "<body using template structure above>" \
-  --label "task"
+  --label "task" \
+  --label "spec:$ARGUMENTS"
 ```
 
 4. **After creating each issue**, immediately update that task's entry in the spec frontmatter:

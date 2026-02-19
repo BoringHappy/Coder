@@ -28,11 +28,12 @@ for spec in .claude/specs/*.md; do
   synced=$(grep -c 'issue_url: "https' "$spec" 2>/dev/null || echo 0)
 
   case "$status" in
-    draft)      icon="📝" ;;
-    planned)    icon="📐" ;;
-    ready)      icon="✅" ;;
+    draft)       icon="📝" ;;
+    planned)     icon="📐" ;;
+    ready)       icon="✅" ;;
     in-progress) icon="🔄" ;;
-    *)          icon="📄" ;;
+    completed)   icon="🎉" ;;
+    *)           icon="📄" ;;
   esac
 
   echo "$icon  $name"
@@ -40,8 +41,7 @@ for spec in .claude/specs/*.md; do
   echo ""
 done
 
-total_specs=$(ls .claude/specs/*.md 2>/dev/null | wc -l)
-echo "Total: $total_specs spec(s)"
+echo "Total: $(ls .claude/specs/*.md 2>/dev/null | wc -l) spec(s)"
 `
 
 ## Instructions

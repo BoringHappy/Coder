@@ -19,7 +19,7 @@ Identifies unclear or missing information in an issue and posts targeted clarify
 
 ## Fetch Issue Templates
 
-!`for f in .github/ISSUE_TEMPLATE/*.md .github/ISSUE_TEMPLATE/*.yml .github/ISSUE_TEMPLATE/*.yaml; do [ -f "$f" ] && echo "=== $f ===" && cat "$f" && echo; done 2>/dev/null || echo "No issue templates found"`
+!`ls .github/ISSUE_TEMPLATE/ 2>/dev/null && echo "---" && for f in .github/ISSUE_TEMPLATE/*.md .github/ISSUE_TEMPLATE/*.yml .github/ISSUE_TEMPLATE/*.yaml; do [ -f "$f" ] && echo "=== $f ===" && cat "$f" && echo; done || echo "No issue templates found"`
 
 ## Instructions
 

@@ -1,9 +1,9 @@
 ---
-name: clean
+name: classify-issue
 description: Identifies unclear or missing information in a GitHub issue and posts clarifying questions as a comment. Adds a needs-more-info label if clarification is needed.
 ---
 
-# Clean GitHub Issue
+# Classify GitHub Issue
 
 Identifies unclear or missing information in an issue and posts targeted clarifying questions as a comment.
 
@@ -24,7 +24,7 @@ Identifies unclear or missing information in an issue and posts targeted clarify
 ## Instructions
 
 ### Step 1 — Match Template
-Identify the relevant issue template based on labels or title prefix (same logic as `issue:refine`).
+Identify the relevant issue template based on labels or title prefix (same logic as `issue:refine-issue`).
 
 ### Step 2 — Identify Unclear Items
 Check for:

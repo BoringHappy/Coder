@@ -1,5 +1,5 @@
 ---
-name: refine
+name: refine-issue
 description: Rewrites an issue body to fully satisfy the matching issue template, incorporating context from comments. Uses a plan-then-execute workflow requiring user approval before making changes.
 ---
 
@@ -58,4 +58,4 @@ gh issue edit $ARGUMENTS --body "<approved refined body>"
 Confirm the update was successful and show the issue URL.
 
 ### Step 5 — Auto-judge
-After successfully updating the issue body, invoke `/issue:judge $ARGUMENTS` to automatically apply priority and category labels.
+After successfully updating the issue body, invoke `/issue:judge-issue $ARGUMENTS` to automatically apply priority and category labels.

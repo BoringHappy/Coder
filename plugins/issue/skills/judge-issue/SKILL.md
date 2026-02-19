@@ -1,5 +1,5 @@
 ---
-name: judge
+name: judge-issue
 description: Analyzes a GitHub issue and applies priority and category labels based on content, impact, and urgency.
 ---
 

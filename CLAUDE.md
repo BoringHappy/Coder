@@ -68,9 +68,9 @@ The marketplace is fetched from the external repository: `BoringHappy/CodeMatePl
 
 **Issue Plugin** (`issue@codemate`):
 - `/issue:read-issue` - Fetch issue details including comments
-- `/issue:refine` - Rewrite issue body to match template (plan-then-execute, requires approval)
-- `/issue:judge` - Apply priority and category labels based on content analysis
-- `/issue:clean` - Post clarifying questions for ambiguous issues and add `needs-more-info` label
+- `/issue:refine-issue` - Rewrite issue body to match template (plan-then-execute, requires approval)
+- `/issue:judge-issue` - Apply priority and category labels based on content analysis
+- `/issue:classify-issue` - Post clarifying questions for ambiguous issues and add `needs-more-info` label
 
 **Configuring Default Plugins:**
 

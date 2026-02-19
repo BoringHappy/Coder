@@ -9,7 +9,20 @@ Analyzes an issue and applies appropriate priority and category labels.
 
 ## Fetch Issue Data
 
-!`gh issue view $ARGUMENTS --json title,body,labels,comments,url -q '"**Title:** \(.title)\n**URL:** \(.url)\n**Current Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)\n**Body:**\n\(.body)\n**Comments:**\n\(if .comments | length > 0 then (.comments | map("**\(.author.login)** (\(.createdAt)):\n\(.body)") | join("\n\n")) else "No comments" end)"' | cat`
+Title:
+!`gh issue view $ARGUMENTS --json title -q .title | cat`
+
+URL:
+!`gh issue view $ARGUMENTS --json url -q .url | cat`
+
+Current Labels:
+!`gh issue view $ARGUMENTS --json labels -q '[.labels[].name] | join(", ")' | cat`
+
+Body:
+!`gh issue view $ARGUMENTS --json body -q .body | cat`
+
+Comments:
+!`gh issue view $ARGUMENTS --json comments -q '.comments[] | "\(.author.login) (\(.createdAt)):\n\(.body)"' | cat`
 
 ## Instructions
 

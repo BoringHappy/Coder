@@ -9,7 +9,26 @@ Retrieves and displays GitHub issue information including title, description, la
 
 ## Issue Information
 
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json title,state,labels,assignees,body,comments,url -q '"**Title:** \(.title)\n**State:** \(.state)\n**Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)\n**Assignees:** \(if .assignees | length > 0 then (.assignees | map(.login) | join(", ")) else "None" end)\n**Issue URL:** \(.url)\n**Description:**\n\(.body)\n**Comments:**\n\(if .comments | length > 0 then (.comments | map("**\(.author.login)** - \(.createdAt):\n\(.body)") | join("\n\n")) else "No comments" end)"' | cat`
+Title:
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json title -q .title | cat`
+
+State:
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json state -q .state | cat`
+
+Labels:
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json labels -q '[.labels[].name] | join(", ")' | cat`
+
+Assignees:
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json assignees -q '[.assignees[].login] | join(", ")' | cat`
+
+URL:
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json url -q .url | cat`
+
+Body:
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json body -q .body | cat`
+
+Comments:
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json comments -q '.comments[] | "\(.author.login) - \(.createdAt):\n\(.body)"' | cat`
 
 ## Instructions
 
@@ -18,8 +37,8 @@ Retrieves and displays GitHub issue information including title, description, la
 1. **Issue Number** - The issue number (from `$ARGUMENTS` or `$ISSUE_NUMBER`)
 2. **Title** - The issue title
 3. **State** - Whether the issue is open or closed
-4. **Labels** - Any labels attached to the issue
-5. **Assignees** - Who is assigned to the issue (if any)
+4. **Labels** - Any labels attached to the issue (or "None" if empty)
+5. **Assignees** - Who is assigned to the issue (or "None" if empty)
 6. **Description** - The issue description/body
 7. **Comments** - Summary of comments on the issue (if any)
 8. **Issue URL** - Direct link to the issue

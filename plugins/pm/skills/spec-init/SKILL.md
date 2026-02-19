@@ -56,7 +56,6 @@ name: $ARGUMENTS
 status: draft
 created: <ISO datetime from: date -u +"%Y-%m-%dT%H:%M:%SZ">
 tasks: []
-pr: ""
 ---
 
 # Spec: $ARGUMENTS

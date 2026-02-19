@@ -45,7 +45,6 @@ tasks:
     status: open
     issue: 42
     issue_url: "https://github.com/org/repo/issues/42"
-pr: "https://github.com/org/repo/pull/99"
 ---
 
 # Spec: feature-name

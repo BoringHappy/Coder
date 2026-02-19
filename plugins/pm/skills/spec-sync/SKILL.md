@@ -46,33 +46,47 @@ grep -E "^  - title:|^    issue_url:" "$SPEC" | cat
 
 2. **For tasks that already have an `issue_url`**, skip them (already synced). Report which ones are skipped.
 
-3. **For each unsynced task**, create a GitHub Issue:
+3. **Check for an issue template** to use as the issue body format:
+
+```bash
+# Look for a task/feature template, fall back to feature_request if present
+if [ -f ".github/ISSUE_TEMPLATE/feature_request.yml" ]; then
+  echo "Using feature_request.yml template"
+elif [ -f ".github/ISSUE_TEMPLATE/feature_request.md" ]; then
+  echo "Using feature_request.md template"
+fi
+```
+
+If a `.github/ISSUE_TEMPLATE/` directory exists, read the most relevant template (prefer `feature_request.yml` or `feature_request.md`) and use its **section structure** as the body format for each issue. Fill in each section with content derived from the task and spec.
+
+If no template exists, use this default body format:
+
+```
+## What would you like to see?
+
+<1-2 sentence description of the task derived from the spec>
+
+Part of spec: **$ARGUMENTS**
+Layer: <layer> | Parallel: <yes/no> | Depends on: <task titles or "none">
+
+## How should it work?
+
+<acceptance criteria derived from the spec success criteria, scoped to this task>
+- [ ] <criterion 1>
+- [ ] <criterion 2>
+
+## Additional Context (optional)
+
+Spec: `.claude/specs/$ARGUMENTS.md`
+Depends on tasks: <list or "none">
+```
+
+For each unsynced task, create the issue:
 
 ```bash
 gh issue create \
   --title "<task title>" \
-  --body "$(cat <<EOF
-## Task
-
-Part of spec: **$ARGUMENTS**
-
-**Layer:** <layer>
-**Parallel:** <yes/no>
-**Depends on:** <task titles or "none">
-
-## Description
-
-<1-2 sentence description derived from the spec context for this task>
-
-## Acceptance Criteria
-
-- [ ] <derived from spec success criteria, scoped to this task>
-
-## References
-
-Spec: \`.claude/specs/$ARGUMENTS.md\`
-EOF
-)" \
+  --body "<body using template structure above>" \
   --label "task"
 ```
 
@@ -83,16 +97,7 @@ EOF
 5. **After all issues are created**, update the spec frontmatter:
    - Set `status` to `in-progress`
 
-6. **If a PR exists** (check `/tmp/.pr_status`), update the spec frontmatter `pr` field:
-
-```bash
-if [ -s /tmp/.pr_status ]; then
-  PR_URL=$(cat /tmp/.pr_status)
-  echo "PR found: $PR_URL"
-fi
-```
-
-7. **Output a summary:**
+6. **Output a summary:**
 
 ```
 ✅ Synced <n> tasks to GitHub

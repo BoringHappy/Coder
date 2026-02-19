@@ -12,7 +12,7 @@ Reads details of a GitHub issue including title, description, labels, assignees,
 ```
 
 ### `/issue:refine-issue`
-Rewrites an issue body to fully satisfy the matching issue template, incorporating context from comments. Uses a plan-then-execute workflow — shows a proposed refined body and waits for approval before making any changes. After approval, automatically invokes `/issue:judge-issue` to apply labels.
+Rewrites an issue body to fully satisfy the matching issue template, incorporating context from comments. Uses a plan-then-execute workflow — shows a proposed refined body and waits for approval before making any changes. After approval, automatically invokes `/issue:triage-issue` to apply labels.
 
 ```
 /issue:refine-issue 44

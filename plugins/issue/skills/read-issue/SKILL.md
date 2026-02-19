@@ -9,7 +9,7 @@ Retrieves and displays GitHub issue information including title, description, la
 
 ## Issue Information
 
-!`gh issue view $ISSUE_NUMBER --json title,state,labels,assignees,body,comments,url -q '"**Title:** \(.title)
+!`ISSUE_REF="${ARGUMENTS:-$ISSUE_NUMBER}" && gh issue view $ISSUE_REF --json title,state,labels,assignees,body,comments,url -q '"**Title:** \(.title)
 **State:** \(.state)
 **Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)
 **Assignees:** \(if .assignees | length > 0 then (.assignees | map(.login) | join(", ")) else "None" end)

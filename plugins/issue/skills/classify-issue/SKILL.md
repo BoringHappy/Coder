@@ -9,20 +9,7 @@ Identifies unclear or missing information in an issue and posts targeted clarify
 
 ## Fetch Issue Data
 
-Title:
-!`gh issue view $ARGUMENTS --json title -q .title | cat`
-
-URL:
-!`gh issue view $ARGUMENTS --json url -q .url | cat`
-
-Labels:
-!`gh issue view $ARGUMENTS --json labels -q '[.labels[].name] | join(", ")' | cat`
-
-Body:
-!`gh issue view $ARGUMENTS --json body -q .body | cat`
-
-Comments:
-!`gh issue view $ARGUMENTS --json comments -q '.comments[] | "\(.author.login) (\(.createdAt)):\n\(.body)"' | cat`
+!`gh issue view $ARGUMENTS --json title,labels,body,url,comments --template '{{.title}}{{"\n"}}{{.url}}{{"\n"}}Labels: {{range .labels}}{{.name}} {{end}}{{"\n"}}{{.body}}{{"\n"}}{{range .comments}}{{.author.login}} ({{.createdAt}}):{{"\n"}}{{.body}}{{"\n\n"}}{{end}}' | cat`
 
 ## Fetch Issue Templates
 

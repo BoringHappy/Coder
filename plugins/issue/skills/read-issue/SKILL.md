@@ -9,26 +9,7 @@ Retrieves and displays GitHub issue information including title, description, la
 
 ## Issue Information
 
-Title:
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json title -q .title | cat`
-
-State:
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json state -q .state | cat`
-
-Labels:
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json labels -q '[.labels[].name] | join(", ")' | cat`
-
-Assignees:
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json assignees -q '[.assignees[].login] | join(", ")' | cat`
-
-URL:
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json url -q .url | cat`
-
-Body:
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json body -q .body | cat`
-
-Comments:
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json comments -q '.comments[] | "\(.author.login) - \(.createdAt):\n\(.body)"' | cat`
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json title,state,labels,assignees,body,url,comments --template '{{.title}}{{"\n"}}{{.state}}{{"\n"}}{{.url}}{{"\n"}}Labels: {{range .labels}}{{.name}} {{end}}{{"\n"}}Assignees: {{range .assignees}}{{.login}} {{end}}{{"\n"}}{{.body}}{{"\n"}}{{range .comments}}{{.author.login}} - {{.createdAt}}:{{"\n"}}{{.body}}{{"\n\n"}}{{end}}' | cat`
 
 ## Instructions
 

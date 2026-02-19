@@ -58,4 +58,4 @@ gh issue edit $ARGUMENTS --body "<approved refined body>"
 Confirm the update was successful and show the issue URL.
 
 ### Step 5 — Auto-judge
-After successfully updating the issue body, invoke `/issue:judge-issue $ARGUMENTS` to automatically apply priority and category labels.
+After successfully updating the issue body, invoke `/issue:triage-issue $ARGUMENTS` to automatically apply priority and category labels.

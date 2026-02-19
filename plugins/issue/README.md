@@ -18,11 +18,11 @@ Rewrites an issue body to fully satisfy the matching issue template, incorporati
 /issue:refine-issue 44
 ```
 
-### `/issue:judge-issue`
+### `/issue:triage-issue`
 Analyzes an issue and applies priority (`priority:high`, `priority:medium`, `priority:low`) and category (`bug`, `enhancement`, `documentation`, `question`) labels based on content, impact, and urgency.
 
 ```
-/issue:judge-issue 44
+/issue:triage-issue 44
 ```
 
 ### `/issue:classify-issue`

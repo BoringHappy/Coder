@@ -1,9 +1,9 @@
 ---
-name: judge-issue
+name: triage-issue
 description: Analyzes a GitHub issue and applies priority and category labels based on content, impact, and urgency.
 ---
 
-# Judge GitHub Issue
+# Triage GitHub Issue
 
 Analyzes an issue and applies appropriate priority and category labels.
 

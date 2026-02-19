@@ -47,6 +47,14 @@
       "version": "1.0.0",
       "category": "codemate",
       "keywords": ["session", "hooks", "slack", "notifications", "lifecycle"]
+    },
+    {
+      "name": "pm",
+      "source": "./plugins/pm",
+      "description": "Spec-driven project management with skills for creating specs, planning, decomposing tasks, and syncing to GitHub Issues",
+      "version": "1.0.0",
+      "category": "project-management",
+      "keywords": ["project-management", "spec", "planning", "issues", "workflow"]
     }
   ]
 }

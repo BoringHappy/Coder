@@ -1,0 +1,9 @@
+{
+  "name": "pm",
+  "description": "Spec-driven project management plugin. Guides features from requirements through GitHub Issues using a SPEC.md doc as the single source of truth.",
+  "version": "1.0.0",
+  "author": {
+    "name": "CodeMate"
+  },
+  "homepage": "https://github.com/BoringHappy/CodeMate"
+}

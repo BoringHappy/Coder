@@ -1,5 +1,5 @@
 {
-  "name": "codemate",
+  "name": "session",
   "description": "CodeMate session lifecycle hooks for tracking activity and sending Slack notifications on code changes",
   "version": "1.0.0",
   "author": {

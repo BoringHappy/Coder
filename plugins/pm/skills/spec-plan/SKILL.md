@@ -74,6 +74,8 @@ cat "$SPEC"
 
 ## Effort Estimate
 - Total tasks: <n>
+- Estimated days: <sum of task estimates>
+- Critical path: <longest dependency chain>
 ```
 
 4. Update the spec frontmatter `status` from `draft` to `planned`.

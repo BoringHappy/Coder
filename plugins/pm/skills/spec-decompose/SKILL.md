@@ -41,7 +41,7 @@ cat "$SPEC"
 
 ## Instructions
 
-1. **If tasks already exist in frontmatter**, ask: "Tasks already decomposed ($TASK_COUNT tasks). Re-decompose? (yes/no)". If yes, clear the existing `tasks:` list before proceeding.
+1. **If tasks already exist in frontmatter** (detected above), ask: "Tasks already decomposed. Re-decompose? (yes/no)". If yes, clear the existing `tasks:` list before proceeding.
 
 2. **Parse the Task Breakdown table** from the spec. For each row extract:
    - Task number

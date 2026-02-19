@@ -5,6 +5,7 @@ Spec-driven project management for GitHub repos. Guides a feature from raw requi
 ## Workflow
 
 ```
+/pm:spec-list              # discover existing specs
 /pm:spec-init <name>       # brainstorm → write requirements
       ↓
 /pm:spec-plan <name>       # requirements → technical plan + task breakdown
@@ -17,6 +18,9 @@ Spec-driven project management for GitHub repos. Guides a feature from raw requi
 ```
 
 ## Skills
+
+### `/pm:spec-list`
+Lists all specs in `.claude/specs/` with status, creation date, and task sync counts. Suggests the next action for each spec based on its current status.
 
 ### `/pm:spec-init <feature-name>`
 Runs a guided discovery session and writes a `SPEC.md` to `.claude/specs/<feature-name>.md`.

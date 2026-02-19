@@ -46,18 +46,22 @@ grep -E "^  - title:|^    issue_url:" "$SPEC" | cat
 
 2. **For tasks that already have an `issue_url`**, skip them (already synced). Report which ones are skipped.
 
-3. **Check for an issue template** to use as the issue body format:
+3. **Check for an issue template** and read its content:
 
 ```bash
-# Look for a task/feature template, fall back to feature_request if present
+# Read template content into context
 if [ -f ".github/ISSUE_TEMPLATE/feature_request.yml" ]; then
-  echo "Using feature_request.yml template"
+  echo "Using template: feature_request.yml"
+  cat .github/ISSUE_TEMPLATE/feature_request.yml
 elif [ -f ".github/ISSUE_TEMPLATE/feature_request.md" ]; then
-  echo "Using feature_request.md template"
+  echo "Using template: feature_request.md"
+  cat .github/ISSUE_TEMPLATE/feature_request.md
+else
+  echo "No issue template found, using default format"
 fi
 ```
 
-If a `.github/ISSUE_TEMPLATE/` directory exists, read the most relevant template (prefer `feature_request.yml` or `feature_request.md`) and use its **section structure** as the body format for each issue. Fill in each section with content derived from the task and spec.
+If a template was found above, use its **section structure** as the body format for each issue, filling each section with content derived from the task and spec.
 
 If no template exists, use this default body format:
 
@@ -115,10 +119,12 @@ Next steps:
 
 ## Notes
 
-- Tasks are created with a `task` label. Create the label first if it doesn't exist:
+- Tasks are created with a `task` label and a spec label. Create them first if they don't exist:
   ```bash
   gh label create "task" --color "1D76DB" --description "Task from spec" --force 2>/dev/null || true
+  gh label create "spec:$ARGUMENTS" --color "0E8A16" --description "Part of spec: $ARGUMENTS" --force 2>/dev/null || true
   ```
+- When creating each issue, add both labels: `--label "task" --label "spec:$ARGUMENTS"`
 - If issue creation fails for a task, report the error and continue with remaining tasks
 - Never create duplicate issues — always check `issue_url` before creating
 

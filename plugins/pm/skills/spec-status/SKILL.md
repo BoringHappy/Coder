@@ -85,7 +85,7 @@ Rules:
 - 🔄 = issue state is `OPEN`
 - ⚠️ = task has no issue yet (not synced)
 - Progress bar: each `█` = 5%, fill based on closed/total ratio
-- "Blocked Tasks": tasks whose `depends_on` list contains tasks that are not yet closed
+- "Blocked Tasks": for each task with `depends_on` entries, check if those dependency task indices are CLOSED in the fetched issue statuses. If any dependency is still OPEN or unsynced, the task is blocked. Cross-reference by matching `depends_on` index (1-based) to the task list order.
 - "Next Up": open tasks with no unresolved dependencies (ready to work on)
 - If all tasks are closed, show: "🎉 Spec complete!"
 - If no tasks are synced yet, suggest: "Run `/pm:spec-sync $ARGUMENTS` to create GitHub Issues"

@@ -9,17 +9,11 @@ Identifies unclear or missing information in an issue and posts targeted clarify
 
 ## Fetch Issue Data
 
-!`gh issue view $ARGUMENTS --json title,body,labels,comments,url -q '"**Title:** \(.title)
-**URL:** \(.url)
-**Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)
-**Body:**
-\(.body)
-**Comments:**
-\(if .comments | length > 0 then (.comments | map("**\(.author.login)** (\(.createdAt)):\n\(.body)") | join("\n\n")) else "No comments" end)"' | cat`
+!`gh issue view $ARGUMENTS --json title,body,labels,comments,url -q '"**Title:** \(.title)\n**URL:** \(.url)\n**Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)\n**Body:**\n\(.body)\n**Comments:**\n\(if .comments | length > 0 then (.comments | map("**\(.author.login)** (\(.createdAt)):\n\(.body)") | join("\n\n")) else "No comments" end)"' | cat`
 
 ## Fetch Issue Templates
 
-!`ls .github/ISSUE_TEMPLATE/ 2>/dev/null && echo "---" && for f in .github/ISSUE_TEMPLATE/*.md .github/ISSUE_TEMPLATE/*.yml .github/ISSUE_TEMPLATE/*.yaml; do [ -f "$f" ] && echo "=== $f ===" && cat "$f" && echo; done || echo "No issue templates found"`
+!`find .github/ISSUE_TEMPLATE/ -name "*.md" -o -name "*.yml" -o -name "*.yaml" 2>/dev/null | while read f; do echo "=== $f ===" && cat "$f" && echo; done || echo "No issue templates found"`
 
 ## Instructions
 

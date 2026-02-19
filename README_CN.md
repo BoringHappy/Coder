@@ -184,7 +184,7 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 CodeMate 支持使用 `--issue` 标志直接从 GitHub issue 开始工作。此工作流会自动：
 
 1. 创建名为 `issue-{NUMBER}` 的分支（如果分支已存在则使用现有分支）
-2. 向 Claude 发送初始查询，使用 `/pr:read-issue` skill 读取并处理 issue
+2. 向 Claude 发送初始查询，使用 `/issue:read-issue` skill 读取并处理 issue
 3. Claude 分析 issue 详情（标题、描述、标签、评论）
 4. Claude 实现请求的更改
 5. 当你准备好提交时创建 PR
@@ -198,7 +198,7 @@ codemate --issue 456
 
 这等同于：
 ```bash
-codemate --branch issue-456 --query "Please use /pr:read-issue skill to read and address issue #456"
+codemate --branch issue-456 --query "Please use /issue:read-issue skill to read and address issue #456"
 ```
 
 **何时使用：**
@@ -225,7 +225,7 @@ codemate --repo https://github.com/yourname/project.git --upstream https://githu
 | `UPSTREAM_REPO_URL` | 否 | 上游仓库 URL（用于 fork 工作流） |
 | `BRANCH_NAME` | 否 | 要工作的分支 |
 | `PR_NUMBER` | 否 | 要工作的现有 PR 编号 |
-| `ISSUE_NUMBER` | 否 | GitHub issue 编号（创建分支 `issue-NUMBER` 并使用 `/pr:read-issue` skill） |
+| `ISSUE_NUMBER` | 否 | GitHub issue 编号（创建分支 `issue-NUMBER` 并使用 `/issue:read-issue` skill） |
 | `GITHUB_TOKEN` | 自动 | GitHub 个人访问令牌（如果未提供，默认为 `gh auth token`） |
 | `GIT_USER_NAME` | 自动 | Git commit author 名称（如果未提供，默认为 `git config user.name`） |
 | `GIT_USER_EMAIL` | 自动 | Git commit author 邮箱（如果未提供，默认为 `git config user.email`） |
@@ -270,7 +270,15 @@ CodeMate 使用单独的[基础镜像（`codemate-base`）](https://github.com/B
 | `/pr:fix-comments` | 读取 PR review comments，修复问题，commit 更改并回复 comments |
 | `/pr:update` | 更新 PR 标题和摘要。使用 `--summary-only` 仅更新摘要 |
 | `/pr:ack-comments` | 通过添加 👀 表情确认 PR issue comments |
-| `/pr:read-issue` | 读取 GitHub issue 详情，包括标题、描述、标签和评论 |
+| `/pr:read-issue` | ~~已移至 `/issue:read-issue`~~ 读取 GitHub issue 详情，包括标题、描述、标签和评论 |
+
+**Issue 插件** (`issue@codemate`)：
+| 命令 | 描述 |
+|---------|-------------|
+| `/issue:read-issue` | 读取 GitHub issue 详情，包括标题、描述、标签和评论 |
+| `/issue:refine-issue` | 重写 issue 正文以匹配模板（计划-执行工作流，需要用户确认） |
+| `/issue:triage-issue` | 根据内容分析应用优先级和分类标签 |
+| `/issue:classify-issue` | 为不明确的 issue 发布澄清问题并添加 `needs-more-info` 标签 |
 
 **浏览器插件** (`agent-browser`)：
 | 命令 | 描述 |

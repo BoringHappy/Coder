@@ -31,6 +31,14 @@
       "version": "1.0.0",
       "category": "development",
       "keywords": ["dev", "environment", "variables", "utilities"]
+    },
+    {
+      "name": "issue",
+      "source": "./plugins/issue",
+      "description": "GitHub Issue workflow management with skills for reading, refining, triaging, and classifying issues",
+      "version": "1.0.0",
+      "category": "github",
+      "keywords": ["github", "issue", "labels", "triage", "workflow"]
     }
   ]
 }

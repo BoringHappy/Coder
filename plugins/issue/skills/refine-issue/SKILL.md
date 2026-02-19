@@ -9,11 +9,11 @@ Rewrites an issue body to fully satisfy the matching issue template, incorporati
 
 ## Fetch Issue Data
 
-!`gh issue view $ARGUMENTS --json title,body,labels,comments,url -q '"**Title:** \(.title)\n**URL:** \(.url)\n**Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)\n**Body:**\n\(.body)\n**Comments:**\n\(if .comments | length > 0 then (.comments | map("**\(.author.login)** (\(.createdAt)):\n\(.body)") | join("\n\n")) else "No comments" end)"' | cat`
+!`gh issue view $ARGUMENTS --json title,labels,body,url,comments --template '{{.title}}{{"\n"}}{{.url}}{{"\n"}}Labels: {{range .labels}}{{.name}} {{end}}{{"\n"}}{{.body}}{{"\n"}}{{range .comments}}{{.author.login}} ({{.createdAt}}):{{"\n"}}{{.body}}{{"\n\n"}}{{end}}' | cat`
 
 ## Fetch Issue Templates
 
-!`find .github/ISSUE_TEMPLATE/ -name "*.md" -o -name "*.yml" -o -name "*.yaml" 2>/dev/null | while read f; do echo "=== $f ===" && cat "$f" && echo; done || echo "No issue templates found"`
+Use the Glob tool to find files matching `.github/ISSUE_TEMPLATE/**` and then use the Read tool to read each template file found. If no files are found, note that no issue templates exist.
 
 ## Instructions
 

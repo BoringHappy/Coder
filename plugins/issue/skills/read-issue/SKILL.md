@@ -25,5 +25,3 @@ Retrieves and displays GitHub issue information including title, description, la
 8. **Issue URL** - Direct link to the issue
 
 Format the output clearly using markdown so the user can see the issue details at a glance. This summary should always be visible in your response to the user.
-
-After displaying the issue information, you should analyze the requirements and start planning how to address the issue.

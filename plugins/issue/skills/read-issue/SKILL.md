@@ -9,15 +9,7 @@ Retrieves and displays GitHub issue information including title, description, la
 
 ## Issue Information
 
-!`ISSUE_REF="${ARGUMENTS:-$ISSUE_NUMBER}" && gh issue view $ISSUE_REF --json title,state,labels,assignees,body,comments,url -q '"**Title:** \(.title)
-**State:** \(.state)
-**Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)
-**Assignees:** \(if .assignees | length > 0 then (.assignees | map(.login) | join(", ")) else "None" end)
-**Issue URL:** \(.url)
-**Description:**
-\(.body)
-**Comments:**
-\(if .comments | length > 0 then (.comments | map("**\(.author.login)** - \(.createdAt):\n\(.body)") | join("\n\n")) else "No comments" end)"' | cat`
+!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json title,state,labels,assignees,body,comments,url -q '"**Title:** \(.title)\n**State:** \(.state)\n**Labels:** \(if .labels | length > 0 then (.labels | map(.name) | join(", ")) else "None" end)\n**Assignees:** \(if .assignees | length > 0 then (.assignees | map(.login) | join(", ")) else "None" end)\n**Issue URL:** \(.url)\n**Description:**\n\(.body)\n**Comments:**\n\(if .comments | length > 0 then (.comments | map("**\(.author.login)** - \(.createdAt):\n\(.body)") | join("\n\n")) else "No comments" end)"' | cat`
 
 ## Instructions
 

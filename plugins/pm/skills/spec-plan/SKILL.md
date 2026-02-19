@@ -39,11 +39,10 @@ cat "$SPEC"
 
 2. **Analyze the spec** above and produce a technical plan covering:
    - Architecture decisions (patterns, data models, key choices and their rationale)
-   - Tech approach broken down by layer (e.g. DB, API, UI, infra)
-   - Task breakdown: a list of concrete, parallelizable tasks sized 1–3 days each. Max 10 tasks. Each task needs:
+   - Tech approach broken down by area (e.g. DB, API, UI, infra)
+   - Task breakdown: a list of concrete tasks sized 1–3 days each. Max 10 tasks. Each task needs:
      - A short title
-     - Which layer it belongs to
-     - Whether it can run in parallel with others
+     - Tags (e.g. data, api, ui, infra — can be multiple)
      - What it depends on (if anything)
 
 3. **Append** the following sections to the spec file (do not overwrite existing content):
@@ -68,15 +67,13 @@ cat "$SPEC"
 <deployment, config, observability — omit if not applicable>
 
 ## Task Breakdown
-| # | Title | Layer | Parallel | Depends On |
-|---|-------|-------|----------|------------|
-| 1 | <title> | <layer> | yes/no | — |
-| 2 | <title> | <layer> | yes/no | 1 |
+| # | Title | Tags | Depends On |
+|---|-------|------|------------|
+| 1 | <title> | <tags> | — |
+| 2 | <title> | <tags> | 1 |
 
 ## Effort Estimate
 - Total tasks: <n>
-- Parallel tasks: <n>
-- Sequential tasks: <n>
 ```
 
 4. Update the spec frontmatter `status` from `draft` to `planned`.

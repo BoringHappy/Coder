@@ -67,7 +67,7 @@ If no template exists, use this default body format:
 <1-2 sentence description of the task derived from the spec>
 
 Part of spec: **$ARGUMENTS**
-Layer: <layer> | Parallel: <yes/no> | Depends on: <task titles or "none">
+Tags: <tags> | Depends on: <task titles or "none">
 
 ## How should it work?
 

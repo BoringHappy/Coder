@@ -46,8 +46,7 @@ cat "$SPEC"
 2. **Parse the Task Breakdown table** from the spec. For each row extract:
    - Task number
    - Title
-   - Layer
-   - Whether it can run in parallel
+   - Tags
    - Dependencies (task numbers it depends on)
 
 3. **Rewrite the `tasks:` frontmatter field** with structured entries. Each task gets:
@@ -55,27 +54,21 @@ cat "$SPEC"
 ```yaml
 tasks:
   - title: "Setup database schema"
-    layer: data
-    parallel: true
+    tags: [data]
     depends_on: []
-    status: open
     issue: ""
     issue_url: ""
   - title: "Build REST endpoints"
-    layer: api
-    parallel: false
+    tags: [api]
     depends_on: [1]
-    status: open
     issue: ""
     issue_url: ""
 ```
 
    Fields:
    - `title`: task title from the breakdown table
-   - `layer`: data / api / ui / infra / other
-   - `parallel`: true/false
+   - `tags`: list of labels e.g. [data], [api], [ui], [infra], or multiple like [api, auth]
    - `depends_on`: list of task numbers (1-based, matching table order)
-   - `status`: always `open` for new tasks
    - `issue`: GitHub issue number — empty until synced
    - `issue_url`: GitHub issue URL — empty until synced
 

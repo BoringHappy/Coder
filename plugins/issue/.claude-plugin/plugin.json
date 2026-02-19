@@ -1,0 +1,9 @@
+{
+  "name": "issue",
+  "description": "GitHub Issue workflow management plugin with skills for reading, refining, judging, and cleaning issues",
+  "version": "1.0.0",
+  "author": {
+    "name": "CodeMate"
+  },
+  "homepage": "https://github.com/your-org/CodeMate"
+}

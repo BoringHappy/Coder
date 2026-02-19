@@ -695,7 +695,7 @@ main() {
 
             # Set initial query if not already set
             if [ -z "$QUERY" ]; then
-                QUERY="Please use /issue:read-issue skill to read and address issue #${ISSUE_NUMBER} (${ISSUE_URL})"
+                QUERY="Please use \`/issue:read-issue ${ISSUE_NUMBER}\` skill to read and address issue #${ISSUE_NUMBER} (${ISSUE_URL})"
             fi
         fi
 

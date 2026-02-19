@@ -9,13 +9,13 @@ Retrieves and displays GitHub issue information including title, description, la
 
 ## Issue Information
 
-!`gh issue view ${ARGUMENTS:-$ISSUE_NUMBER} --json title,state,labels,assignees,body,url,comments --template '{{.title}}{{"\n"}}{{.state}}{{"\n"}}{{.url}}{{"\n"}}Labels: {{range .labels}}{{.name}} {{end}}{{"\n"}}Assignees: {{range .assignees}}{{.login}} {{end}}{{"\n"}}{{.body}}{{"\n"}}{{range .comments}}{{.author.login}} - {{.createdAt}}:{{"\n"}}{{.body}}{{"\n\n"}}{{end}}' | cat`
+!`gh issue view $ARGUMENTS --json title,state,labels,assignees,body,url,comments --template '{{.title}}{{"\n"}}{{.state}}{{"\n"}}{{.url}}{{"\n"}}Labels: {{range .labels}}{{.name}} {{end}}{{"\n"}}Assignees: {{range .assignees}}{{.login}} {{end}}{{"\n"}}{{.body}}{{"\n"}}{{range .comments}}{{.author.login}} - {{.createdAt}}:{{"\n"}}{{.body}}{{"\n\n"}}{{end}}' | cat`
 
 ## Instructions
 
 **IMPORTANT: You MUST output a summary to the user.** After gathering the issue information above, display a formatted summary that includes:
 
-1. **Issue Number** - The issue number (from `$ARGUMENTS` or `$ISSUE_NUMBER`)
+1. **Issue Number** - The issue number (from `$ARGUMENTS`)
 2. **Title** - The issue title
 3. **State** - Whether the issue is open or closed
 4. **Labels** - Any labels attached to the issue (or "None" if empty)

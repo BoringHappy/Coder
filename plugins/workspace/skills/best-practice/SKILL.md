@@ -30,8 +30,6 @@ fi
 
 if [ -f ".github/pull_request_template.md" ]; then
   echo "[INFO] pull_request_template.md exists"
-elif [ -f ".github/PULL_REQUEST_TEMPLATE.md" ]; then
-  echo "[WARN] PULL_REQUEST_TEMPLATE.md exists with uppercase name (will rename to lowercase)"
 else
   echo "[INFO] pull_request_template.md not found (will create)"
 fi
@@ -345,9 +343,8 @@ done
    gh label create "task"    --color "1D76DB" --description "Task from spec"                   --force 2>/dev/null || true
    ```
 
-8. **Create or update `.github/pull_request_template.md`** (lowercase):
-   - If `.github/PULL_REQUEST_TEMPLATE.md` (uppercase) exists, rename it to lowercase with `git mv`.
-   - If `.github/pull_request_template.md` already exists and contains a `## Related Spec` section, skip.
+8. **Create or update `.github/pull_request_template.md`**:
+   - If it already exists and contains a `## Related Spec` section, skip.
    - If it exists but lacks `## Related Spec`, append it after the first `## ` section.
    - If it doesn't exist, create it with the content below.
 
@@ -360,8 +357,8 @@ done
 
    ## Related Spec
 
-   <!-- Link the parent spec issue: Closes #<spec-issue-number> -->
-   <!-- Link the task this PR implements: Implements #<task-issue-number> -->
+   <!-- Link the parent spec issue: Implements #<spec-issue-number> -->
+   <!-- Link the task this PR implements: Closes #<task-issue-number> -->
 
    ## Changes
 

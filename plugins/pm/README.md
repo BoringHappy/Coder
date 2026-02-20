@@ -39,12 +39,15 @@ Creates a GitHub Issue per task using the repo's issue template and writes the i
 ### `/pm:spec-status <feature-name>`
 Reads the spec and fetches live issue state from GitHub for each task. Shows a progress table (✅ closed / 🔄 open / ⚠️ not synced), a progress bar, blocked tasks, and what's next to work on.
 
+### `/pm:spec-abandon <feature-name>`
+Marks a spec as abandoned and optionally closes any linked open GitHub Issues. Use when a feature is cancelled or no longer being pursued.
+
 ## Spec Format
 
 ```markdown
 ---
 name: feature-name
-status: draft | planned | ready | in-progress
+status: draft | planned | ready | in-progress | abandoned
 created: 2026-01-01T00:00:00Z
 tasks:
   - title: "Setup database schema"

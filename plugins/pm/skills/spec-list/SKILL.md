@@ -22,12 +22,12 @@ echo ""
 for spec in .claude/specs/*.md; do
   [ -f "$spec" ] || continue
   name=$(basename "$spec" .md)
-  status=$(grep "^status:" "$spec" | head -1 | sed 's/^status: *//')
+  spec_status=$(grep "^status:" "$spec" | head -1 | sed 's/^status: *//')
   created=$(grep "^created:" "$spec" | head -1 | sed 's/^created: *//' | cut -c1-10)
   total=$(grep -c "^  - title:" "$spec" 2>/dev/null || echo 0)
   synced=$(grep -c 'issue_url: "https' "$spec" 2>/dev/null || echo 0)
 
-  case "$status" in
+  case "$spec_status" in
     draft)       icon="📝" ;;
     planned)     icon="📐" ;;
     ready)       icon="✅" ;;
@@ -37,7 +37,7 @@ for spec in .claude/specs/*.md; do
   esac
 
   echo "$icon  $name"
-  echo "    Status: ${status:-draft} | Created: ${created:-unknown} | Tasks: $synced/$total synced"
+  echo "    Status: ${spec_status:-draft} | Created: ${created:-unknown} | Tasks: $synced/$total synced"
   echo ""
 done
 

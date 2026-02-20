@@ -238,8 +238,9 @@ done
 5. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, ask the user to confirm overwrite.
 
    ```yaml
-   name: "✅ Task"
+   name: Task
    description: Implementation task linked to a spec
+   title: "[Task]: "
    labels: ["task"]
    body:
      - type: markdown
@@ -257,12 +258,62 @@ done
          required: true
 
      - type: textarea
+       id: user-story
+       attributes:
+         label: User Story
+         description: Who needs this and why?
+         placeholder: |
+           As a <role>, I want to <action> so that <outcome>.
+       validations:
+         required: true
+
+     - type: textarea
        id: description
        attributes:
          label: Description
-         description: What needs to be done?
+         description: Technical details of what needs to be implemented
        validations:
          required: true
+
+     - type: textarea
+       id: acceptance-criteria
+       attributes:
+         label: Acceptance Criteria
+         description: Definition of Done — all boxes must be checked before closing
+         placeholder: |
+           - [ ] Criterion 1
+           - [ ] Criterion 2
+       validations:
+         required: true
+
+     - type: textarea
+       id: definition-of-done
+       attributes:
+         label: Definition of Done
+         description: Standard checklist that applies to every task
+         value: |
+           - [ ] Code reviewed and approved
+           - [ ] Tests written and passing
+           - [ ] No regressions introduced
+           - [ ] Documentation updated if needed
+           - [ ] Deployed to staging / feature env (if applicable)
+
+     - type: input
+       id: story-points
+       attributes:
+         label: Story Points
+         description: Effort estimate using Fibonacci scale (1, 2, 3, 5, 8, 13)
+         placeholder: "3"
+
+     - type: dropdown
+       id: priority
+       attributes:
+         label: Priority
+         options:
+           - Low
+           - Medium
+           - High
+           - Critical
 
      - type: input
        id: tags
@@ -272,27 +323,11 @@ done
          placeholder: api, data
 
      - type: input
-       id: estimate
-       attributes:
-         label: Effort Estimate
-         placeholder: 1d
-
-     - type: input
        id: depends-on
        attributes:
          label: Depends On
          description: Task issue numbers this depends on
          placeholder: "#10, #11"
-
-     - type: textarea
-       id: acceptance-criteria
-       attributes:
-         label: Acceptance Criteria
-         placeholder: |
-           - [ ] Criterion 1
-           - [ ] Criterion 2
-       validations:
-         required: true
    ```
 
 6. **Create `.github/ISSUE_TEMPLATE/config.yml`** if it doesn't exist:

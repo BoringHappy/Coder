@@ -39,9 +39,8 @@ Usage: `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
 4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
 
    ```bash
-   cat > /tmp/spec-plan-body.md << 'SPECEOF'
-   <full updated body with plan sections appended>
-   SPECEOF
+   source "$BASE_DIR/scripts/helpers.sh"
+   write_issue_body "<full updated body with plan sections appended>" /tmp/spec-plan-body.md
    gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
    rm -f /tmp/spec-plan-body.md
    ```
@@ -81,7 +80,8 @@ Usage: `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
 
 5. **Add `planned` label** to the spec issue:
    ```bash
-   gh label create "planned" --color "FBCA04" --description "Spec has a technical plan" --force 2>/dev/null || true
+   source "$BASE_DIR/scripts/helpers.sh"
+   ensure_planned_label
    gh issue edit <spec_issue_number> --add-label "planned"
    ```
 

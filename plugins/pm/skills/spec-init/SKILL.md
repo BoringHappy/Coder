@@ -34,16 +34,15 @@ Usage: `/pm:spec-init <feature-name>`
 
 3. **Ensure labels exist** before creating the issue:
    ```bash
-   gh label create "spec" --color "5319E7" --description "Spec-level tracking issue" --force 2>/dev/null || true
-   gh label create "spec:$ARGUMENTS" --color "0E8A16" --description "Part of spec: $ARGUMENTS" --force 2>/dev/null || true
+   source "$BASE_DIR/scripts/helpers.sh"
+   ensure_spec_labels "$ARGUMENTS"
    ```
 
 4. **Create the spec issue** — write the body to a temp file, then create the issue. If a spec template was found in preflight, mirror its section headings exactly. Otherwise use the default format below:
 
    ```bash
-   cat > /tmp/spec-body.md << 'SPECEOF'
-   <body content using template headings if available, otherwise default format below>
-   SPECEOF
+   source "$BASE_DIR/scripts/helpers.sh"
+   write_issue_body "<body content>" /tmp/spec-body.md
 
    gh issue create \
      --title "[Spec]: $ARGUMENTS" \

@@ -44,8 +44,8 @@ Usage: `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
 
 4. **Ensure labels exist**:
    ```bash
-   gh label create "task" --color "1D76DB" --description "Task from spec" --force 2>/dev/null || true
-   gh label create "spec:$FEATURE_NAME" --color "0E8A16" --description "Part of spec: $FEATURE_NAME" --force 2>/dev/null || true
+   source "$BASE_DIR/scripts/helpers.sh"
+   ensure_task_labels "$FEATURE_NAME"
    ```
 
 5. **Close orphan sub-issues** (removed from spec):
@@ -57,12 +57,8 @@ Usage: `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
 
    b. Remove it from the spec issue's sub-issues:
    ```bash
-   gh api \
-     --method DELETE \
-     -H "Accept: application/vnd.github+json" \
-     -H "X-GitHub-Api-Version: 2022-11-28" \
-     /repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues \
-     -f sub_issue_id=<orphan_issue_id>
+   source "$BASE_DIR/scripts/helpers.sh"
+   remove_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "<orphan_issue_id>"
    ```
 
 6. **Create new task issues** and register as sub-issues:
@@ -78,11 +74,10 @@ Usage: `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
    fi
    ```
 
-   b. Write the task body to a temp file, populating each field from the template with values derived from the spec task breakdown. If the template exists, mirror its section headings exactly. If not, fall back to a plain body:
+   b. Write the task body to a temp file and create the issue:
    ```bash
-   cat > /tmp/task-body.md << 'TASKEOF'
-   <body content using template headings if available, otherwise plain description>
-   TASKEOF
+   source "$BASE_DIR/scripts/helpers.sh"
+   write_issue_body "<body content>" /tmp/task-body.md
 
    TASK_URL=$(gh issue create \
      --title "<task title>" \
@@ -100,17 +95,14 @@ Usage: `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
 
    d. Register as sub-issue of the spec issue:
    ```bash
-   gh api \
-     --method POST \
-     -H "Accept: application/vnd.github+json" \
-     -H "X-GitHub-Api-Version: 2022-11-28" \
-     /repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues \
-     -f sub_issue_id="$TASK_ISSUE_ID"
+   source "$BASE_DIR/scripts/helpers.sh"
+   register_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "$TASK_ISSUE_ID"
    ```
 
 7. **Add `ready` label** to the spec issue:
    ```bash
-   gh label create "ready" --color "0075CA" --description "Spec tasks have been decomposed" --force 2>/dev/null || true
+   source "$BASE_DIR/scripts/helpers.sh"
+   ensure_ready_label
    gh issue edit $SPEC_ISSUE_NUMBER --add-label "ready"
    ```
 

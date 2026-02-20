@@ -141,7 +141,7 @@ done
          placeholder: Any additional information...
    ```
 
-4. **Create `.github/ISSUE_TEMPLATE/spec.yml`**. If it already exists, ask the user to confirm overwrite before proceeding.
+3. **Create `.github/ISSUE_TEMPLATE/spec.yml`**. If it already exists, ask the user to confirm overwrite before proceeding.
 
    Write this content:
 
@@ -233,7 +233,7 @@ done
          required: true
    ```
 
-5. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, ask the user to confirm overwrite.
+4. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, ask the user to confirm overwrite.
 
    ```yaml
    name: Task
@@ -328,13 +328,13 @@ done
          placeholder: "#10, #11"
    ```
 
-6. **Create `.github/ISSUE_TEMPLATE/config.yml`** if it doesn't exist:
+5. **Create `.github/ISSUE_TEMPLATE/config.yml`** if it doesn't exist:
 
    ```yaml
    blank_issues_enabled: true
    ```
 
-7. **Ensure standard labels exist**:
+6. **Ensure standard labels exist**:
 
    ```bash
    gh label create "spec"    --color "5319E7" --description "Spec-level tracking issue"       --force 2>/dev/null || true
@@ -343,7 +343,7 @@ done
    gh label create "task"    --color "1D76DB" --description "Task from spec"                   --force 2>/dev/null || true
    ```
 
-8. **Create or update `.github/pull_request_template.md`**:
+7. **Create or update `.github/pull_request_template.md`**:
    - If it already exists and contains a `## Related Spec` section, skip.
    - If it exists but lacks `## Related Spec`, append it after the first `## ` section.
    - If it doesn't exist, create it with the content below.
@@ -379,9 +379,9 @@ done
    - [ ] Commit messages follow conventional commit style
    ```
 
-9. **Commit all created/modified files** using `/git:commit`.
+8. **Commit all created/modified files** using `/git:commit`.
 
-10. Output a summary:
+9. Output a summary:
 
    ```
    ✅ Spec best practices bootstrapped for <repo>

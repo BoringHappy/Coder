@@ -1,22 +1,22 @@
 ---
 name: spec-decompose
 description: Fetches the spec GitHub Issue, parses the task breakdown table, creates task issues as sub-issues, and links them to the spec. Reconciles existing sub-issues on re-decompose. Use after spec-plan to prepare tasks. Accepts an optional --granularity flag (micro | pr | macro) to control task splitting.
-argument-hint: <feature-name> [--granularity micro|pr|macro]
+argument-hint: <issue-number-or-feature-name> [--granularity micro|pr|macro]
 ---
 
 # Spec Decompose
 
-Reads the Task Breakdown table from the spec GitHub Issue for `<feature-name>`, creates individual task issues as sub-issues, and reconciles any changes on re-runs.
+Reads the Task Breakdown table from the spec GitHub Issue, creates individual task issues as sub-issues, and reconciles any changes on re-runs.
 
-Usage: `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
+Usage: `/pm:spec-decompose <issue-number-or-feature-name> [--granularity micro|pr|macro]`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No feature name provided. Usage: /pm:spec-decompose <feature-name> [--granularity micro|pr|macro]"; exit 1; fi`
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No argument provided. Usage: /pm:spec-decompose <issue-number-or-feature-name> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`FEATURE_NAME=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); if [ -n "$GRANULARITY" ]; then case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity override: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac; fi`
+!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); if [ -n "$GRANULARITY" ]; then case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity override: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac; fi`
 
-!`FEATURE_NAME=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; SPEC=$(gh issue list --label "spec:$FEATURE_NAME" --label "spec" --state open --json number,title,url,body --jq '.[0]' 2>/dev/null); if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] No open spec issue found for: $FEATURE_NAME. Run /pm:spec-init $FEATURE_NAME first."; exit 1; fi; SPEC_NUM=$(echo "$SPEC" | jq -r '.number'); SPEC_URL=$(echo "$SPEC" | jq -r '.url'); echo "[OK] Found spec issue #$SPEC_NUM: $SPEC_URL"; SPEC_BODY=$(echo "$SPEC" | jq -r '.body'); if ! echo "$SPEC_BODY" | grep -q "## Task Breakdown"; then echo "[ERROR] No Task Breakdown section found. Run /pm:spec-plan $FEATURE_NAME first."; exit 1; fi; DETECTED=$(echo "$SPEC_BODY" | grep -m1 '<!-- granularity:' | sed 's/.*granularity: *\([^ >]*\).*/\1/'); GRAN=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRAN="${GRAN:-${DETECTED:-pr}}"; echo "[INFO] Granularity: $GRAN"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); echo "[INFO] Repo: $REPO | Spec issue: #$SPEC_NUM"; echo ""; echo "--- Existing sub-issues ---"; gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$REPO/issues/$SPEC_NUM/sub_issues --jq '.[] | "  #\(.number) [\(.state)] \(.title)"' 2>/dev/null || echo "  None"; echo ""; echo "--- Spec issue body ---"; echo "$SPEC_BODY"`
+!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; if echo "$ARG" | grep -qE '^[0-9]+$'; then SPEC=$(gh issue view "$ARG" --json number,title,url,body,state,labels 2>/dev/null); else SPEC=$(gh issue list --label "spec:$ARG" --label "spec" --state open --json number,title,url,body,state,labels --jq '.[0]' 2>/dev/null); fi; if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] No open spec issue found for: $ARG"; exit 1; fi; SPEC_NUM=$(echo "$SPEC" | jq -r '.number'); SPEC_URL=$(echo "$SPEC" | jq -r '.url'); echo "[OK] Found spec issue #$SPEC_NUM: $SPEC_URL"; SPEC_BODY=$(echo "$SPEC" | jq -r '.body'); if ! echo "$SPEC_BODY" | grep -q "## Task Breakdown"; then echo "[ERROR] No Task Breakdown section found. Run /pm:spec-plan first."; exit 1; fi; DETECTED=$(echo "$SPEC_BODY" | grep -m1 '<!-- granularity:' | sed 's/.*granularity: *\([^ >]*\).*/\1/'); GRAN=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRAN="${GRAN:-${DETECTED:-pr}}"; echo "[INFO] Granularity: $GRAN"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); echo "[INFO] Repo: $REPO | Spec issue: #$SPEC_NUM"; echo ""; echo "--- Existing sub-issues ---"; gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$REPO/issues/$SPEC_NUM/sub_issues --jq '.[] | "  #\(.number) [\(.state)] \(.title)"' 2>/dev/null || echo "  None"; echo ""; echo "--- Spec issue body ---"; echo "$SPEC_BODY"`
 
 ## Instructions
 

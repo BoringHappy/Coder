@@ -7,17 +7,15 @@ description: Starts a guided brainstorming session to create a new spec as a Git
 
 Creates a new feature spec as a GitHub Issue through a guided requirements session.
 
-Usage: `/pm:spec-init <feature-name>`
+Usage: `/pm:spec-init <short-title>`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No feature name provided. Usage: /pm:spec-init <feature-name>"; exit 1; fi`
-
-!`if ! echo "$ARGUMENTS" | grep -qE '^[a-z][a-z0-9-]*$'; then echo "[ERROR] Feature name must be kebab-case (lowercase letters, numbers, hyphens). Example: user-auth"; exit 1; fi`
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No title provided. Usage: /pm:spec-init <short-title>"; exit 1; fi`
 
 !`gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"'`
 
-!`echo "--- Checking for existing spec issue ---"; gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url --jq 'if length > 0 then "[WARN] Existing open spec issue found:" else "[OK] No existing spec issue for: $ENV.ARGUMENTS" end' 2>/dev/null || echo "[OK] No existing spec issue for: $ARGUMENTS"`
+!`LABEL=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-\|-$//g'); echo "--- Checking for existing spec issue ---"; gh issue list --label "spec:$LABEL" --label "spec" --state open --json number,title,url --jq 'if length > 0 then "[WARN] Existing open spec issue found:" else "[OK] No existing spec issue for: $LABEL" end' 2>/dev/null || echo "[OK] No existing spec issue"`
 
 !`if [ -f ".github/ISSUE_TEMPLATE/spec.yml" ]; then echo "--- Spec issue template ---"; cat ".github/ISSUE_TEMPLATE/spec.yml"; else echo "[WARN] No spec template found at .github/ISSUE_TEMPLATE/spec.yml"; fi`
 
@@ -32,10 +30,11 @@ Usage: `/pm:spec-init <feature-name>`
    - What is explicitly out of scope?
    - What are the dependencies or constraints?
 
-3. **Ensure labels exist** before creating the issue:
+3. **Derive the label slug** from the title and ensure labels exist:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
-   ensure_spec_labels "$ARGUMENTS"
+   LABEL=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-\|-$//g')
+   ensure_spec_labels "$LABEL"
    ```
 
 4. **Create the spec issue** — write the body to a temp file, then create the issue. If a spec template was found in preflight, mirror its section headings exactly. Otherwise use the default format below:
@@ -47,7 +46,7 @@ Usage: `/pm:spec-init <feature-name>`
    gh issue create \
      --title "[Spec]: $ARGUMENTS" \
      --label "spec" \
-     --label "spec:$ARGUMENTS" \
+     --label "spec:$LABEL" \
      --body-file /tmp/spec-body.md
    rm -f /tmp/spec-body.md
    ```
@@ -73,9 +72,8 @@ Usage: `/pm:spec-init <feature-name>`
    ```
 
 5. Confirm: "✅ Spec issue created: `[Spec]: $ARGUMENTS` → <issue_url>"
-6. Suggest next step: "Ready to plan the implementation? Run: `/pm:spec-plan $ARGUMENTS`"
+6. Suggest next step: "Ready to plan the implementation? Run: `/pm:spec-plan <issue_number>`"
 
 ## Prerequisites
-- Feature name must be provided as argument
-- Feature name must be kebab-case
+- Title must be provided as argument
 - Must be inside a GitHub repository

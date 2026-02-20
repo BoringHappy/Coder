@@ -135,38 +135,19 @@ echo "$SPEC_BODY"
 
 6. **Create new task issues** and register as sub-issues:
 
-   a. Write the task body to a temp file and create the issue using the `task` template fields:
+   a. Read the task issue template to understand the expected fields:
    ```bash
-   cat > /tmp/task-body.md << 'TASKEOF'
-   ### Parent Spec
-   #<spec_issue_number>
+   TASK_TEMPLATE=".github/ISSUE_TEMPLATE/task.yml"
+   if [ -f "$TASK_TEMPLATE" ]; then
+     echo "[OK] Using task template: $TASK_TEMPLATE"
+     cat "$TASK_TEMPLATE"
+   else
+     echo "[WARN] No task template found at $TASK_TEMPLATE, using plain body"
+   fi
+   ```
 
-   ### User Story
-   As a <role>, I want to <action> so that <outcome>.
-
-   ### Description
-   <1-2 sentence technical description of the task>
-
-   ### Acceptance Criteria
-   - [ ] <criterion 1>
-   - [ ] <criterion 2>
-
-   ### Definition of Done
-   - [ ] Code reviewed and approved
-   - [ ] Tests written and passing
-   - [ ] No regressions introduced
-   - [ ] Documentation updated if needed
-   - [ ] Deployed to staging / feature env (if applicable)
-
-   ### Story Points
-   <fibonacci estimate: 1, 2, 3, 5, 8, or 13>
-
-   ### Tags
-   <tags>
-
-   ### Depends On
-   <dependency task numbers or 'none'>
-   TASKEOF
+   b. Write the task body to a temp file, populating each field from the template with values derived from the spec task breakdown. If the template exists, mirror its section headings exactly. If not, fall back to a plain body:
+   ```bash
    TASK_URL=$(gh issue create \
      --title "<task title>" \
      --label "task" \

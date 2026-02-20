@@ -2,31 +2,8 @@
 # PR Monitor Hook - Stop hook that checks for PR activity and injects prompts
 # Fires when Claude finishes a turn; waits 60s for user activity before acting
 
-STATE_FILE="${STATE_FILE:-/tmp/pr-monitor-state}"
-SESSION_STATUS_FILE="/tmp/.session_status"
-
-
-# Load persisted state
-load_state() {
-    if [ -f "$STATE_FILE" ]; then
-        source "$STATE_FILE"
-    else
-        LAST_CHECK_TIME=""
-        CONSECUTIVE_FAILURES=0
-        LAST_ISSUE_COMMENT_ID=""
-        READY_FOR_REVIEW_NOTIFIED="false"
-    fi
-}
-
-# Save state for next run
-save_state() {
-    cat > "$STATE_FILE" <<EOF
-LAST_CHECK_TIME="$LAST_CHECK_TIME"
-CONSECUTIVE_FAILURES=$CONSECUTIVE_FAILURES
-LAST_ISSUE_COMMENT_ID="$LAST_ISSUE_COMMENT_ID"
-READY_FOR_REVIEW_NOTIFIED="$READY_FOR_REVIEW_NOTIFIED"
-EOF
-}
+# shellcheck source=common.sh
+source "$(dirname "$0")/common.sh"
 
 # Wait up to 60s for user activity; exit 0 (no injection) if user becomes active
 wait_for_idle() {

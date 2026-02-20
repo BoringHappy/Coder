@@ -148,6 +148,10 @@ echo "$SPEC_BODY"
 
    b. Write the task body to a temp file, populating each field from the template with values derived from the spec task breakdown. If the template exists, mirror its section headings exactly. If not, fall back to a plain body:
    ```bash
+   cat > /tmp/task-body.md << 'TASKEOF'
+   <body content using template headings if available, otherwise plain description>
+   TASKEOF
+
    TASK_URL=$(gh issue create \
      --title "<task title>" \
      --label "task" \
@@ -156,13 +160,13 @@ echo "$SPEC_BODY"
    rm -f /tmp/task-body.md
    ```
 
-   b. Get the task issue's numeric ID (not number):
+   c. Get the task issue's numeric ID (not number):
    ```bash
    TASK_ISSUE_NUMBER=$(echo "$TASK_URL" | grep -oE '[0-9]+$')
    TASK_ISSUE_ID=$(gh api /repos/$REPO/issues/$TASK_ISSUE_NUMBER --jq '.id')
    ```
 
-   c. Register as sub-issue of the spec issue:
+   d. Register as sub-issue of the spec issue:
    ```bash
    gh api \
      --method POST \

@@ -68,14 +68,19 @@ fi
    gh label create "spec:$ARGUMENTS" --color "0E8A16" --description "Part of spec: $ARGUMENTS" --force 2>/dev/null || true
    ```
 
-4. **Create the spec issue** — if a spec template was found in preflight, mirror its section headings exactly when building the body. Otherwise use this format:
+4. **Create the spec issue** — write the body to a temp file, then create the issue. If a spec template was found in preflight, mirror its section headings exactly. Otherwise use the default format below:
 
    ```bash
+   cat > /tmp/spec-body.md << 'SPECEOF'
+   <body content using template headings if available, otherwise default format below>
+   SPECEOF
+
    gh issue create \
      --title "[Spec]: $ARGUMENTS" \
      --label "spec" \
      --label "spec:$ARGUMENTS" \
      --body-file /tmp/spec-body.md
+   rm -f /tmp/spec-body.md
    ```
 
    Default body format (used when no template exists):

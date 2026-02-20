@@ -14,7 +14,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-decompose <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`source "$BASE_DIR/../scripts/helpers.sh"; ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRAN=""; if echo "$ARGUMENTS" | grep -q -- '--granularity'; then GRAN=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity override: $GRAN"; fi; spec_decompose_fetch_issue "$ARG" "$GRAN"`
+!`_H=$(find ~/.claude/plugins/cache/codemate/pm -name "helpers.sh" -path "*/spec-decompose/scripts/*" | head -1); source "$_H"; ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRAN=""; if echo "$ARGUMENTS" | grep -q -- '--granularity'; then GRAN=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity override: $GRAN"; fi; spec_decompose_fetch_issue "$ARG" "$GRAN"`
 
 ## Instructions
 
@@ -42,7 +42,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 4. **Ensure labels exist**:
    ```bash
-   source "$BASE_DIR/../scripts/helpers.sh"
+   source "$BASE_DIR/scripts/helpers.sh"
    SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
    ensure_task_labels "${SPEC_LABEL#spec:}"
    ```
@@ -56,7 +56,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    b. Remove it from the spec issue's sub-issues:
    ```bash
-   source "$BASE_DIR/../scripts/helpers.sh"
+   source "$BASE_DIR/scripts/helpers.sh"
    remove_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "<orphan_issue_id>"
    ```
 
@@ -75,7 +75,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    b. Write the task body to a temp file and create the issue:
    ```bash
-   source "$BASE_DIR/../scripts/helpers.sh"
+   source "$BASE_DIR/scripts/helpers.sh"
    SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
    write_issue_body "<body content>" /tmp/task-body.md
 
@@ -95,13 +95,13 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    d. Register as sub-issue of the spec issue:
    ```bash
-   source "$BASE_DIR/../scripts/helpers.sh"
+   source "$BASE_DIR/scripts/helpers.sh"
    register_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "$TASK_ISSUE_ID"
    ```
 
 7. **Add `ready` label** to the spec issue:
    ```bash
-   source "$BASE_DIR/../scripts/helpers.sh"
+   source "$BASE_DIR/scripts/helpers.sh"
    ensure_ready_label
    gh issue edit $SPEC_ISSUE_NUMBER --add-label "ready"
    ```

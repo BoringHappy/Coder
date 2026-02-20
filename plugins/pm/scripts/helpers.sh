@@ -130,7 +130,7 @@ register_sub_issue() {
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "/repos/$repo/issues/$spec_num/sub_issues" \
-    -f sub_issue_id="$task_id"
+    -F sub_issue_id="$task_id"
 }
 
 # Remove a sub-issue from a parent spec issue
@@ -144,7 +144,7 @@ remove_sub_issue() {
     -H "Accept: application/vnd.github+json" \
     -H "X-GitHub-Api-Version: 2022-11-28" \
     "/repos/$repo/issues/$spec_num/sub_issues" \
-    -f sub_issue_id="$task_id"
+    -F sub_issue_id="$task_id"
 }
 
 # List sub-issues for a spec issue

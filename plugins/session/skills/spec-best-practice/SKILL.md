@@ -28,11 +28,23 @@ else
   echo "[INFO] .github/ISSUE_TEMPLATE/ not found (will create)"
 fi
 
-if [ -f ".github/PULL_REQUEST_TEMPLATE.md" ]; then
-  echo "[INFO] PULL_REQUEST_TEMPLATE.md exists"
+if [ -f ".github/pull_request_template.md" ]; then
+  echo "[INFO] pull_request_template.md exists"
+elif [ -f ".github/PULL_REQUEST_TEMPLATE.md" ]; then
+  echo "[WARN] PULL_REQUEST_TEMPLATE.md exists with uppercase name (will rename to lowercase)"
 else
-  echo "[INFO] PULL_REQUEST_TEMPLATE.md not found (will create)"
+  echo "[INFO] pull_request_template.md not found (will create)"
 fi
+
+echo ""
+echo "--- Checking existing issue templates ---"
+for TMPL in "bug_report.yml" "feature_request.yml" "spec.yml" "task.yml"; do
+  if [ -f ".github/ISSUE_TEMPLATE/$TMPL" ]; then
+    echo "[OK] $TMPL exists"
+  else
+    echo "[MISSING] $TMPL"
+  fi
+done
 
 echo ""
 echo "--- Checking existing labels ---"
@@ -48,7 +60,90 @@ done
 
 ## Instructions
 
-1. **Create `.github/ISSUE_TEMPLATE/spec.yml`**. If it already exists, ask the user to confirm overwrite before proceeding.
+1. **Create `.github/ISSUE_TEMPLATE/bug_report.yml`** if it doesn't exist:
+
+   ```yaml
+   name: Bug Report
+   description: Report a bug or unexpected behavior
+   title: "[Bug]: "
+   labels: ["bug"]
+   body:
+     - type: textarea
+       id: what-happened
+       attributes:
+         label: What happened?
+         description: Describe the bug and what you expected instead
+         placeholder: |
+           When I run... I get an error...
+           I expected it to...
+       validations:
+         required: true
+
+     - type: textarea
+       id: steps
+       attributes:
+         label: Steps to Reproduce
+         placeholder: |
+           1. Run '...'
+           2. Execute '...'
+           3. See error
+       validations:
+         required: true
+
+     - type: textarea
+       id: environment
+       attributes:
+         label: Environment (optional)
+         description: OS, versions, architecture, etc.
+         placeholder: |
+           - OS: Ubuntu 22.04
+           - Version: 1.0.0
+
+     - type: textarea
+       id: logs
+       attributes:
+         label: Logs or Additional Context (optional)
+         placeholder: Paste logs or add additional information here...
+         render: shell
+   ```
+
+2. **Create `.github/ISSUE_TEMPLATE/feature_request.yml`** if it doesn't exist:
+
+   ```yaml
+   name: Feature Request
+   description: Suggest a new feature or enhancement
+   title: "[Feature]: "
+   labels: ["enhancement"]
+   body:
+     - type: textarea
+       id: description
+       attributes:
+         label: What would you like to see?
+         description: Describe the feature and why it would be useful
+         placeholder: |
+           I would like to support...
+           This would help because...
+       validations:
+         required: true
+
+     - type: textarea
+       id: solution
+       attributes:
+         label: How should it work?
+         description: Describe how you envision this feature working
+         placeholder: When I run... it should...
+       validations:
+         required: true
+
+     - type: textarea
+       id: additional
+       attributes:
+         label: Additional Context (optional)
+         description: Alternatives considered, examples, or other context
+         placeholder: Any additional information...
+   ```
+
+4. **Create `.github/ISSUE_TEMPLATE/spec.yml`**. If it already exists, ask the user to confirm overwrite before proceeding.
 
    Write this content:
 
@@ -140,7 +235,7 @@ done
          required: true
    ```
 
-2. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, ask the user to confirm overwrite.
+5. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, ask the user to confirm overwrite.
 
    ```yaml
    name: "✅ Task"
@@ -200,13 +295,13 @@ done
          required: true
    ```
 
-3. **Create `.github/ISSUE_TEMPLATE/config.yml`** if it doesn't exist:
+6. **Create `.github/ISSUE_TEMPLATE/config.yml`** if it doesn't exist:
 
    ```yaml
    blank_issues_enabled: true
    ```
 
-4. **Ensure standard labels exist**:
+7. **Ensure standard labels exist**:
 
    ```bash
    gh label create "spec"    --color "5319E7" --description "Spec-level tracking issue"       --force 2>/dev/null || true
@@ -215,10 +310,11 @@ done
    gh label create "task"    --color "1D76DB" --description "Task from spec"                   --force 2>/dev/null || true
    ```
 
-5. **Create or update `.github/PULL_REQUEST_TEMPLATE.md`**:
+8. **Create or update `.github/pull_request_template.md`** (lowercase):
+   - If `.github/PULL_REQUEST_TEMPLATE.md` (uppercase) exists, rename it to lowercase with `git mv`.
+   - If `.github/pull_request_template.md` already exists and contains a `## Related Spec` section, skip.
+   - If it exists but lacks `## Related Spec`, append it after the first `## ` section.
    - If it doesn't exist, create it with the content below.
-   - If it exists and already contains a `## Related Spec` section, skip.
-   - If it exists but lacks a `## Related Spec` section, append it after the first `## ` section.
 
    Full template content (use when creating from scratch):
 
@@ -251,18 +347,20 @@ done
    - [ ] Commit messages follow conventional commit style
    ```
 
-6. **Commit all created/modified files** using `/git:commit`.
+9. **Commit all created/modified files** using `/git:commit`.
 
-7. Output a summary:
+10. Output a summary:
 
    ```
    ✅ Spec best practices bootstrapped for <repo>
 
    Files added/updated:
+     .github/ISSUE_TEMPLATE/bug_report.yml
+     .github/ISSUE_TEMPLATE/feature_request.yml
      .github/ISSUE_TEMPLATE/spec.yml
      .github/ISSUE_TEMPLATE/task.yml
      .github/ISSUE_TEMPLATE/config.yml
-     .github/PULL_REQUEST_TEMPLATE.md
+     .github/pull_request_template.md
 
    Labels ensured:
      spec, planned, ready, task

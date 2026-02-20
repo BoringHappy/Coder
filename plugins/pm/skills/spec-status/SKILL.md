@@ -9,35 +9,13 @@ Fetches the spec GitHub Issue for `<feature-name>` and its task sub-issues to sh
 
 ## Preflight
 
-!`
-if [ -z "$ARGUMENTS" ]; then
-  echo "[ERROR] No feature name provided. Usage: /pm:spec-status <feature-name>"
-  echo ""
-  echo "Available specs (open spec issues):"
-  gh issue list --label "spec" --state open --json number,title --jq '.[] | "  • \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"
-  exit 1
-fi
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No feature name provided. Usage: /pm:spec-status <feature-name>"; echo ""; echo "Available specs (open spec issues):"; gh issue list --label "spec" --state open --json number,title --jq '.[] | "  - \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"; exit 1; fi`
 
-# Fetch the spec issue
-echo "--- Fetching spec issue ---"
-SPEC_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state all --json number,title,url,body,state,labels --jq '.[0]' 2>/dev/null || echo "")
-if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
-  echo "[ERROR] No spec issue found for: $ARGUMENTS"
-  exit 1
-fi
+!`echo "--- Fetching spec issue ---"; gh issue list --label "spec:$ARGUMENTS" --label "spec" --state all --json number,title,url,body,state,labels --jq 'if length == 0 then "[ERROR] No spec issue found for: $ENV.ARGUMENTS" else ".[0]" end' 2>/dev/null || echo "[ERROR] No spec issue found for: $ARGUMENTS"`
 
-SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
-SPEC_ISSUE_URL=$(echo "$SPEC_ISSUE" | jq -r '.url')
-SPEC_ISSUE_STATE=$(echo "$SPEC_ISSUE" | jq -r '.state')
-echo "[OK] Spec issue #$SPEC_ISSUE_NUMBER [$SPEC_ISSUE_STATE]: $SPEC_ISSUE_URL"
+!`gh issue list --label "spec:$ARGUMENTS" --label "spec" --state all --json number,title,url,body,state,labels --jq '.[0] | "[OK] Spec issue #\(.number) [\(.state)]: \(.url)\n\(.body)"' 2>/dev/null`
 
-# Fetch all task issues for this spec
-echo ""
-echo "--- Task issues ---"
-gh issue list --label "spec:$ARGUMENTS" --label "task" --state all \
-  --json number,title,state,url \
-  --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.url)"' 2>/dev/null || echo "(none)"
-`
+!`echo "--- Task issues ---"; gh issue list --label "spec:$ARGUMENTS" --label "task" --state all --json number,title,state,url --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.url)"' 2>/dev/null || echo "(none)"`
 
 ## Instructions
 

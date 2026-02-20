@@ -9,33 +9,11 @@ Fetches open task issues for `<feature-name>` from GitHub and identifies the nex
 
 ## Preflight
 
-!`
-if [ -z "$ARGUMENTS" ]; then
-  echo "[ERROR] No feature name provided. Usage: /pm:spec-next <feature-name>"
-  echo ""
-  echo "Available specs (open spec issues):"
-  gh issue list --label "spec" --state open --json number,title --jq '.[] | "  • \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"
-  exit 1
-fi
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No feature name provided. Usage: /pm:spec-next <feature-name>"; echo ""; echo "Available specs (open spec issues):"; gh issue list --label "spec" --state open --json number,title --jq '.[] | "  - \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"; exit 1; fi`
 
-# Fetch the spec issue
-echo "--- Fetching spec issue ---"
-SPEC_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url --jq '.[0]' 2>/dev/null || echo "")
-if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
-  echo "[ERROR] No open spec issue found for: $ARGUMENTS"
-  exit 1
-fi
+!`echo "--- Fetching spec issue ---"; SPEC=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url --jq '.[0]' 2>/dev/null); if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] No open spec issue found for: $ARGUMENTS"; exit 1; fi; echo "$SPEC" | jq -r '"[OK] Spec issue #\(.number)"'`
 
-SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
-echo "[OK] Spec issue #$SPEC_ISSUE_NUMBER"
-
-# Fetch all task issues (open and closed) for dependency resolution
-echo ""
-echo "--- All task issues (with bodies for dependency resolution) ---"
-gh issue list --label "spec:$ARGUMENTS" --label "task" --state all \
-  --json number,title,state,url,body \
-  --jq '.' 2>/dev/null || echo "[]"
-`
+!`echo "--- All task issues (with bodies for dependency resolution) ---"; gh issue list --label "spec:$ARGUMENTS" --label "task" --state all --json number,title,state,url,body --jq '.' 2>/dev/null || echo "[]"`
 
 ## Instructions
 

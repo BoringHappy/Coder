@@ -9,41 +9,13 @@ Closes the spec GitHub Issue for `<feature-name>` and optionally closes all link
 
 ## Preflight
 
-!`
-if [ -z "$ARGUMENTS" ]; then
-  echo "[ERROR] No feature name provided. Usage: /pm:spec-abandon <feature-name>"
-  echo ""
-  echo "Available specs (open spec issues):"
-  gh issue list --label "spec" --state open --json number,title --jq '.[] | "  • \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"
-  exit 1
-fi
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No feature name provided. Usage: /pm:spec-abandon <feature-name>"; echo ""; echo "Available specs (open spec issues):"; gh issue list --label "spec" --state open --json number,title --jq '.[] | "  - \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"; exit 1; fi`
 
-# Fetch the spec issue
-echo "--- Fetching spec issue ---"
-SPEC_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url,state --jq '.[0]' 2>/dev/null || echo "")
-if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
-  # Check if it exists but is already closed
-  CLOSED_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state closed --json number,title,url --jq '.[0]' 2>/dev/null || echo "")
-  if [ -n "$CLOSED_ISSUE" ] && [ "$CLOSED_ISSUE" != "null" ]; then
-    CLOSED_NUM=$(echo "$CLOSED_ISSUE" | jq -r '.number')
-    echo "[WARN] Spec issue #$CLOSED_NUM is already closed."
-  else
-    echo "[ERROR] No spec issue found for: $ARGUMENTS"
-  fi
-  exit 1
-fi
+!`echo "--- Fetching spec issue ---"; gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url,state --jq 'if length > 0 then ".[0] | \"[OK] Spec issue #\(.number): \(.url)\"" else "[WARN] No open spec issue found for: $ENV.ARGUMENTS" end' 2>/dev/null || echo "[ERROR] Failed to fetch spec issue for: $ARGUMENTS"`
 
-SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
-SPEC_ISSUE_URL=$(echo "$SPEC_ISSUE" | jq -r '.url')
-echo "[OK] Spec issue #$SPEC_ISSUE_NUMBER: $SPEC_ISSUE_URL"
+!`gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url,state --jq '.[0] | "[OK] Spec issue #\(.number): \(.url)"' 2>/dev/null`
 
-# Fetch open task issues
-echo ""
-echo "--- Open task issues ---"
-gh issue list --label "spec:$ARGUMENTS" --label "task" --state open \
-  --json number,title,url \
-  --jq '.[] | "#\(.number) \(.title) \(.url)"' 2>/dev/null || echo "(none)"
-`
+!`echo "--- Open task issues ---"; gh issue list --label "spec:$ARGUMENTS" --label "task" --state open --json number,title,url --jq '.[] | "#\(.number) \(.title) \(.url)"' 2>/dev/null || echo "(none)"`
 
 ## Instructions
 

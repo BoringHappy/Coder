@@ -1,22 +1,22 @@
 ---
 name: spec-plan
 description: Converts a spec GitHub Issue into a technical implementation plan by appending architecture decisions, tech approach, and a task breakdown. Use after spec-init to turn requirements into an engineering plan. Accepts an optional --granularity flag (micro | pr | macro) to control task sizing.
-argument-hint: <issue-number-or-feature-name> [--granularity micro|pr|macro]
+argument-hint: <issue-number> [--granularity micro|pr|macro]
 ---
 
 # Spec Plan
 
 Fetches the spec GitHub Issue and appends a technical implementation plan to it.
 
-Usage: `/pm:spec-plan <issue-number-or-feature-name> [--granularity micro|pr|macro]`
+Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No argument provided. Usage: /pm:spec-plan <issue-number-or-feature-name> [--granularity micro|pr|macro]"; exit 1; fi`
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
 !`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRANULARITY="${GRANULARITY:-pr}"; case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac`
 
-!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; if echo "$ARG" | grep -qE '^[0-9]+$'; then SPEC=$(gh issue view "$ARG" --json number,title,url,body,state 2>/dev/null); else SPEC=$(gh issue list --label "spec:$ARG" --label "spec" --state open --json number,title,url,body --jq '.[0]' 2>/dev/null); fi; if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] No open spec issue found for: $ARG"; exit 1; fi; echo "$SPEC" | jq -r '"[OK] Found spec issue #\(.number): \(.url)"'; if echo "$SPEC" | jq -r '.body' | grep -q "## Architecture Decisions"; then echo "[WARN] Plan sections already exist in spec issue"; else echo "[OK] Ready to plan"; fi; echo ""; echo "--- Current spec issue body ---"; echo "$SPEC" | jq -r '.body'`
+!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; SPEC=$(gh issue view "$ARG" --json number,title,url,body,state 2>/dev/null); if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] Issue #$ARG not found"; exit 1; fi; echo "$SPEC" | jq -r '"[OK] Found spec issue #\(.number): \(.url)"'; if echo "$SPEC" | jq -r '.body' | grep -q "## Architecture Decisions"; then echo "[WARN] Plan sections already exist in spec issue"; else echo "[OK] Ready to plan"; fi; echo ""; echo "--- Current spec issue body ---"; echo "$SPEC" | jq -r '.body'`
 
 ## Instructions
 
@@ -86,8 +86,8 @@ Usage: `/pm:spec-plan <issue-number-or-feature-name> [--granularity micro|pr|mac
    ```
 
 6. Confirm: "✅ Technical plan added to spec issue #<number> (granularity: <value>)"
-7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose $FEATURE_NAME`"
+7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <issue_number>`"
 
 ## Prerequisites
-- A spec issue must exist (run `/pm:spec-init <feature-name>` first)
+- A spec issue must exist (run `/pm:spec-init <title>` first)
 - Must be authenticated: `gh auth status`

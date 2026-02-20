@@ -1,22 +1,22 @@
 ---
 name: spec-status
 description: Fetches the spec GitHub Issue and its task sub-issues to produce a full spec progress summary. Use when the user wants to know the current state of a feature spec.
-argument-hint: <issue-number-or-feature-name>
+argument-hint: <issue-number>
 ---
 
 # Spec Status
 
 Fetches the spec GitHub Issue and its task sub-issues to show a complete progress summary.
 
-Usage: `/pm:spec-status <issue-number-or-feature-name>`
+Usage: `/pm:spec-status <issue-number>`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No argument provided. Usage: /pm:spec-status <issue-number-or-feature-name>"; echo ""; echo "Available specs:"; gh issue list --label "spec" --state open --json number,title --jq '.[] | "  #\(.number) \(.title)"' 2>/dev/null || echo "  (none found)"; exit 1; fi`
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-status <issue-number>"; echo ""; echo "Available specs:"; gh issue list --label "spec" --state open --json number,title --jq '.[] | "  #\(.number) \(.title)"' 2>/dev/null || echo "  (none found)"; exit 1; fi`
 
-!`echo "--- Fetching spec issue ---"; if echo "$ARGUMENTS" | grep -qE '^[0-9]+$'; then gh issue view "$ARGUMENTS" --json number,title,url,body,state,labels --jq '"[OK] Spec issue #\(.number) [\(.state)]: \(.url)\n\(.body)"' 2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"; else gh issue list --label "spec:$ARGUMENTS" --label "spec" --state all --json number,title,url,body,state --jq 'if length > 0 then .[0] | "[OK] Spec issue #\(.number) [\(.state)]: \(.url)\n\(.body)" else "[ERROR] No spec issue found for: $ENV.ARGUMENTS" end' 2>/dev/null; fi`
+!`echo "--- Fetching spec issue ---"; gh issue view "$ARGUMENTS" --json number,title,url,body,state,labels --jq '"[OK] Spec issue #\(.number) [\(.state)]: \(.url)\n\(.body)"' 2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"`
 
-!`echo "--- Task issues ---"; if echo "$ARGUMENTS" | grep -qE '^[0-9]+$'; then SPEC_LABEL=$(gh issue view "$ARGUMENTS" --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]' 2>/dev/null); gh issue list --label "$SPEC_LABEL" --label "task" --state all --json number,title,state,url --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.url)"' 2>/dev/null || echo "(none)"; else gh issue list --label "spec:$ARGUMENTS" --label "task" --state all --json number,title,state,url --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.url)"' 2>/dev/null || echo "(none)"; fi`
+!`echo "--- Task issues ---"; SPEC_LABEL=$(gh issue view "$ARGUMENTS" --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]' 2>/dev/null); gh issue list --label "$SPEC_LABEL" --label "task" --state all --json number,title,state,url --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.url)"' 2>/dev/null || echo "(none)"`
 
 ## Instructions
 
@@ -49,8 +49,8 @@ Rules:
 - Progress bar: each `█` = 5%, fill based on closed/total ratio
 - "Next Up": open task issues ready to work on
 - If all tasks are closed, show: "🎉 Spec complete!"
-- If no task issues exist yet, suggest: "Run `/pm:spec-decompose $ARGUMENTS` to create task issues"
+- If no task issues exist yet, suggest: "Run `/pm:spec-decompose <issue_number>` to create task issues"
 
 ## Prerequisites
-- A spec issue must exist for the given feature name
+- A spec issue must exist
 - GitHub CLI authenticated

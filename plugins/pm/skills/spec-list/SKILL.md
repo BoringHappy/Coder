@@ -9,13 +9,13 @@ Lists all feature specs as GitHub Issues labeled with `spec`.
 
 ## Specs
 
-!`echo "--- Fetching spec issues ---"; gh issue list --label "spec" --state all --limit 200 --json number,title,state,url,labels --jq 'if length == 0 then "No spec issues found. Create your first spec with: /pm:spec-init <feature-name>" else "SPEC_ISSUES:\n" + (. | tojson) end' 2>/dev/null || echo "[]"`
+!`echo "--- Fetching spec issues ---"; gh issue list --label "spec" --state all --limit 200 --json number,title,state,url,labels --jq 'if length == 0 then "No spec issues found. Create your first spec with: /pm:spec-init <title>" else "SPEC_ISSUES:\n" + (. | tojson) end' 2>/dev/null || echo "[]"`
 
 !`echo "TASK_ISSUES:"; gh issue list --label "task" --state all --limit 500 --json number,title,state,labels --jq '.' 2>/dev/null || echo "[]"`
 
 ## Instructions
 
-Display the spec list shown above. If no specs exist, prompt the user to create one with `/pm:spec-init <feature-name>`.
+Display the spec list shown above. If no specs exist, prompt the user to create one with `/pm:spec-init <title>`.
 
 Using the two JSON arrays from preflight (spec issues + all task issues), compute task counts client-side:
 - For each spec issue, extract its `spec:<name>` label to get the spec name

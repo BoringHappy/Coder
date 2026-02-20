@@ -1,63 +1,22 @@
 ---
 name: spec-plan
 description: Converts a spec GitHub Issue into a technical implementation plan by appending architecture decisions, tech approach, and a task breakdown. Use after spec-init to turn requirements into an engineering plan. Accepts an optional --granularity flag (micro | pr | macro) to control task sizing.
-argument-hint: <feature-name> [--granularity micro|pr|macro]
+argument-hint: <issue-number> [--granularity micro|pr|macro]
 ---
 
 # Spec Plan
 
-Fetches the spec GitHub Issue for `<feature-name>` and appends a technical implementation plan to it.
+Fetches the spec GitHub Issue and appends a technical implementation plan to it.
 
-Usage: `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
+Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 ## Preflight
 
-!`
-FEATURE_NAME=$(echo "$ARGUMENTS" | awk '{print $1}')
-GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
-GRANULARITY="${GRANULARITY:-pr}"
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-if [ -z "$FEATURE_NAME" ]; then
-  echo "[ERROR] No feature name provided. Usage: /pm:spec-plan <feature-name> [--granularity micro|pr|macro]"
-  exit 1
-fi
+!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRANULARITY="${GRANULARITY:-pr}"; case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac`
 
-case "$GRANULARITY" in
-  micro|pr|macro) ;;
-  *)
-    echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"
-    exit 1
-    ;;
-esac
-
-echo "[INFO] Granularity: $GRANULARITY"
-
-# Fetch the spec issue
-echo ""
-echo "--- Fetching spec issue ---"
-SPEC_ISSUE=$(gh issue list --label "spec:$FEATURE_NAME" --label "spec" --state open --json number,title,url,body --jq '.[0]' 2>/dev/null || echo "")
-if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
-  echo "[ERROR] No open spec issue found for: $FEATURE_NAME"
-  echo "Run /pm:spec-init $FEATURE_NAME first."
-  exit 1
-fi
-
-SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
-SPEC_ISSUE_URL=$(echo "$SPEC_ISSUE" | jq -r '.url')
-echo "[OK] Found spec issue #$SPEC_ISSUE_NUMBER: $SPEC_ISSUE_URL"
-
-# Check if plan already exists
-SPEC_BODY=$(echo "$SPEC_ISSUE" | jq -r '.body')
-if echo "$SPEC_BODY" | grep -q "## Architecture Decisions"; then
-  echo "[WARN] Plan sections already exist in spec issue"
-else
-  echo "[OK] Ready to plan"
-fi
-
-echo ""
-echo "--- Current spec issue body ---"
-echo "$SPEC_BODY"
-`
+!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; SPEC=$(gh issue view "$ARG" --json number,title,url,body,state 2>/dev/null); if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] Issue #$ARG not found"; exit 1; fi; echo "$SPEC" | jq -r '"[OK] Found spec issue #\(.number): \(.url)"'; if echo "$SPEC" | jq -r '.body' | grep -q "## Architecture Decisions"; then echo "[WARN] Plan sections already exist in spec issue"; else echo "[OK] Ready to plan"; fi; echo ""; echo "--- Current spec issue body ---"; echo "$SPEC" | jq -r '.body'`
 
 ## Instructions
 
@@ -80,9 +39,8 @@ echo "$SPEC_BODY"
 4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
 
    ```bash
-   cat > /tmp/spec-plan-body.md << 'SPECEOF'
-   <full updated body with plan sections appended>
-   SPECEOF
+   source "$BASE_DIR/scripts/helpers.sh"
+   write_issue_body "<full updated body with plan sections appended>" /tmp/spec-plan-body.md
    gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
    rm -f /tmp/spec-plan-body.md
    ```
@@ -122,13 +80,14 @@ echo "$SPEC_BODY"
 
 5. **Add `planned` label** to the spec issue:
    ```bash
-   gh label create "planned" --color "FBCA04" --description "Spec has a technical plan" --force 2>/dev/null || true
+   source "$BASE_DIR/scripts/helpers.sh"
+   ensure_planned_label
    gh issue edit <spec_issue_number> --add-label "planned"
    ```
 
 6. Confirm: "✅ Technical plan added to spec issue #<number> (granularity: <value>)"
-7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose $FEATURE_NAME`"
+7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <issue_number>`"
 
 ## Prerequisites
-- A spec issue must exist (run `/pm:spec-init <feature-name>` first)
+- A spec issue must exist (run `/pm:spec-init <title>` first)
 - Must be authenticated: `gh auth status`

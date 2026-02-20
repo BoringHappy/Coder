@@ -1,41 +1,22 @@
 ---
 name: spec-next
 description: Finds the next actionable task for a spec by checking GitHub Issue status. Use when the user wants to know what to work on next.
+argument-hint: <issue-number>
 ---
 
 # Spec Next
 
-Fetches open task issues for `<feature-name>` from GitHub and identifies the next task(s) ready to work on.
+Fetches open task issues for a spec from GitHub and identifies the next task(s) ready to work on.
+
+Usage: `/pm:spec-next <issue-number>`
 
 ## Preflight
 
-!`
-if [ -z "$ARGUMENTS" ]; then
-  echo "[ERROR] No feature name provided. Usage: /pm:spec-next <feature-name>"
-  echo ""
-  echo "Available specs (open spec issues):"
-  gh issue list --label "spec" --state open --json number,title --jq '.[] | "  • \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"
-  exit 1
-fi
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-next <issue-number>"; echo ""; echo "Available specs:"; gh issue list --label "spec" --state open --json number,title --jq '.[] | "  #\(.number) \(.title)"' 2>/dev/null || echo "  (none found)"; exit 1; fi`
 
-# Fetch the spec issue
-echo "--- Fetching spec issue ---"
-SPEC_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url --jq '.[0]' 2>/dev/null || echo "")
-if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
-  echo "[ERROR] No open spec issue found for: $ARGUMENTS"
-  exit 1
-fi
+!`echo "--- Fetching spec issue ---"; gh issue view "$ARGUMENTS" --json number,title,url,state --jq '"[OK] Spec issue #\(.number)"' 2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"`
 
-SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
-echo "[OK] Spec issue #$SPEC_ISSUE_NUMBER"
-
-# Fetch all task issues (open and closed) for dependency resolution
-echo ""
-echo "--- All task issues (with bodies for dependency resolution) ---"
-gh issue list --label "spec:$ARGUMENTS" --label "task" --state all \
-  --json number,title,state,url,body \
-  --jq '.' 2>/dev/null || echo "[]"
-`
+!`echo "--- All task issues (with bodies for dependency resolution) ---"; SPEC_LABEL=$(gh issue view "$ARGUMENTS" --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]' 2>/dev/null); if [ -z "$SPEC_LABEL" ] || [ "$SPEC_LABEL" = "null" ]; then echo "[ERROR] No spec: label found on issue #$ARGUMENTS. Is this a spec issue?"; exit 1; fi; gh issue list --label "$SPEC_LABEL" --label "task" --state all --json number,title,state,url,body --jq '.' 2>/dev/null || echo "[]"`
 
 ## Instructions
 
@@ -65,11 +46,11 @@ Using the task issues fetched above, find the next task(s) ready to work on.
 ```
 
 Rules:
-- If no tasks exist yet, suggest: "Run `/pm:spec-decompose $ARGUMENTS` to create task issues."
+- If no tasks exist yet, suggest: "Run `/pm:spec-decompose <issue_number>` to create task issues."
 - If all tasks are closed, show: "🎉 All tasks complete!"
 - If multiple tasks are ready, list all — the user picks.
 - "Suggestion" should recommend the first ready task by issue number.
 
 ## Prerequisites
-- A spec issue must exist for the given feature name
+- A spec issue must exist
 - GitHub CLI authenticated

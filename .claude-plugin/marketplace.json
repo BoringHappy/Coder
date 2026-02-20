@@ -41,12 +41,12 @@
       "keywords": ["github", "issue", "labels", "triage", "workflow"]
     },
     {
-      "name": "session",
-      "source": "./plugins/session",
-      "description": "Session lifecycle hooks for tracking activity and sending Slack notifications on code changes",
+      "name": "workspace",
+      "source": "./plugins/workspace",
+      "description": "Workspace lifecycle hooks, Slack notifications, and repo setup utilities",
       "version": "1.0.0",
       "category": "codemate",
-      "keywords": ["session", "hooks", "slack", "notifications", "lifecycle"]
+      "keywords": ["workspace", "hooks", "slack", "notifications", "lifecycle", "setup"]
     },
     {
       "name": "pm",

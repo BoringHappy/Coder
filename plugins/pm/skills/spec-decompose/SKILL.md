@@ -135,20 +135,23 @@ echo "$SPEC_BODY"
 
 6. **Create new task issues** and register as sub-issues:
 
-   a. Write the task body to a temp file and create the issue:
+   a. Read the task issue template to understand the expected fields:
+   ```bash
+   TASK_TEMPLATE=".github/ISSUE_TEMPLATE/task.yml"
+   if [ -f "$TASK_TEMPLATE" ]; then
+     echo "[OK] Using task template: $TASK_TEMPLATE"
+     cat "$TASK_TEMPLATE"
+   else
+     echo "[WARN] No task template found at $TASK_TEMPLATE, using plain body"
+   fi
+   ```
+
+   b. Write the task body to a temp file, populating each field from the template with values derived from the spec task breakdown. If the template exists, mirror its section headings exactly. If not, fall back to a plain body:
    ```bash
    cat > /tmp/task-body.md << 'TASKEOF'
-   Part of spec: **$FEATURE_NAME** (#<spec_issue_number>)
-
-   <1-2 sentence description of the task>
-
-   **Tags:** <tags>
-   **Depends on:** <dependency task titles or 'none'>
-
-   ## Acceptance Criteria
-   - [ ] <criterion 1>
-   - [ ] <criterion 2>
+   <body content using template headings if available, otherwise plain description>
    TASKEOF
+
    TASK_URL=$(gh issue create \
      --title "<task title>" \
      --label "task" \
@@ -157,13 +160,13 @@ echo "$SPEC_BODY"
    rm -f /tmp/task-body.md
    ```
 
-   b. Get the task issue's numeric ID (not number):
+   c. Get the task issue's numeric ID (not number):
    ```bash
    TASK_ISSUE_NUMBER=$(echo "$TASK_URL" | grep -oE '[0-9]+$')
    TASK_ISSUE_ID=$(gh api /repos/$REPO/issues/$TASK_ISSUE_NUMBER --jq '.id')
    ```
 
-   c. Register as sub-issue of the spec issue:
+   d. Register as sub-issue of the spec issue:
    ```bash
    gh api \
      --method POST \

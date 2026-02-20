@@ -39,6 +39,23 @@ gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"' | cat
 echo "--- Tasks to sync ---"
 grep -E "^  - title:|^    issue_url:" "$SPEC" | cat
 
+# Detect orphan issues: open issues with spec label not referenced in current task list
+echo ""
+echo "--- Checking for orphan issues ---"
+CURRENT_ISSUE_URLS=$(grep '    issue_url: "https' "$SPEC" | sed 's/.*issue_url: "\(.*\)"/\1/' | sort)
+LABELED_ISSUES=$(gh issue list --label "spec:$ARGUMENTS" --state open --json number,url,title --jq '.[] | "\(.number) \(.url) \(.title)"' 2>/dev/null || echo "")
+if [ -n "$LABELED_ISSUES" ]; then
+  while IFS= read -r line; do
+    ISSUE_URL=$(echo "$line" | awk '{print $2}')
+    if ! echo "$CURRENT_ISSUE_URLS" | grep -qF "$ISSUE_URL"; then
+      ISSUE_NUM=$(echo "$line" | awk '{print $1}')
+      echo "[ORPHAN] #$ISSUE_NUM - $ISSUE_URL"
+    fi
+  done <<< "$LABELED_ISSUES"
+else
+  echo "No open issues with label spec:$ARGUMENTS found"
+fi
+
 # Read issue template into context
 echo ""
 echo "--- Issue template ---"
@@ -59,7 +76,14 @@ fi
 
 2. **For tasks that already have an `issue_url`**, skip them (already synced). Report which ones are skipped.
 
-3. **Use the issue template** read in the Preflight above. If a template was found, use its section structure as the body format for each issue, filling each section with content derived from the task and spec.
+3. **Close orphan issues** detected in the Preflight (lines starting with `[ORPHAN]`). For each orphan issue:
+   - Close it with a comment explaining it was removed from the spec:
+     ```bash
+     gh issue close <number> --comment "Closed: this task was removed from spec **$ARGUMENTS** during re-decomposition."
+     ```
+   - Report each closed issue in the output.
+
+4. **Use the issue template** read in the Preflight above. If a template was found, use its section structure as the body format for each issue, filling each section with content derived from the task and spec.
 
 If no template was found, use this default body format:
 
@@ -104,6 +128,9 @@ gh issue create \
 
 ```
 ✅ Synced <n> tasks to GitHub
+
+Closed orphan issues:
+  #<num> - <title> (removed from spec)
 
 Created issues:
   #<num> - <title> → <url>

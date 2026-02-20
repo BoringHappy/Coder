@@ -5,6 +5,9 @@
 STATE_FILE="${STATE_FILE:-/tmp/pr-monitor-state}"
 SESSION_STATUS_FILE="/tmp/.session_status"
 
+# shellcheck source=check_git_changes.sh
+source "$(dirname "$0")/check_git_changes.sh"
+
 # Load persisted state
 load_state() {
     if [ -f "$STATE_FILE" ]; then
@@ -142,6 +145,11 @@ main() {
 
     load_state
 
+    # Priority: git changes → review comments → issue comments → PR readiness
+
+    # 1. Uncommitted git changes (highest priority)
+    check_git_changes
+
     local pr_number
     pr_number=$(get_pr_number)
     [ -z "$pr_number" ] && save_state && exit 0
@@ -152,13 +160,7 @@ main() {
         exit 0
     fi
 
-    # Check git changes (highest priority after comments)
-    local git_changes
-    git_changes=$(git status --porcelain 2>/dev/null || echo "")
-
-    # Priority: review comments → issue comments → PR readiness → git changes
-
-    # 1. Inline review comments
+    # 2. Inline review comments
     local comments_data
     comments_data=$(check_pr_comments "$pr_number")
     if [ $? -eq 0 ] && [ -n "$comments_data" ] && [ "$comments_data" != "[]" ]; then
@@ -181,11 +183,6 @@ main() {
 
     # 3. PR readiness
     check_pr_ready_for_review "$pr_number"
-
-    # 4. Uncommitted git changes
-    if [ -n "$git_changes" ]; then
-        inject_prompt "Please use /git:commit skill to submit changes to github"
-    fi
 
     save_state
     exit 0

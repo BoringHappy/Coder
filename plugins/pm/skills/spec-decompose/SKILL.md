@@ -14,9 +14,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-decompose <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`source "$BASE_DIR/../scripts/helpers.sh"; GRANULARITY=$(parse_granularity "$ARGUMENTS") || exit 1; if echo "$ARGUMENTS" | grep -q -- '--granularity'; then echo "[INFO] Granularity override: $GRANULARITY"; fi`
-
-!`source "$BASE_DIR/../scripts/helpers.sh"; ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRAN=$(parse_granularity "$ARGUMENTS"); spec_decompose_fetch_issue "$ARG" "$GRAN"`
+!`source "$BASE_DIR/../scripts/helpers.sh"; ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRAN=""; if echo "$ARGUMENTS" | grep -q -- '--granularity'; then GRAN=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity override: $GRAN"; fi; spec_decompose_fetch_issue "$ARG" "$GRAN"`
 
 ## Instructions
 

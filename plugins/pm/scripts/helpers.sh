@@ -105,7 +105,6 @@ ensure_ready_label() {
   gh label create "ready" --color "0075CA" --description "Spec tasks have been decomposed" --force 2>/dev/null || true
 }
 
-
 # Write issue body to temp file and create/edit a GitHub issue
 # Usage: write_issue_body <content> <tempfile>
 write_issue_body() {

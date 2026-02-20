@@ -1,6 +1,7 @@
 ---
 name: spec-plan
 description: Converts a SPEC.md into a technical implementation plan by appending architecture decisions, tech approach, and a task breakdown. Use after spec-init to turn requirements into an engineering plan. Accepts an optional --granularity flag (micro | pr | macro) to control task sizing.
+argument-hint: <feature-name> [--granularity micro|pr|macro]
 ---
 
 # Spec Plan
@@ -13,7 +14,7 @@ Usage: `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
 
 !`
 FEATURE_NAME=$(echo "$ARGUMENTS" | awk '{print $1}')
-GRANULARITY=$(echo "$ARGUMENTS" | grep -oP '(?<=--granularity )\S+')
+GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
 GRANULARITY="${GRANULARITY:-pr}"
 SPEC=".claude/specs/$FEATURE_NAME.md"
 
@@ -102,9 +103,9 @@ cat "$SPEC"
 
 5. Update the spec frontmatter `status` from `draft` to `planned`.
 
-6. Confirm: "✅ Technical plan added to `.claude/specs/$FEATURE_NAME.md` (granularity: <value>)"
-7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose $FEATURE_NAME`"
+6. Confirm: "✅ Technical plan added to `.claude/specs/<feature-name>.md` (granularity: <value>)"
+7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <feature-name>`"
 
 ## Prerequisites
-- Spec must exist at `.claude/specs/$FEATURE_NAME.md`
-- Run `/pm:spec-init $FEATURE_NAME` first if it doesn't
+- Spec must exist at `.claude/specs/<feature-name>.md`
+- Run `/pm:spec-init <feature-name>` first if it doesn't

@@ -15,6 +15,7 @@ Spec-driven project management for GitHub repos. Guides a feature from raw requi
 /pm:spec-sync <name>       # tasks → GitHub Issues, issue numbers written back to spec
       ↓
 /pm:spec-status <name>     # live progress summary from spec + GitHub Issues
+/pm:spec-next <name>       # find next actionable task based on dependencies
 ```
 
 ## Skills
@@ -30,14 +31,20 @@ Covers: problem statement, user stories, functional/non-functional requirements,
 ### `/pm:spec-plan <feature-name>`
 Reads the spec and appends a technical implementation plan: architecture decisions, area-by-area approach, and a task breakdown table (max 10 tasks, sized 1–3 days each).
 
-### `/pm:spec-decompose <feature-name>`
-Parses the task breakdown table and writes structured task entries into the spec's `tasks:` frontmatter field. Each task gets: title, tags, dependencies, and empty issue/issue_url fields ready for sync.
+### `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
+Parses the task breakdown table and writes structured task entries into the spec's `tasks:` frontmatter field. The `--granularity` flag controls how tasks are split:
+- `micro` — split aggressively into 0.5–1 day tasks
+- `pr` (default) — PR-sized 1–3 day tasks; auto-detected from spec if set by `spec-plan`
+- `macro` — merge into 3–7 day milestones
 
 ### `/pm:spec-sync <feature-name>`
 Creates a GitHub Issue per task using the repo's issue template and writes the issue number and URL back into the spec frontmatter. Skips already-synced tasks (idempotent). Updates spec `status` to `in-progress`.
 
 ### `/pm:spec-status <feature-name>`
 Reads the spec and fetches live issue state from GitHub for each task. Shows a progress table (✅ closed / 🔄 open / ⚠️ not synced), a progress bar, blocked tasks, and what's next to work on.
+
+### `/pm:spec-next <feature-name>`
+Finds the next actionable task(s) by checking live GitHub Issue status and resolving dependencies. Lists tasks that are open with all dependencies closed, and highlights blocked tasks.
 
 ### `/pm:spec-abandon <feature-name>`
 Marks a spec as abandoned and optionally closes any linked open GitHub Issues. Use when a feature is cancelled or no longer being pursued.

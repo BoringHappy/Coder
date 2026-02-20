@@ -39,21 +39,28 @@ fi
 
 # Show repo
 gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"' | cat
+
+# Read spec issue template if available
+SPEC_TEMPLATE=".github/ISSUE_TEMPLATE/spec.yml"
+if [ -f "$SPEC_TEMPLATE" ]; then
+  echo ""
+  echo "--- Spec issue template ---"
+  cat "$SPEC_TEMPLATE"
+else
+  echo "[WARN] No spec template found at $SPEC_TEMPLATE"
+fi
 `
 
 ## Instructions
 
 1. **If an existing spec issue was found** in preflight, ask the user: "A spec issue already exists for `$ARGUMENTS`. Open a new one anyway? (yes/no)". Stop if they say no.
 
-2. **Run a discovery session** — ask the user focused questions to understand the feature. Cover:
-   - What problem does this solve?
-   - Who are the users and what are their goals?
-   - What are the key use cases / user stories?
-   - What are the functional requirements?
-   - What are the non-functional requirements (performance, security, scale)?
+2. **Run a discovery session** — ask the user focused questions aligned to the spec template fields. Cover:
+   - What problem does this solve and why does it matter?
+   - Who are the users? What do they want to achieve? (use "As a / I want / So that" format)
+   - What are the measurable acceptance criteria that define done at the feature level?
    - What is explicitly out of scope?
    - What are the dependencies or constraints?
-   - How will success be measured?
 
 3. **Ensure labels exist** before creating the issue:
    ```bash
@@ -61,43 +68,34 @@ gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"' | cat
    gh label create "spec:$ARGUMENTS" --color "0E8A16" --description "Part of spec: $ARGUMENTS" --force 2>/dev/null || true
    ```
 
-4. **Create the spec issue** with the structured content from the discovery session:
+4. **Create the spec issue** — if a spec template was found in preflight, mirror its section headings exactly when building the body. Otherwise use this format:
 
    ```bash
    gh issue create \
      --title "[Spec]: $ARGUMENTS" \
      --label "spec" \
      --label "spec:$ARGUMENTS" \
-     --body "<body>"
+     --body-file /tmp/spec-body.md
    ```
 
-   Use this body format:
+   Default body format (used when no template exists):
 
    ```
    ## Problem Statement
    <what problem this solves and why it matters>
 
-   ## Users & Goals
-   <who uses this and what they want to achieve>
-
    ## User Stories
    - As a <persona>, I want to <action> so that <outcome>
 
-   ## Functional Requirements
-   - <requirement 1>
-   - <requirement 2>
-
-   ## Non-Functional Requirements
-   - <performance, security, reliability, etc.>
+   ## Acceptance Criteria
+   - [ ] <measurable outcome 1>
+   - [ ] <measurable outcome 2>
 
    ## Out of Scope
    - <explicit exclusions>
 
    ## Dependencies & Constraints
    - <external services, team dependencies, technical constraints>
-
-   ## Success Criteria
-   - <measurable outcomes that define done>
    ```
 
 5. Confirm: "✅ Spec issue created: `[Spec]: $ARGUMENTS` → <issue_url>"

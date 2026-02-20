@@ -11,45 +11,15 @@ Usage: `/pm:spec-init <feature-name>`
 
 ## Preflight
 
-!`
-NAME="$ARGUMENTS"
+!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No feature name provided. Usage: /pm:spec-init <feature-name>"; exit 1; fi`
 
-# Validate argument
-if [ -z "$NAME" ]; then
-  echo "[ERROR] No feature name provided. Usage: /pm:spec-init <feature-name>"
-  exit 1
-fi
+!`if ! echo "$ARGUMENTS" | grep -qE '^[a-z][a-z0-9-]*$'; then echo "[ERROR] Feature name must be kebab-case (lowercase letters, numbers, hyphens). Example: user-auth"; exit 1; fi`
 
-# Validate kebab-case
-if ! echo "$NAME" | grep -qE '^[a-z][a-z0-9-]*$'; then
-  echo "[ERROR] Feature name must be kebab-case (lowercase letters, numbers, hyphens). Example: user-auth"
-  exit 1
-fi
+!`gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"'`
 
-# Check for existing open spec issue with this name
-echo ""
-echo "--- Checking for existing spec issue ---"
-EXISTING=$(gh issue list --label "spec:$NAME" --label "spec" --state open --json number,title,url --jq '.[] | "#\(.number) \(.title) \(.url)"' 2>/dev/null || echo "")
-if [ -n "$EXISTING" ]; then
-  echo "[WARN] Existing open spec issue found:"
-  echo "$EXISTING"
-else
-  echo "[OK] No existing spec issue for: $NAME"
-fi
+!`echo "--- Checking for existing spec issue ---"; gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url --jq 'if length > 0 then "[WARN] Existing open spec issue found:" else "[OK] No existing spec issue for: $ENV.ARGUMENTS" end' 2>/dev/null || echo "[OK] No existing spec issue for: $ARGUMENTS"`
 
-# Show repo
-gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"' | cat
-
-# Read spec issue template if available
-SPEC_TEMPLATE=".github/ISSUE_TEMPLATE/spec.yml"
-if [ -f "$SPEC_TEMPLATE" ]; then
-  echo ""
-  echo "--- Spec issue template ---"
-  cat "$SPEC_TEMPLATE"
-else
-  echo "[WARN] No spec template found at $SPEC_TEMPLATE"
-fi
-`
+!`if [ -f ".github/ISSUE_TEMPLATE/spec.yml" ]; then echo "--- Spec issue template ---"; cat ".github/ISSUE_TEMPLATE/spec.yml"; else echo "[WARN] No spec template found at .github/ISSUE_TEMPLATE/spec.yml"; fi`
 
 ## Instructions
 

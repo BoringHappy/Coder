@@ -14,9 +14,9 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-decompose <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); if [ -n "$GRANULARITY" ]; then case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity override: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac; fi`
+!`source "$BASE_DIR/../scripts/helpers.sh"; GRANULARITY=$(parse_granularity "$ARGUMENTS") || exit 1; if echo "$ARGUMENTS" | grep -q -- '--granularity'; then echo "[INFO] Granularity override: $GRANULARITY"; fi`
 
-!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRAN=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); source "$BASE_DIR/../scripts/helpers.sh"; spec_decompose_fetch_issue "$ARG" "$GRAN"`
+!`source "$BASE_DIR/../scripts/helpers.sh"; ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRAN=$(parse_granularity "$ARGUMENTS"); spec_decompose_fetch_issue "$ARG" "$GRAN"`
 
 ## Instructions
 

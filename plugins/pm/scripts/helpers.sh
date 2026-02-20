@@ -1,18 +1,20 @@
 #!/bin/bash
 # Shared helpers for pm spec skills
-# Usage: source "$BASE_DIR/../scripts/helpers.sh"
+# Expected layout: plugins/pm/scripts/helpers.sh
+# Source from a skill with: source "$BASE_DIR/../scripts/helpers.sh"
+# ($BASE_DIR is set by the skill runner to the skill's own directory)
 
-# Validate and print granularity for spec-plan
-# Usage: spec_plan_check_granularity "$ARGUMENTS"
-spec_plan_check_granularity() {
+# Parse and validate granularity from ARGUMENTS string
+# Prints the resolved granularity value (micro|pr|macro) or errors and returns 1
+# Usage: parse_granularity "$ARGUMENTS"
+parse_granularity() {
   local args="$1"
-  local arg granularity
-  arg=$(echo "$args" | awk '{print $1}')
+  local granularity
   granularity=$(echo "$args" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
   granularity="${granularity:-pr}"
   case "$granularity" in
-    micro|pr|macro) echo "[INFO] Granularity: $granularity" ;;
-    *) echo "[ERROR] Invalid granularity: '$granularity'. Must be one of: micro, pr, macro"; return 1 ;;
+    micro|pr|macro) echo "$granularity" ;;
+    *) echo "[ERROR] Invalid granularity: '$granularity'. Must be one of: micro, pr, macro" >&2; return 1 ;;
   esac
 }
 

@@ -14,7 +14,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRANULARITY="${GRANULARITY:-pr}"; case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac`
+!`source "$BASE_DIR/../scripts/helpers.sh"; GRANULARITY=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity: $GRANULARITY"`
 
 !`source "$BASE_DIR/../scripts/helpers.sh"; spec_plan_fetch_issue "$(echo "$ARGUMENTS" | awk '{print $1}')"`
 

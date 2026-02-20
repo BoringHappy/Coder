@@ -11,7 +11,7 @@ Lists all feature specs as GitHub Issues labeled with `spec`.
 
 !`
 echo "--- Fetching spec issues ---"
-SPECS_JSON=$(gh issue list --label "spec" --state all \
+SPECS_JSON=$(gh issue list --label "spec" --state all --limit 200 \
   --json number,title,state,url,labels --jq '.' 2>/dev/null || echo "[]")
 
 if [ "$SPECS_JSON" = "[]" ] || [ -z "$SPECS_JSON" ]; then
@@ -25,7 +25,7 @@ echo ""
 
 # Fetch all task issues in one call, then group by spec:<name> label client-side
 echo "TASK_ISSUES:"
-gh issue list --label "task" --state all \
+gh issue list --label "task" --state all --limit 500 \
   --json number,title,state,labels \
   --jq '.' 2>/dev/null || echo "[]"
 `

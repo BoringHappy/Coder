@@ -135,13 +135,10 @@ echo "$SPEC_BODY"
 
 6. **Create new task issues** and register as sub-issues:
 
-   a. Create the task issue:
+   a. Write the task body to a temp file and create the issue:
    ```bash
-   TASK_URL=$(gh issue create \
-     --title "<task title>" \
-     --label "task" \
-     --label "spec:$FEATURE_NAME" \
-     --body "Part of spec: **$FEATURE_NAME** (#<spec_issue_number>)
+   cat > /tmp/task-body.md << 'TASKEOF'
+   Part of spec: **$FEATURE_NAME** (#<spec_issue_number>)
 
    <1-2 sentence description of the task>
 
@@ -150,7 +147,14 @@ echo "$SPEC_BODY"
 
    ## Acceptance Criteria
    - [ ] <criterion 1>
-   - [ ] <criterion 2>")
+   - [ ] <criterion 2>
+   TASKEOF
+   TASK_URL=$(gh issue create \
+     --title "<task title>" \
+     --label "task" \
+     --label "spec:$FEATURE_NAME" \
+     --body-file /tmp/task-body.md)
+   rm -f /tmp/task-body.md
    ```
 
    b. Get the task issue's numeric ID (not number):

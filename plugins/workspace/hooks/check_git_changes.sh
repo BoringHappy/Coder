@@ -3,7 +3,7 @@
 # Works both as a standalone Stop hook and when sourced by monitor_pr.sh.
 
 _git_changes_inject() {
-    printf '{"continue":true,"prompt":"Please use /git:commit skill to submit changes to github"}'
+    printf '{"decision":"block","reason":"Please use /git:commit skill to submit changes to github"}'
 }
 
 check_git_changes() {

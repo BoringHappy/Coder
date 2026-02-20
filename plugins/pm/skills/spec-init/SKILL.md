@@ -32,7 +32,7 @@ Usage: `/pm:spec-init <short-title>`
 
 3. **Derive the label slug** from the title and ensure labels exist:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    LABEL=$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-\|-$//g')
    ensure_spec_labels "$LABEL"
    ```
@@ -40,7 +40,7 @@ Usage: `/pm:spec-init <short-title>`
 4. **Create the spec issue** — write the body to a temp file, then create the issue. If a spec template was found in preflight, mirror its section headings exactly. Otherwise use the default format below:
 
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    write_issue_body "<body content>" /tmp/spec-body.md
 
    gh issue create \

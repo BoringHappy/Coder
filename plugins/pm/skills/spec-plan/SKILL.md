@@ -14,9 +14,9 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRANULARITY="${GRANULARITY:-pr}"; case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac`
+!`source "$BASE_DIR/../scripts/helpers.sh"; GRANULARITY=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity: $GRANULARITY"`
 
-!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; SPEC=$(gh issue view "$ARG" --json number,title,url,body,state 2>/dev/null); if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] Issue #$ARG not found"; exit 1; fi; echo "$SPEC" | jq -r '"[OK] Found spec issue #\(.number): \(.url)"'; if echo "$SPEC" | jq -r '.body' | grep -q "## Architecture Decisions"; then echo "[WARN] Plan sections already exist in spec issue"; else echo "[OK] Ready to plan"; fi; echo ""; echo "--- Current spec issue body ---"; echo "$SPEC" | jq -r '.body'`
+!`source "$BASE_DIR/../scripts/helpers.sh"; spec_plan_fetch_issue "$(echo "$ARGUMENTS" | awk '{print $1}')"`
 
 ## Instructions
 
@@ -39,7 +39,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
 
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    write_issue_body "<full updated body with plan sections appended>" /tmp/spec-plan-body.md
    gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
    rm -f /tmp/spec-plan-body.md
@@ -80,7 +80,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 5. **Add `planned` label** to the spec issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    ensure_planned_label
    gh issue edit <spec_issue_number> --add-label "planned"
    ```

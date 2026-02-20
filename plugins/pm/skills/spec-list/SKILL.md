@@ -11,33 +11,31 @@ Lists all feature specs as GitHub Issues labeled with `spec`.
 
 !`
 echo "--- Fetching spec issues ---"
-SPECS=$(gh issue list --label "spec" --state all --json number,title,state,url,labels \
-  --jq '.[] | "\(.number)\t\(.state)\t\(.title)\t\(.url)\t\(.labels | map(.name) | join(","))"' 2>/dev/null || echo "")
+SPECS_JSON=$(gh issue list --label "spec" --state all \
+  --json number,title,state,url,labels --jq '.' 2>/dev/null || echo "[]")
 
-if [ -z "$SPECS" ]; then
+if [ "$SPECS_JSON" = "[]" ] || [ -z "$SPECS_JSON" ]; then
   echo "No spec issues found. Create your first spec with: /pm:spec-init <feature-name>"
   exit 0
 fi
 
-echo "$SPECS"
+echo "$SPECS_JSON"
 echo ""
 
-# For each spec, count its task issues
-echo "--- Task counts per spec ---"
-echo "$SPECS" | while IFS=$'\t' read -r num state title url labels; do
-  # Extract spec:<name> label
-  SPEC_NAME=$(echo "$labels" | tr ',' '\n' | grep '^spec:' | head -1 | sed 's/^spec://')
-  if [ -n "$SPEC_NAME" ]; then
-    TOTAL=$(gh issue list --label "spec:$SPEC_NAME" --label "task" --state all --json number --jq 'length' 2>/dev/null || echo 0)
-    CLOSED=$(gh issue list --label "spec:$SPEC_NAME" --label "task" --state closed --json number --jq 'length' 2>/dev/null || echo 0)
-    echo "#$num|$SPEC_NAME|$state|$CLOSED/$TOTAL"
-  fi
-done
+# Fetch all task issues in one call, then group by spec:<name> label client-side
+echo "--- Fetching all task issues ---"
+gh issue list --label "task" --state all \
+  --json number,title,state,labels \
+  --jq '.' 2>/dev/null || echo "[]"
 `
 
 ## Instructions
 
 Display the spec list shown above. If no specs exist, prompt the user to create one with `/pm:spec-init <feature-name>`.
+
+Using the two JSON arrays from preflight (spec issues + all task issues), compute task counts client-side:
+- For each spec issue, extract its `spec:<name>` label to get the spec name
+- Count total and closed task issues whose labels include `spec:<name>`
 
 Format the output as:
 

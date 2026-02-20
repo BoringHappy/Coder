@@ -31,10 +31,10 @@ echo "[OK] Spec issue #$SPEC_ISSUE_NUMBER"
 
 # Fetch all task issues (open and closed) for dependency resolution
 echo ""
-echo "--- All task issues ---"
+echo "--- All task issues (with bodies for dependency resolution) ---"
 gh issue list --label "spec:$ARGUMENTS" --label "task" --state all \
   --json number,title,state,url,body \
-  --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.url)"' 2>/dev/null || echo "(none)"
+  --jq '.' 2>/dev/null || echo "[]"
 `
 
 ## Instructions
@@ -43,9 +43,9 @@ Using the task issues fetched above, find the next task(s) ready to work on.
 
 ### Algorithm
 
-1. List all task issues for the spec (both OPEN and CLOSED).
+1. Parse the JSON array of task issues from preflight (both OPEN and CLOSED).
 2. A task is **ready** if its state is `OPEN` and it has no open dependencies.
-   - Dependencies are inferred from the issue body: look for "Depends on:" lines referencing other task issue numbers or titles.
+   - Dependencies are inferred from the issue body: look for "Depends on:" lines referencing other task issue numbers (e.g. `#42`) or task titles. Use semantic understanding to match referenced titles to actual issues — a reference like "depends on the database setup task" should match an issue titled "Set up database schema".
    - A dependency is resolved if the referenced issue is `CLOSED`.
 3. A task is **blocked** if any of its dependencies are still `OPEN`.
 

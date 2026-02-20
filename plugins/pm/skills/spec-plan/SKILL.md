@@ -77,13 +77,14 @@ echo "$SPEC_BODY"
      - An effort estimate in days consistent with the chosen granularity
      - What it depends on (if anything)
 
-4. **Append** the following sections to the spec issue body via `gh issue edit`:
+4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
 
    ```bash
-   gh issue edit <spec_issue_number> --body "<updated_body>"
+   cat > /tmp/spec-plan-body.md << 'SPECEOF'
+   <full updated body with plan sections appended>
+   SPECEOF
+   gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
    ```
-
-   Append these sections to the existing body:
 
    ```markdown
 

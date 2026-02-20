@@ -26,9 +26,6 @@ if ! echo "$NAME" | grep -qE '^[a-z][a-z0-9-]*$'; then
   exit 1
 fi
 
-# Check GitHub auth
-gh auth status 2>&1 | head -3
-
 # Check for existing open spec issue with this name
 echo ""
 echo "--- Checking for existing spec issue ---"
@@ -109,5 +106,4 @@ gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"' | cat
 ## Prerequisites
 - Feature name must be provided as argument
 - Feature name must be kebab-case
-- Must be authenticated: `gh auth status`
 - Must be inside a GitHub repository

@@ -99,10 +99,10 @@ echo "$SPEC_BODY"
 
 3. **Reconcile** against existing sub-issues fetched in preflight:
 
-   - **Match** existing sub-issues to new tasks by title (case-insensitive, trimmed).
-   - **New tasks** (in new list, no matching sub-issue) → create issue + register as sub-issue.
-   - **Orphan tasks** (existing sub-issue, no matching new task) → close issue with comment + remove from sub-issues.
-   - **Unchanged tasks** (matched) → skip, already consistent.
+   - **Match** existing sub-issues to new tasks using semantic similarity — consider two tasks the same if they describe the same intent, even if the title wording differs slightly (e.g. "Set up DB schema" matches "Database schema setup"). Do not rely on exact string comparison.
+   - **New tasks** (in new list, no semantically matching sub-issue) → create issue + register as sub-issue.
+   - **Orphan tasks** (existing sub-issue, no semantically matching new task) → close issue with comment + remove from sub-issues.
+   - **Unchanged tasks** (semantically matched) → skip, already consistent.
 
    If there are orphans or new tasks to create, show the diff to the user and confirm before proceeding:
    ```

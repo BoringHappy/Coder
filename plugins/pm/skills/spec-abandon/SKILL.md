@@ -20,9 +20,16 @@ fi
 
 # Fetch the spec issue
 echo "--- Fetching spec issue ---"
-SPEC_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url,state --jq '.[0]' 2>/dev/null || echo "")
+SPEC_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state all --json number,title,url,state --jq '[.[] | select(.state == "open")] | .[0]' 2>/dev/null || echo "")
 if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
-  echo "[ERROR] No open spec issue found for: $ARGUMENTS"
+  # Check if it exists but is already closed
+  CLOSED_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state closed --json number,title,url --jq '.[0]' 2>/dev/null || echo "")
+  if [ -n "$CLOSED_ISSUE" ] && [ "$CLOSED_ISSUE" != "null" ]; then
+    CLOSED_NUM=$(echo "$CLOSED_ISSUE" | jq -r '.number')
+    echo "[WARN] Spec issue #$CLOSED_NUM is already closed."
+  else
+    echo "[ERROR] No spec issue found for: $ARGUMENTS"
+  fi
   exit 1
 fi
 

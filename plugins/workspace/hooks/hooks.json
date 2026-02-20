@@ -25,6 +25,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check_git_changes.sh"
+          },
+          {
+            "type": "command",
             "command": "echo \"$(date -u '+%Y-%m-%d %H:%M:%S'), Stop\" >> /tmp/.session_status"
           },
           {

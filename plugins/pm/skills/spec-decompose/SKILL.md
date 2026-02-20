@@ -135,19 +135,37 @@ echo "$SPEC_BODY"
 
 6. **Create new task issues** and register as sub-issues:
 
-   a. Write the task body to a temp file and create the issue:
+   a. Write the task body to a temp file and create the issue using the `task` template fields:
    ```bash
    cat > /tmp/task-body.md << 'TASKEOF'
-   Part of spec: **$FEATURE_NAME** (#<spec_issue_number>)
+   ### Parent Spec
+   #<spec_issue_number>
 
-   <1-2 sentence description of the task>
+   ### User Story
+   As a <role>, I want to <action> so that <outcome>.
 
-   **Tags:** <tags>
-   **Depends on:** <dependency task titles or 'none'>
+   ### Description
+   <1-2 sentence technical description of the task>
 
-   ## Acceptance Criteria
+   ### Acceptance Criteria
    - [ ] <criterion 1>
    - [ ] <criterion 2>
+
+   ### Definition of Done
+   - [ ] Code reviewed and approved
+   - [ ] Tests written and passing
+   - [ ] No regressions introduced
+   - [ ] Documentation updated if needed
+   - [ ] Deployed to staging / feature env (if applicable)
+
+   ### Story Points
+   <fibonacci estimate: 1, 2, 3, 5, 8, or 13>
+
+   ### Tags
+   <tags>
+
+   ### Depends On
+   <dependency task numbers or 'none'>
    TASKEOF
    TASK_URL=$(gh issue create \
      --title "<task title>" \

@@ -28,42 +28,6 @@ ensure_ready_label() {
   gh label create "ready" --color "0075CA" --description "Spec tasks have been decomposed" --force 2>/dev/null || true
 }
 
-# Fetch open spec issue JSON for a feature name
-# Usage: fetch_spec_issue <feature-name> [all|open|closed]
-# Prints JSON of first matching issue, or empty string if not found
-fetch_spec_issue() {
-  local name="$1"
-  local state="${2:-open}"
-  gh issue list --label "spec:$name" --label "spec" --state "$state" \
-    --json number,title,url,body,state,labels \
-    --jq '.[0]' 2>/dev/null || echo ""
-}
-
-# Parse feature name from ARGUMENTS (first word)
-# Usage: feature_name_from_args "$ARGUMENTS"
-feature_name_from_args() {
-  echo "$1" | awk '{print $1}'
-}
-
-# Parse --granularity flag from ARGUMENTS
-# Usage: granularity_from_args "$ARGUMENTS" [default]
-granularity_from_args() {
-  local args="$1"
-  local default="${2:-pr}"
-  local val
-  val=$(echo "$args" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
-  echo "${val:-$default}"
-}
-
-# Validate granularity value
-# Usage: validate_granularity <value>
-# Returns 0 if valid, 1 if invalid
-validate_granularity() {
-  case "$1" in
-    micro|pr|macro) return 0 ;;
-    *) return 1 ;;
-  esac
-}
 
 # Write issue body to temp file and create/edit a GitHub issue
 # Usage: write_issue_body <content> <tempfile>

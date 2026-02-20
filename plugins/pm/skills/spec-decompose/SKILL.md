@@ -16,7 +16,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 !`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); if [ -n "$GRANULARITY" ]; then case "$GRANULARITY" in micro|pr|macro) echo "[INFO] Granularity override: $GRANULARITY";; *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"; exit 1;; esac; fi`
 
-!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; SPEC=$(gh issue view "$ARG" --json number,title,url,body,state,labels 2>/dev/null); if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] Issue #$ARG not found"; exit 1; fi; SPEC_NUM=$(echo "$SPEC" | jq -r '.number'); SPEC_URL=$(echo "$SPEC" | jq -r '.url'); SPEC_LABEL=$(echo "$SPEC" | jq -r '[.labels[].name | select(startswith("spec:"))] | .[0]'); echo "[OK] Found spec issue #$SPEC_NUM: $SPEC_URL"; SPEC_BODY=$(echo "$SPEC" | jq -r '.body'); if ! echo "$SPEC_BODY" | grep -q "## Task Breakdown"; then echo "[ERROR] No Task Breakdown section found. Run /pm:spec-plan $ARG first."; exit 1; fi; DETECTED=$(echo "$SPEC_BODY" | grep -m1 '<!-- granularity:' | sed 's/.*granularity: *\([^ >]*\).*/\1/'); GRAN=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRAN="${GRAN:-${DETECTED:-pr}}"; echo "[INFO] Granularity: $GRAN | Label: $SPEC_LABEL"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); echo "[INFO] Repo: $REPO | Spec issue: #$SPEC_NUM"; echo ""; echo "--- Existing sub-issues ---"; gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$REPO/issues/$SPEC_NUM/sub_issues --jq '.[] | "  #\(.number) [\(.state)] \(.title)"' 2>/dev/null || echo "  None"; echo ""; echo "--- Spec issue body ---"; echo "$SPEC_BODY"`
+!`ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); echo "--- Fetching spec issue ---"; SPEC=$(gh issue view "$ARG" --json number,title,url,body,state,labels 2>/dev/null); if [ -z "$SPEC" ] || [ "$SPEC" = "null" ]; then echo "[ERROR] Issue #$ARG not found"; exit 1; fi; SPEC_NUM=$(printf '%s' "$SPEC" | jq -r '.number'); SPEC_URL=$(printf '%s' "$SPEC" | jq -r '.url'); SPEC_LABEL=$(printf '%s' "$SPEC" | jq -r '[.labels[].name | select(startswith("spec:"))] | .[0]'); echo "[OK] Found spec issue #$SPEC_NUM: $SPEC_URL"; SPEC_BODY=$(printf '%s' "$SPEC" | jq -r '.body'); if ! printf '%s' "$SPEC_BODY" | grep -q "## Task Breakdown"; then echo "[ERROR] No Task Breakdown section found. Run /pm:spec-plan $ARG first."; exit 1; fi; DETECTED=$(printf '%s' "$SPEC_BODY" | grep -m1 '<!-- granularity:' | sed 's/.*granularity: *\([^ >]*\).*/\1/'); GRAN=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p'); GRAN="${GRAN:-${DETECTED:-pr}}"; echo "[INFO] Granularity: $GRAN | Label: $SPEC_LABEL"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); echo "[INFO] Repo: $REPO | Spec issue: #$SPEC_NUM"; echo ""; echo "--- Existing sub-issues ---"; gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /repos/$REPO/issues/$SPEC_NUM/sub_issues --jq '.[] | "  #\(.number) [\(.state)] \(.title)"' 2>/dev/null || echo "  None"; echo ""; echo "--- Spec issue body ---"; printf '%s\n' "$SPEC_BODY"`
 
 ## Instructions
 
@@ -44,7 +44,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 4. **Ensure labels exist**:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
    ensure_task_labels "${SPEC_LABEL#spec:}"
    ```
@@ -58,7 +58,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    b. Remove it from the spec issue's sub-issues:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    remove_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "<orphan_issue_id>"
    ```
 
@@ -77,7 +77,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    b. Write the task body to a temp file and create the issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
    write_issue_body "<body content>" /tmp/task-body.md
 
@@ -97,13 +97,13 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    d. Register as sub-issue of the spec issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    register_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "$TASK_ISSUE_ID"
    ```
 
 7. **Add `ready` label** to the spec issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
+   source "$BASE_DIR/../scripts/helpers.sh"
    ensure_ready_label
    gh issue edit $SPEC_ISSUE_NUMBER --add-label "ready"
    ```

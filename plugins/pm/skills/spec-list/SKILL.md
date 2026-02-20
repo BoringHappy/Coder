@@ -19,11 +19,12 @@ if [ "$SPECS_JSON" = "[]" ] || [ -z "$SPECS_JSON" ]; then
   exit 0
 fi
 
+echo "SPEC_ISSUES:"
 echo "$SPECS_JSON"
 echo ""
 
 # Fetch all task issues in one call, then group by spec:<name> label client-side
-echo "--- Fetching all task issues ---"
+echo "TASK_ISSUES:"
 gh issue list --label "task" --state all \
   --json number,title,state,labels \
   --jq '.' 2>/dev/null || echo "[]"

@@ -70,12 +70,10 @@ EXISTING_SUB_ISSUES=$(gh api \
   -H "Accept: application/vnd.github+json" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
   /repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues \
-  --jq '.[] | "\(.number)\t\(.title)\t\(.state)\t\(.id)"' 2>/dev/null || echo "")
+  --jq '.' 2>/dev/null || echo "[]")
 
-if [ -n "$EXISTING_SUB_ISSUES" ]; then
-  echo "$EXISTING_SUB_ISSUES" | while IFS=$'\t' read -r num title state id; do
-    echo "  #$num [$state] $title (id: $id)"
-  done
+if [ "$EXISTING_SUB_ISSUES" != "[]" ] && [ -n "$EXISTING_SUB_ISSUES" ]; then
+  echo "$EXISTING_SUB_ISSUES" | jq -r '.[] | "  #\(.number) [\(.state)] \(.title) (id: \(.id))"'
 else
   echo "  None"
 fi

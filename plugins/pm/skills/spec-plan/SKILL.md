@@ -84,6 +84,7 @@ echo "$SPEC_BODY"
    <full updated body with plan sections appended>
    SPECEOF
    gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
+   rm -f /tmp/spec-plan-body.md
    ```
 
    ```markdown

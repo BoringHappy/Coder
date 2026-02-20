@@ -43,7 +43,7 @@ Using the task issues fetched above, find the next task(s) ready to work on.
 
 ### Algorithm
 
-1. Parse the JSON array of task issues from preflight (both OPEN and CLOSED).
+1. Parse the JSON array of task issues from the `--- All task issues ---` section of preflight (both OPEN and CLOSED).
 2. A task is **ready** if its state is `OPEN` and it has no open dependencies.
    - Dependencies are inferred from the issue body: look for "Depends on:" lines referencing other task issue numbers (e.g. `#42`) or task titles. Use semantic understanding to match referenced titles to actual issues — a reference like "depends on the database setup task" should match an issue titled "Set up database schema".
    - A dependency is resolved if the referenced issue is `CLOSED`.

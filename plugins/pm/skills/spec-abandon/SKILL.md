@@ -1,73 +1,68 @@
 ---
 name: spec-abandon
-description: Marks a spec as abandoned and optionally closes its linked GitHub Issues. Use when a feature is cancelled or no longer being pursued.
+description: Closes the spec GitHub Issue and optionally closes its linked task issues. Use when a feature is cancelled or no longer being pursued.
 ---
 
 # Spec Abandon
 
-Marks `.claude/specs/$ARGUMENTS.md` as abandoned and optionally closes any linked GitHub Issues.
+Closes the spec GitHub Issue for `<feature-name>` and optionally closes all linked task issues.
 
 ## Preflight
 
 !`
-SPEC=".claude/specs/$ARGUMENTS.md"
-
 if [ -z "$ARGUMENTS" ]; then
   echo "[ERROR] No feature name provided. Usage: /pm:spec-abandon <feature-name>"
-  if [ -d ".claude/specs" ]; then
-    echo ""
-    echo "Available specs:"
-    for f in .claude/specs/*.md; do
-      [ -f "$f" ] && echo "  • $(basename "$f" .md)"
-    done
-  fi
+  echo ""
+  echo "Available specs (open spec issues):"
+  gh issue list --label "spec" --state open --json number,title --jq '.[] | "  • \(.title) (#\(.number))"' 2>/dev/null || echo "  (none found)"
   exit 1
 fi
 
-if [ ! -f "$SPEC" ]; then
-  echo "[ERROR] Spec not found: $SPEC"
-  if [ -d ".claude/specs" ]; then
-    echo ""
-    echo "Available specs:"
-    for f in .claude/specs/*.md; do
-      [ -f "$f" ] && echo "  • $(basename "$f" .md)"
-    done
-  fi
+# Fetch the spec issue
+echo "--- Fetching spec issue ---"
+SPEC_ISSUE=$(gh issue list --label "spec:$ARGUMENTS" --label "spec" --state open --json number,title,url,state --jq '.[0]' 2>/dev/null || echo "")
+if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
+  echo "[ERROR] No open spec issue found for: $ARGUMENTS"
   exit 1
 fi
 
-spec_status=$(grep "^status:" "$SPEC" | head -1 | sed 's/^status: *//')
-echo "[OK] Spec found: $SPEC (status: ${spec_status:-draft})"
+SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
+SPEC_ISSUE_URL=$(echo "$SPEC_ISSUE" | jq -r '.url')
+echo "[OK] Spec issue #$SPEC_ISSUE_NUMBER: $SPEC_ISSUE_URL"
 
+# Fetch open task issues
 echo ""
-echo "--- Synced issues ---"
-grep "issue_url:" "$SPEC" | grep "https" | sed 's/.*issue_url: *"//' | sed 's/"//' | while read url; do
-  issue_num=$(echo "$url" | grep -oE '[0-9]+$')
-  if [ -n "$issue_num" ]; then
-    gh issue view "$issue_num" --json number,title,state \
-      -q '"#\(.number) [\(.state | ascii_upcase)] \(.title)"' 2>/dev/null || echo "#$issue_num [ERROR] Could not fetch"
-  fi
-done
+echo "--- Open task issues ---"
+gh issue list --label "spec:$ARGUMENTS" --label "task" --state open \
+  --json number,title,url \
+  --jq '.[] | "#\(.number) \(.title) \(.url)"' 2>/dev/null || echo "(none)"
 `
 
 ## Instructions
 
 1. **Confirm with the user** before making any changes:
-   - Show the spec name and current status from preflight output
-   - List any synced issues found above
-   - Ask: "Are you sure you want to abandon `$ARGUMENTS`? This will mark the spec as abandoned. Reply with yes/no, and whether to also close any open GitHub Issues (yes/no)."
+   - Show the spec issue number and URL from preflight
+   - List any open task issues found above
+   - Ask: "Are you sure you want to abandon `$ARGUMENTS`? This will close the spec issue. Reply with yes/no, and whether to also close any open task issues (yes/no)."
    - Stop if they say no.
 
-2. **Update the spec status** to `abandoned` by editing the frontmatter in `.claude/specs/$ARGUMENTS.md`:
-   - Change `status: <current>` to `status: abandoned`
+2. **Close the spec issue** with an explanatory comment:
+   ```bash
+   gh issue close <spec_issue_number> --comment "Closing: spec **$ARGUMENTS** has been abandoned."
+   ```
 
-3. **If the user wants to close open issues**, for each synced issue that is OPEN:
-   - Run: `gh issue close <number> --comment "Closing: parent spec \`$ARGUMENTS\` has been abandoned."`
+3. **If the user wants to close open task issues**, for each open task issue:
+   ```bash
+   gh issue close <task_issue_number> --comment "Closing: parent spec **$ARGUMENTS** has been abandoned."
+   ```
 
-4. Confirm: "✅ Spec `$ARGUMENTS` marked as abandoned."
-   - If issues were closed, list them: "Closed issues: #N, #N, ..."
-   - Suggest cleanup: "To delete the spec file entirely, run: `rm .claude/specs/$ARGUMENTS.md`"
+4. Confirm:
+   ```
+   ✅ Spec `$ARGUMENTS` abandoned.
+   Closed spec issue: #<num>
+   Closed task issues: #<num>, #<num>, ...  (if applicable)
+   ```
 
 ## Prerequisites
-- Spec must exist at `.claude/specs/$ARGUMENTS.md`
-- GitHub CLI authenticated (only needed if closing issues)
+- A spec issue must exist for the given feature name
+- GitHub CLI authenticated

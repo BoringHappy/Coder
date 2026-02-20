@@ -1,24 +1,38 @@
 ---
 name: spec-plan
-description: Converts a SPEC.md into a technical implementation plan by appending architecture decisions, tech approach, and a task breakdown. Use after spec-init to turn requirements into an engineering plan.
+description: Converts a SPEC.md into a technical implementation plan by appending architecture decisions, tech approach, and a task breakdown. Use after spec-init to turn requirements into an engineering plan. Accepts an optional --granularity flag (micro | pr | macro) to control task sizing.
+argument-hint: <feature-name> [--granularity micro|pr|macro]
 ---
 
 # Spec Plan
 
-Reads `.claude/specs/$ARGUMENTS.md` and appends a technical implementation plan to it.
+Reads `.claude/specs/<feature-name>.md` and appends a technical implementation plan to it.
+
+Usage: `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
 
 ## Preflight
 
 !`
-SPEC=".claude/specs/$ARGUMENTS.md"
+FEATURE_NAME=$(echo "$ARGUMENTS" | awk '{print $1}')
+GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
+GRANULARITY="${GRANULARITY:-pr}"
+SPEC=".claude/specs/$FEATURE_NAME.md"
 
-if [ -z "$ARGUMENTS" ]; then
-  echo "[ERROR] No feature name provided. Usage: /pm:spec-plan <feature-name>"
+if [ -z "$FEATURE_NAME" ]; then
+  echo "[ERROR] No feature name provided. Usage: /pm:spec-plan <feature-name> [--granularity micro|pr|macro]"
   exit 1
 fi
 
+case "$GRANULARITY" in
+  micro|pr|macro) ;;
+  *)
+    echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro"
+    exit 1
+    ;;
+esac
+
 if [ ! -f "$SPEC" ]; then
-  echo "[ERROR] Spec not found: $SPEC. Create it first with: /pm:spec-init $ARGUMENTS"
+  echo "[ERROR] Spec not found: $SPEC. Create it first with: /pm:spec-init $FEATURE_NAME"
   exit 1
 fi
 
@@ -29,6 +43,7 @@ else
   echo "[OK] Spec found, ready to plan"
 fi
 
+echo "[INFO] Granularity: $GRANULARITY"
 echo "--- Current spec ---"
 cat "$SPEC"
 `
@@ -37,15 +52,21 @@ cat "$SPEC"
 
 1. **If plan sections already exist**, ask: "Technical plan already exists in this spec. Overwrite? (yes/no)". If yes, remove existing plan sections before proceeding.
 
-2. **Analyze the spec** above and produce a technical plan covering:
+2. **Determine task sizing rules** from the granularity reported in preflight:
+   - `micro` — Tasks are small and focused. Each task: 0.5–1 day. Aim for 10–20 tasks. Split by thin vertical slice (one endpoint, one component, one migration). Each task should be committable in isolation.
+   - `pr` (default) — Tasks are PR-sized shippable units. Each task: 1–3 days. Aim for 5–10 tasks. Each task should be independently reviewable and mergeable, delivering a coherent piece of functionality.
+   - `macro` — Tasks are large milestones. Each task: 3–7 days. Aim for 3–5 tasks. Each task represents a major deliverable (e.g. "complete data layer", "end-to-end API", "full UI flow").
+
+3. **Analyze the spec** above and produce a technical plan covering:
    - Architecture decisions (patterns, data models, key choices and their rationale)
    - Tech approach broken down by area (e.g. DB, API, UI, infra)
-   - Task breakdown: a list of concrete tasks sized 1–3 days each. Max 10 tasks. Each task needs:
+   - Task breakdown sized according to the granularity rules above. Each task needs:
      - A short title
      - Tags (e.g. data, api, ui, infra — can be multiple)
+     - An effort estimate in days consistent with the chosen granularity
      - What it depends on (if anything)
 
-3. **Append** the following sections to the spec file (do not overwrite existing content):
+4. **Append** the following sections to the spec file (do not overwrite existing content):
 
 ```markdown
 
@@ -67,22 +88,24 @@ cat "$SPEC"
 <deployment, config, observability — omit if not applicable>
 
 ## Task Breakdown
-| # | Title | Tags | Depends On |
-|---|-------|------|------------|
-| 1 | <title> | <tags> | — |
-| 2 | <title> | <tags> | 1 |
+<!-- granularity: <micro|pr|macro> -->
+| # | Title | Tags | Estimate | Depends On |
+|---|-------|------|----------|------------|
+| 1 | <title> | <tags> | <Xd> | — |
+| 2 | <title> | <tags> | <Xd> | 1 |
 
 ## Effort Estimate
+- Granularity: <micro|pr|macro>
 - Total tasks: <n>
 - Estimated days: <sum of task estimates>
 - Critical path: <longest dependency chain>
 ```
 
-4. Update the spec frontmatter `status` from `draft` to `planned`.
+5. Update the spec frontmatter `status` from `draft` to `planned`.
 
-5. Confirm: "✅ Technical plan added to `.claude/specs/$ARGUMENTS.md`"
-6. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose $ARGUMENTS`"
+6. Confirm: "✅ Technical plan added to `.claude/specs/<feature-name>.md` (granularity: <value>)"
+7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <feature-name>`"
 
 ## Prerequisites
-- Spec must exist at `.claude/specs/$ARGUMENTS.md`
-- Run `/pm:spec-init $ARGUMENTS` first if it doesn't
+- Spec must exist at `.claude/specs/<feature-name>.md`
+- Run `/pm:spec-init <feature-name>` first if it doesn't

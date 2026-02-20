@@ -57,7 +57,6 @@ load_state() {
         source "$STATE_FILE"
     else
         LAST_CHECK_TIME=""
-        GIT_CHANGES_NOTIFIED="false"
         CONSECUTIVE_FAILURES=0
         LAST_ISSUE_COMMENT_ID=""
         READY_FOR_REVIEW_NOTIFIED="false"
@@ -72,7 +71,6 @@ load_state() {
 save_state() {
     cat > "$STATE_FILE" <<EOF
 LAST_CHECK_TIME="$LAST_CHECK_TIME"
-GIT_CHANGES_NOTIFIED="$GIT_CHANGES_NOTIFIED"
 CONSECUTIVE_FAILURES=$CONSECUTIVE_FAILURES
 LAST_ISSUE_COMMENT_ID="$LAST_ISSUE_COMMENT_ID"
 READY_FOR_REVIEW_NOTIFIED="$READY_FOR_REVIEW_NOTIFIED"
@@ -380,21 +378,6 @@ main() {
     }
 
     echo "$(date): Checking PR #$pr_number"
-
-    # Check for unstaged git changes
-    git_changes=$(git status --porcelain 2>/dev/null || echo "")
-
-    if [ -n "$git_changes" ]; then
-        if [ "$GIT_CHANGES_NOTIFIED" = "false" ]; then
-            echo "$(date): Unstaged changes detected"
-            if session_exists "$CLAUDE_SESSION"; then
-                send_and_verify_command "$CLAUDE_SESSION" "Please use /git:commit skill to submit changes to github" 3
-                GIT_CHANGES_NOTIFIED="true"
-            fi
-        fi
-    else
-        GIT_CHANGES_NOTIFIED="false"
-    fi
 
     # Check for CI failures
     check_ci_status "$pr_number"

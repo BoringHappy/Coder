@@ -1,55 +1,56 @@
 ---
 name: spec-list
-description: Lists all specs in .claude/specs/ with their status and task counts. Use when the user wants to discover existing specs or get a project overview.
+description: Lists all spec GitHub Issues with their status and task counts. Use when the user wants to discover existing specs or get a project overview.
 ---
 
 # Spec List
 
-Lists all feature specs in `.claude/specs/` with status and task summary.
+Lists all feature specs as GitHub Issues labeled with `spec`.
 
 ## Specs
 
 !`
-if [ ! -d ".claude/specs" ] || [ -z "$(ls .claude/specs/*.md 2>/dev/null)" ]; then
-  echo "No specs found. Create your first spec with: /pm:spec-init <feature-name>"
+echo "--- Fetching spec issues ---"
+SPECS_JSON=$(gh issue list --label "spec" --state all --limit 200 \
+  --json number,title,state,url,labels --jq '.' 2>/dev/null || echo "[]")
+
+if [ "$SPECS_JSON" = "[]" ] || [ -z "$SPECS_JSON" ]; then
+  echo "No spec issues found. Create your first spec with: /pm:spec-init <feature-name>"
   exit 0
 fi
 
-echo "📋 Feature Specs"
-echo "================"
+echo "SPEC_ISSUES:"
+echo "$SPECS_JSON"
 echo ""
 
-for spec in .claude/specs/*.md; do
-  [ -f "$spec" ] || continue
-  name=$(basename "$spec" .md)
-  spec_status=$(grep "^status:" "$spec" | head -1 | sed 's/^status: *//')
-  created=$(grep "^created:" "$spec" | head -1 | sed 's/^created: *//' | cut -c1-10)
-  total=$(grep -c "^  - title:" "$spec" 2>/dev/null || echo 0)
-  synced=$(grep -c 'issue_url: "https' "$spec" 2>/dev/null || echo 0)
-
-  case "$spec_status" in
-    draft)       icon="📝" ;;
-    planned)     icon="📐" ;;
-    ready)       icon="✅" ;;
-    in-progress) icon="🔄" ;;
-    completed)   icon="🎉" ;;
-    *)           icon="📄" ;;
-  esac
-
-  echo "$icon  $name"
-  echo "    Status: ${spec_status:-draft} | Created: ${created:-unknown} | Tasks: $synced/$total synced"
-  echo ""
-done
-
-echo "Total: $(ls .claude/specs/*.md 2>/dev/null | wc -l) spec(s)"
+# Fetch all task issues in one call, then group by spec:<name> label client-side
+echo "TASK_ISSUES:"
+gh issue list --label "task" --state all --limit 500 \
+  --json number,title,state,labels \
+  --jq '.' 2>/dev/null || echo "[]"
 `
 
 ## Instructions
 
 Display the spec list shown above. If no specs exist, prompt the user to create one with `/pm:spec-init <feature-name>`.
 
-For each spec, suggest the appropriate next step based on its status:
-- `draft` → `/pm:spec-plan <name>`
-- `planned` → `/pm:spec-decompose <name>`
-- `ready` → `/pm:spec-sync <name>`
-- `in-progress` → `/pm:spec-status <name>`
+Using the two JSON arrays from preflight (spec issues + all task issues), compute task counts client-side:
+- For each spec issue, extract its `spec:<name>` label to get the spec name
+- Count total and closed task issues whose labels include `spec:<name>`
+
+Format the output as:
+
+```
+## Feature Specs
+
+| Issue | Name | State | Tasks |
+|-------|------|-------|-------|
+| #12 | user-auth | 🔄 OPEN | 2/5 closed |
+| #8  | dark-mode | ✅ CLOSED | 3/3 closed |
+```
+
+For each spec, suggest the appropriate next step based on its state and labels:
+- Has no `planned` label → `/pm:spec-plan <name>`
+- Has `planned` but no `ready` label → `/pm:spec-decompose <name>`
+- Has `ready` label, tasks open → `/pm:spec-status <name>`
+- Issue is CLOSED → spec complete

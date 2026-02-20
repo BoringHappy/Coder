@@ -1,12 +1,12 @@
 ---
 name: spec-plan
-description: Converts a SPEC.md into a technical implementation plan by appending architecture decisions, tech approach, and a task breakdown. Use after spec-init to turn requirements into an engineering plan. Accepts an optional --granularity flag (micro | pr | macro) to control task sizing.
+description: Converts a spec GitHub Issue into a technical implementation plan by appending architecture decisions, tech approach, and a task breakdown. Use after spec-init to turn requirements into an engineering plan. Accepts an optional --granularity flag (micro | pr | macro) to control task sizing.
 argument-hint: <feature-name> [--granularity micro|pr|macro]
 ---
 
 # Spec Plan
 
-Reads `.claude/specs/<feature-name>.md` and appends a technical implementation plan to it.
+Fetches the spec GitHub Issue for `<feature-name>` and appends a technical implementation plan to it.
 
 Usage: `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
 
@@ -16,7 +16,6 @@ Usage: `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
 FEATURE_NAME=$(echo "$ARGUMENTS" | awk '{print $1}')
 GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
 GRANULARITY="${GRANULARITY:-pr}"
-SPEC=".claude/specs/$FEATURE_NAME.md"
 
 if [ -z "$FEATURE_NAME" ]; then
   echo "[ERROR] No feature name provided. Usage: /pm:spec-plan <feature-name> [--granularity micro|pr|macro]"
@@ -31,26 +30,38 @@ case "$GRANULARITY" in
     ;;
 esac
 
-if [ ! -f "$SPEC" ]; then
-  echo "[ERROR] Spec not found: $SPEC. Create it first with: /pm:spec-init $FEATURE_NAME"
+echo "[INFO] Granularity: $GRANULARITY"
+
+# Fetch the spec issue
+echo ""
+echo "--- Fetching spec issue ---"
+SPEC_ISSUE=$(gh issue list --label "spec:$FEATURE_NAME" --label "spec" --state open --json number,title,url,body --jq '.[0]' 2>/dev/null || echo "")
+if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
+  echo "[ERROR] No open spec issue found for: $FEATURE_NAME"
+  echo "Run /pm:spec-init $FEATURE_NAME first."
   exit 1
 fi
 
+SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
+SPEC_ISSUE_URL=$(echo "$SPEC_ISSUE" | jq -r '.url')
+echo "[OK] Found spec issue #$SPEC_ISSUE_NUMBER: $SPEC_ISSUE_URL"
+
 # Check if plan already exists
-if grep -q "^## Architecture" "$SPEC" 2>/dev/null; then
-  echo "[WARN] Plan sections already exist in spec"
+SPEC_BODY=$(echo "$SPEC_ISSUE" | jq -r '.body')
+if echo "$SPEC_BODY" | grep -q "## Architecture Decisions"; then
+  echo "[WARN] Plan sections already exist in spec issue"
 else
-  echo "[OK] Spec found, ready to plan"
+  echo "[OK] Ready to plan"
 fi
 
-echo "[INFO] Granularity: $GRANULARITY"
-echo "--- Current spec ---"
-cat "$SPEC"
+echo ""
+echo "--- Current spec issue body ---"
+echo "$SPEC_BODY"
 `
 
 ## Instructions
 
-1. **If plan sections already exist**, ask: "Technical plan already exists in this spec. Overwrite? (yes/no)". If yes, remove existing plan sections before proceeding.
+1. **If plan sections already exist** (detected above), ask: "Technical plan already exists in this spec issue. Overwrite? (yes/no)". If yes, remove existing plan sections from the body before proceeding.
 
 2. **Determine task sizing rules** from the granularity reported in preflight:
    - `micro` — Tasks are small and focused. Each task: 0.5–1 day. Aim for 10–20 tasks. Split by thin vertical slice (one endpoint, one component, one migration). Each task should be committable in isolation.
@@ -66,46 +77,58 @@ cat "$SPEC"
      - An effort estimate in days consistent with the chosen granularity
      - What it depends on (if anything)
 
-4. **Append** the following sections to the spec file (do not overwrite existing content):
+4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
 
-```markdown
+   ```bash
+   cat > /tmp/spec-plan-body.md << 'SPECEOF'
+   <full updated body with plan sections appended>
+   SPECEOF
+   gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
+   rm -f /tmp/spec-plan-body.md
+   ```
 
-## Architecture Decisions
-- <decision>: <rationale>
+   ```markdown
 
-## Technical Approach
+   ## Architecture Decisions
+   - <decision>: <rationale>
 
-### Data Layer
-<schema, models, migrations>
+   ## Technical Approach
 
-### Service / API Layer
-<endpoints, business logic, integrations>
+   ### Data Layer
+   <schema, models, migrations>
 
-### UI Layer
-<components, pages, interactions — omit if not applicable>
+   ### Service / API Layer
+   <endpoints, business logic, integrations>
 
-### Infrastructure
-<deployment, config, observability — omit if not applicable>
+   ### UI Layer
+   <components, pages, interactions — omit if not applicable>
 
-## Task Breakdown
-<!-- granularity: <micro|pr|macro> -->
-| # | Title | Tags | Estimate | Depends On |
-|---|-------|------|----------|------------|
-| 1 | <title> | <tags> | <Xd> | — |
-| 2 | <title> | <tags> | <Xd> | 1 |
+   ### Infrastructure
+   <deployment, config, observability — omit if not applicable>
 
-## Effort Estimate
-- Granularity: <micro|pr|macro>
-- Total tasks: <n>
-- Estimated days: <sum of task estimates>
-- Critical path: <longest dependency chain>
-```
+   ## Task Breakdown
+   <!-- granularity: <micro|pr|macro> -->
+   | # | Title | Tags | Estimate | Depends On |
+   |---|-------|------|----------|------------|
+   | 1 | <title> | <tags> | <Xd> | — |
+   | 2 | <title> | <tags> | <Xd> | 1 |
 
-5. Update the spec frontmatter `status` from `draft` to `planned`.
+   ## Effort Estimate
+   - Granularity: <micro|pr|macro>
+   - Total tasks: <n>
+   - Estimated days: <sum of task estimates>
+   - Critical path: <longest dependency chain>
+   ```
 
-6. Confirm: "✅ Technical plan added to `.claude/specs/<feature-name>.md` (granularity: <value>)"
-7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <feature-name>`"
+5. **Add `planned` label** to the spec issue:
+   ```bash
+   gh label create "planned" --color "FBCA04" --description "Spec has a technical plan" --force 2>/dev/null || true
+   gh issue edit <spec_issue_number> --add-label "planned"
+   ```
+
+6. Confirm: "✅ Technical plan added to spec issue #<number> (granularity: <value>)"
+7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose $FEATURE_NAME`"
 
 ## Prerequisites
-- Spec must exist at `.claude/specs/<feature-name>.md`
-- Run `/pm:spec-init <feature-name>` first if it doesn't
+- A spec issue must exist (run `/pm:spec-init <feature-name>` first)
+- Must be authenticated: `gh auth status`

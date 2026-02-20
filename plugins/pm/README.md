@@ -1,72 +1,60 @@
 # pm Plugin
 
-Spec-driven project management for GitHub repos. Guides a feature from raw requirements through GitHub Issues using a single `SPEC.md` doc as the source of truth.
+Spec-driven project management for GitHub repos. Manages feature specs as GitHub Issues — from requirements through task decomposition using sub-issues.
 
 ## Workflow
 
 ```
-/pm:spec-list              # discover existing specs
-/pm:spec-init <name>       # brainstorm → write requirements
+/pm:spec-list              # discover existing specs (GitHub Issues)
+/pm:spec-init <name>       # brainstorm → create spec GitHub Issue
       ↓
-/pm:spec-plan <name>       # requirements → technical plan + task breakdown
+/pm:spec-plan <name>       # requirements → technical plan appended to spec issue
       ↓
-/pm:spec-decompose <name>  # task breakdown → structured tasks in frontmatter
+/pm:spec-decompose <name>  # task breakdown → task issues as sub-issues of spec
       ↓
-/pm:spec-sync <name>       # tasks → GitHub Issues, issue numbers written back to spec
-      ↓
-/pm:spec-status <name>     # live progress summary from spec + GitHub Issues
+/pm:spec-status <name>     # live progress summary from GitHub Issues
 /pm:spec-next <name>       # find next actionable task based on dependencies
 ```
 
 ## Skills
 
 ### `/pm:spec-list`
-Lists all specs in `.claude/specs/` with status, creation date, and task sync counts. Suggests the next action for each spec based on its current status.
+Lists all spec GitHub Issues (labeled `spec`) with state and task counts. Suggests the next action for each spec based on its labels.
 
 ### `/pm:spec-init <feature-name>`
-Runs a guided discovery session and writes a `SPEC.md` to `.claude/specs/<feature-name>.md`.
+Runs a guided discovery session and creates a GitHub Issue titled `[Spec]: <feature-name>` with labels `spec` and `spec:<feature-name>`.
 
 Covers: problem statement, user stories, functional/non-functional requirements, out of scope, dependencies, success criteria.
 
-### `/pm:spec-plan <feature-name>`
-Reads the spec and appends a technical implementation plan: architecture decisions, area-by-area approach, and a task breakdown table (max 10 tasks, sized 1–3 days each).
+### `/pm:spec-plan <feature-name> [--granularity micro|pr|macro]`
+Fetches the spec issue and appends a technical implementation plan: architecture decisions, area-by-area approach, and a task breakdown table. Adds a `planned` label to the spec issue.
 
 ### `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
-Parses the task breakdown table and writes structured task entries into the spec's `tasks:` frontmatter field. The `--granularity` flag controls how tasks are split:
+Parses the task breakdown table from the spec issue, creates individual task GitHub Issues, and registers them as **sub-issues** of the spec issue. The `--granularity` flag controls how tasks are split:
 - `micro` — split aggressively into 0.5–1 day tasks
 - `pr` (default) — PR-sized 1–3 day tasks; auto-detected from spec if set by `spec-plan`
 - `macro` — merge into 3–7 day milestones
 
-### `/pm:spec-sync <feature-name>`
-Creates a GitHub Issue per task using the repo's issue template and writes the issue number and URL back into the spec frontmatter. Skips already-synced tasks (idempotent). Updates spec `status` to `in-progress`.
+Adds a `ready` label to the spec issue.
 
 ### `/pm:spec-status <feature-name>`
-Reads the spec and fetches live issue state from GitHub for each task. Shows a progress table (✅ closed / 🔄 open / ⚠️ not synced), a progress bar, blocked tasks, and what's next to work on.
+Fetches the spec issue and all task sub-issues from GitHub. Shows a progress table (✅ closed / 🔄 open), a progress bar, and what's next to work on.
 
 ### `/pm:spec-next <feature-name>`
 Finds the next actionable task(s) by checking live GitHub Issue status and resolving dependencies. Lists tasks that are open with all dependencies closed, and highlights blocked tasks.
 
 ### `/pm:spec-abandon <feature-name>`
-Marks a spec as abandoned and optionally closes any linked open GitHub Issues. Use when a feature is cancelled or no longer being pursued.
+Closes the spec GitHub Issue and optionally closes all linked task issues. Use when a feature is cancelled or no longer being pursued.
 
-## Spec Format
+## Labels Used
 
-```markdown
----
-name: feature-name
-status: draft | planned | ready | in-progress | abandoned
-created: 2026-01-01T00:00:00Z
-tasks:
-  - title: "Setup database schema"
-    tags: [data]
-    depends_on: []
-    issue: 42
-    issue_url: "https://github.com/org/repo/issues/42"
----
-
-# Spec: feature-name
-...
-```
+| Label | Purpose |
+|-------|---------|
+| `spec` | Marks a spec-level issue |
+| `spec:<name>` | Groups all issues (spec + tasks) for a spec |
+| `task` | Marks a task-level issue |
+| `planned` | Spec has a technical plan |
+| `ready` | Spec tasks have been decomposed into sub-issues |
 
 ## Requirements
 

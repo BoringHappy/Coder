@@ -1,16 +1,17 @@
 ---
 name: spec-init
-description: Starts a guided brainstorming session to create a new SPEC.md for a feature. Use when the user wants to define requirements for a new feature before writing any code.
+description: Starts a guided brainstorming session to create a new spec as a GitHub Issue. Use when the user wants to define requirements for a new feature before writing any code.
 ---
 
 # Spec Init
 
-Creates a new feature spec at `.claude/specs/$ARGUMENTS.md` through a guided requirements session.
+Creates a new feature spec as a GitHub Issue through a guided requirements session.
+
+Usage: `/pm:spec-init <feature-name>`
 
 ## Preflight
 
 !`
-SPEC=".claude/specs/$ARGUMENTS.md"
 NAME="$ARGUMENTS"
 
 # Validate argument
@@ -25,18 +26,24 @@ if ! echo "$NAME" | grep -qE '^[a-z][a-z0-9-]*$'; then
   exit 1
 fi
 
-# Check for existing spec
-if [ -f "$SPEC" ]; then
-  echo "[WARN] Spec already exists: $SPEC"
+# Check for existing open spec issue with this name
+echo ""
+echo "--- Checking for existing spec issue ---"
+EXISTING=$(gh issue list --label "spec:$NAME" --label "spec" --state open --json number,title,url --jq '.[] | "#\(.number) \(.title) \(.url)"' 2>/dev/null || echo "")
+if [ -n "$EXISTING" ]; then
+  echo "[WARN] Existing open spec issue found:"
+  echo "$EXISTING"
 else
-  echo "[OK] Ready to create: $SPEC"
-  mkdir -p .claude/specs
+  echo "[OK] No existing spec issue for: $NAME"
 fi
+
+# Show repo
+gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"' | cat
 `
 
 ## Instructions
 
-1. **If the spec already exists**, ask the user: "Spec already exists at `.claude/specs/$ARGUMENTS.md`. Overwrite? (yes/no)". Stop if they say no.
+1. **If an existing spec issue was found** in preflight, ask the user: "A spec issue already exists for `$ARGUMENTS`. Open a new one anyway? (yes/no)". Stop if they say no.
 
 2. **Run a discovery session** — ask the user focused questions to understand the feature. Cover:
    - What problem does this solve?
@@ -48,47 +55,55 @@ fi
    - What are the dependencies or constraints?
    - How will success be measured?
 
-3. **Write the spec** to `.claude/specs/$ARGUMENTS.md` with this exact structure:
+3. **Ensure labels exist** before creating the issue:
+   ```bash
+   gh label create "spec" --color "5319E7" --description "Spec-level tracking issue" --force 2>/dev/null || true
+   gh label create "spec:$ARGUMENTS" --color "0E8A16" --description "Part of spec: $ARGUMENTS" --force 2>/dev/null || true
+   ```
 
-```markdown
----
-name: $ARGUMENTS
-status: draft
-created: <ISO datetime from: date -u +"%Y-%m-%dT%H:%M:%SZ">
-tasks: []
----
+4. **Create the spec issue** with the structured content from the discovery session:
 
-# Spec: $ARGUMENTS
+   ```bash
+   gh issue create \
+     --title "[Spec]: $ARGUMENTS" \
+     --label "spec" \
+     --label "spec:$ARGUMENTS" \
+     --body "<body>"
+   ```
 
-## Problem Statement
-<what problem this solves and why it matters>
+   Use this body format:
 
-## Users & Goals
-<who uses this and what they want to achieve>
+   ```
+   ## Problem Statement
+   <what problem this solves and why it matters>
 
-## User Stories
-- As a <persona>, I want to <action> so that <outcome>
+   ## Users & Goals
+   <who uses this and what they want to achieve>
 
-## Functional Requirements
-- <requirement 1>
-- <requirement 2>
+   ## User Stories
+   - As a <persona>, I want to <action> so that <outcome>
 
-## Non-Functional Requirements
-- <performance, security, reliability, etc.>
+   ## Functional Requirements
+   - <requirement 1>
+   - <requirement 2>
 
-## Out of Scope
-- <explicit exclusions>
+   ## Non-Functional Requirements
+   - <performance, security, reliability, etc.>
 
-## Dependencies & Constraints
-- <external services, team dependencies, technical constraints>
+   ## Out of Scope
+   - <explicit exclusions>
 
-## Success Criteria
-- <measurable outcomes that define done>
-```
+   ## Dependencies & Constraints
+   - <external services, team dependencies, technical constraints>
 
-4. Confirm: "✅ Spec created: `.claude/specs/$ARGUMENTS.md`"
-5. Suggest next step: "Ready to plan the implementation? Run: `/pm:spec-plan $ARGUMENTS`"
+   ## Success Criteria
+   - <measurable outcomes that define done>
+   ```
+
+5. Confirm: "✅ Spec issue created: `[Spec]: $ARGUMENTS` → <issue_url>"
+6. Suggest next step: "Ready to plan the implementation? Run: `/pm:spec-plan $ARGUMENTS`"
 
 ## Prerequisites
 - Feature name must be provided as argument
 - Feature name must be kebab-case
+- Must be inside a GitHub repository

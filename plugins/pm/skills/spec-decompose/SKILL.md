@@ -1,12 +1,12 @@
 ---
 name: spec-decompose
-description: Breaks the task breakdown in a SPEC.md into structured task entries and writes them back into the spec's frontmatter tasks list. Use after spec-plan to prepare tasks before syncing to GitHub. Accepts an optional --granularity flag (micro | pr | macro) to control task splitting.
+description: Fetches the spec GitHub Issue, parses the task breakdown table, creates task issues as sub-issues, and links them to the spec. Reconciles existing sub-issues on re-decompose. Use after spec-plan to prepare tasks. Accepts an optional --granularity flag (micro | pr | macro) to control task splitting.
 argument-hint: <feature-name> [--granularity micro|pr|macro]
 ---
 
 # Spec Decompose
 
-Reads the Task Breakdown table from `.claude/specs/<feature-name>.md` and writes structured task entries into the spec's `tasks:` frontmatter field.
+Reads the Task Breakdown table from the spec GitHub Issue for `<feature-name>`, creates individual task issues as sub-issues, and reconciles any changes on re-runs.
 
 Usage: `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
 
@@ -15,15 +15,9 @@ Usage: `/pm:spec-decompose <feature-name> [--granularity micro|pr|macro]`
 !`
 FEATURE_NAME=$(echo "$ARGUMENTS" | awk '{print $1}')
 GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
-SPEC=".claude/specs/$FEATURE_NAME.md"
 
 if [ -z "$FEATURE_NAME" ]; then
   echo "[ERROR] No feature name provided. Usage: /pm:spec-decompose <feature-name> [--granularity micro|pr|macro]"
-  exit 1
-fi
-
-if [ ! -f "$SPEC" ]; then
-  echo "[ERROR] Spec not found: $SPEC. Run /pm:spec-init $FEATURE_NAME first."
   exit 1
 fi
 
@@ -36,72 +30,174 @@ if [ -n "$GRANULARITY" ]; then
       ;;
   esac
   echo "[INFO] Granularity override: $GRANULARITY"
-else
-  # Try to detect granularity from the Task Breakdown comment in the spec
-  DETECTED=$(grep -m1 '<!-- granularity:' "$SPEC" 2>/dev/null | sed 's/.*granularity: *\([^ >]*\).*/\1/')
+fi
+
+# Fetch the spec issue
+echo ""
+echo "--- Fetching spec issue ---"
+SPEC_ISSUE=$(gh issue list --label "spec:$FEATURE_NAME" --label "spec" --state open --json number,title,url,body --jq '.[0]' 2>/dev/null || echo "")
+if [ -z "$SPEC_ISSUE" ] || [ "$SPEC_ISSUE" = "null" ]; then
+  echo "[ERROR] No open spec issue found for: $FEATURE_NAME"
+  echo "Run /pm:spec-init $FEATURE_NAME first."
+  exit 1
+fi
+
+SPEC_ISSUE_NUMBER=$(echo "$SPEC_ISSUE" | jq -r '.number')
+SPEC_ISSUE_URL=$(echo "$SPEC_ISSUE" | jq -r '.url')
+echo "[OK] Found spec issue #$SPEC_ISSUE_NUMBER: $SPEC_ISSUE_URL"
+
+SPEC_BODY=$(echo "$SPEC_ISSUE" | jq -r '.body')
+
+# Detect granularity from spec body if not overridden
+if [ -z "$GRANULARITY" ]; then
+  DETECTED=$(echo "$SPEC_BODY" | grep -m1 '<!-- granularity:' | sed 's/.*granularity: *\([^ >]*\).*/\1/')
   GRANULARITY="${DETECTED:-pr}"
   echo "[INFO] Granularity: $GRANULARITY (${DETECTED:+detected from spec}${DETECTED:-default})"
 fi
 
-if ! grep -q "^## Task Breakdown" "$SPEC" 2>/dev/null; then
-  echo "[ERROR] No Task Breakdown section found. Run /pm:spec-plan $FEATURE_NAME first."
+# Check if Task Breakdown exists
+if ! echo "$SPEC_BODY" | grep -q "## Task Breakdown"; then
+  echo "[ERROR] No Task Breakdown section found in spec issue."
+  echo "Run /pm:spec-plan $FEATURE_NAME first."
   exit 1
 fi
 
-# Check if tasks already decomposed
-TASK_COUNT=$(grep -c "^  - title:" "$SPEC" 2>/dev/null || echo 0)
-if [ "$TASK_COUNT" -gt 0 ]; then
-  echo "[WARN] $TASK_COUNT tasks already in frontmatter"
+# Fetch existing sub-issues via REST API
+REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+echo ""
+echo "--- Existing sub-issues ---"
+EXISTING_SUB_ISSUES=$(gh api \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  /repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues \
+  --jq '.' 2>/dev/null || echo "[]")
+
+if [ "$EXISTING_SUB_ISSUES" != "[]" ] && [ -n "$EXISTING_SUB_ISSUES" ]; then
+  echo "$EXISTING_SUB_ISSUES" | jq -r '.[] | "  #\(.number) [\(.state)] \(.title) (id: \(.id))"'
 else
-  echo "[OK] Ready to decompose"
+  echo "  None"
 fi
 
-echo "--- Current spec ---"
-cat "$SPEC"
+echo ""
+echo "[INFO] Repo: $REPO"
+echo "[INFO] Spec issue number: $SPEC_ISSUE_NUMBER"
+echo ""
+echo "--- Spec issue body ---"
+echo "$SPEC_BODY"
 `
 
 ## Instructions
 
-1. **If tasks already exist in frontmatter** (detected above), ask: "Tasks already decomposed. Re-decompose? (yes/no)". If yes, clear the existing `tasks:` list before proceeding.
+1. **Determine task splitting rules** from the granularity reported in preflight:
+   - `micro` — Split aggressively. Each task: 0.5–1 day. One concern per task (single endpoint, single component, single migration).
+   - `pr` (default) — Keep tasks as PR-sized units. Each task: 1–3 days. Merge very small rows if they naturally belong together; split rows that are clearly too large.
+   - `macro` — Merge related tasks into milestones. Each task: 3–7 days. Group rows by area. Aim for 3–5 tasks total.
 
-2. **Determine task splitting rules** from the granularity reported in preflight:
-   - `micro` — Split aggressively. Each task: 0.5–1 day. One concern per task (single endpoint, single component, single migration). If a table row covers multiple concerns, split it into multiple tasks.
-   - `pr` (default) — Keep tasks as PR-sized units. Each task: 1–3 days. Merge very small table rows if they naturally belong together; split rows that are clearly too large.
-   - `macro` — Merge related tasks into milestones. Each task: 3–7 days. Group table rows by area (e.g. all data-layer rows → one task). Aim for 3–5 tasks total.
+2. **Parse the Task Breakdown table** from the spec issue body. Apply the splitting rules to produce the **new task list** (list of titles + tags + dependencies).
 
-3. **Parse the Task Breakdown table** from the spec. Apply the splitting rules above to produce the final task list. For each resulting task extract:
-   - Title
-   - Tags
-   - Dependencies (1-based indices into the final task list after splitting/merging)
+3. **Reconcile** against existing sub-issues fetched in preflight:
 
-4. **Rewrite the `tasks:` frontmatter field** with structured entries:
+   - **Match** existing sub-issues to new tasks using semantic similarity — consider two tasks the same if they describe the same intent, even if the title wording differs slightly (e.g. "Set up DB schema" matches "Database schema setup"). Do not rely on exact string comparison.
+   - **New tasks** (in new list, no semantically matching sub-issue) → create issue + register as sub-issue.
+   - **Orphan tasks** (existing sub-issue, no semantically matching new task) → close issue with comment + remove from sub-issues.
+   - **Unchanged tasks** (semantically matched) → skip, already consistent.
 
-```yaml
-tasks:
-  - title: "Setup database schema"
-    tags: [data]
-    depends_on: []
-    issue: ""
-    issue_url: ""
-  - title: "Build REST endpoints"
-    tags: [api]
-    depends_on: [1]
-    issue: ""
-    issue_url: ""
-```
+   If there are orphans or new tasks to create, show the diff to the user and confirm before proceeding:
+   ```
+   Reconcile plan:
+     + Create: "Task A", "Task B"
+     - Close orphan: #42 "Old Task C" (removed from spec)
+   Proceed? (yes/no)
+   ```
 
-   Fields:
-   - `title`: task title
-   - `tags`: list of labels e.g. [data], [api], [ui], [infra], or multiple like [api, auth]
-   - `depends_on`: list of task numbers (1-based, matching final task list order)
-   - `issue`: GitHub issue number — empty until synced
-   - `issue_url`: GitHub issue URL — empty until synced
+4. **Ensure labels exist**:
+   ```bash
+   gh label create "task" --color "1D76DB" --description "Task from spec" --force 2>/dev/null || true
+   gh label create "spec:$FEATURE_NAME" --color "0E8A16" --description "Part of spec: $FEATURE_NAME" --force 2>/dev/null || true
+   ```
 
-5. Update the spec frontmatter `status` to `ready`.
+5. **Close orphan sub-issues** (removed from spec):
 
-6. Confirm: "✅ Decomposed <n> tasks into `.claude/specs/$FEATURE_NAME.md` (granularity: <value>)"
-7. Suggest next step: "Ready to push to GitHub? Run: `/pm:spec-sync $FEATURE_NAME`"
+   a. Close the issue with a comment:
+   ```bash
+   gh issue close <orphan_number> --comment "Closing: this task was removed from spec **$FEATURE_NAME** during re-decomposition."
+   ```
+
+   b. Remove it from the spec issue's sub-issues:
+   ```bash
+   gh api \
+     --method DELETE \
+     -H "Accept: application/vnd.github+json" \
+     -H "X-GitHub-Api-Version: 2022-11-28" \
+     /repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues \
+     -f sub_issue_id=<orphan_issue_id>
+   ```
+
+6. **Create new task issues** and register as sub-issues:
+
+   a. Write the task body to a temp file and create the issue:
+   ```bash
+   cat > /tmp/task-body.md << 'TASKEOF'
+   Part of spec: **$FEATURE_NAME** (#<spec_issue_number>)
+
+   <1-2 sentence description of the task>
+
+   **Tags:** <tags>
+   **Depends on:** <dependency task titles or 'none'>
+
+   ## Acceptance Criteria
+   - [ ] <criterion 1>
+   - [ ] <criterion 2>
+   TASKEOF
+   TASK_URL=$(gh issue create \
+     --title "<task title>" \
+     --label "task" \
+     --label "spec:$FEATURE_NAME" \
+     --body-file /tmp/task-body.md)
+   rm -f /tmp/task-body.md
+   ```
+
+   b. Get the task issue's numeric ID (not number):
+   ```bash
+   TASK_ISSUE_NUMBER=$(echo "$TASK_URL" | grep -oE '[0-9]+$')
+   TASK_ISSUE_ID=$(gh api /repos/$REPO/issues/$TASK_ISSUE_NUMBER --jq '.id')
+   ```
+
+   c. Register as sub-issue of the spec issue:
+   ```bash
+   gh api \
+     --method POST \
+     -H "Accept: application/vnd.github+json" \
+     -H "X-GitHub-Api-Version: 2022-11-28" \
+     /repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues \
+     -f sub_issue_id="$TASK_ISSUE_ID"
+   ```
+
+7. **Add `ready` label** to the spec issue:
+   ```bash
+   gh label create "ready" --color "0075CA" --description "Spec tasks have been decomposed" --force 2>/dev/null || true
+   gh issue edit $SPEC_ISSUE_NUMBER --add-label "ready"
+   ```
+
+8. **Output a summary:**
+   ```
+   ✅ Decomposed <n> tasks for spec: $FEATURE_NAME (granularity: <value>)
+
+   Created (<n> new):
+     #<num> - <title> → <url>
+
+   Closed orphans (<n> removed):
+     #<num> - <title>
+
+   Unchanged (<n> skipped):
+     #<num> - <title>
+
+   Next steps:
+     - View progress: /pm:spec-status $FEATURE_NAME
+     - Find next task: /pm:spec-next $FEATURE_NAME
+   ```
 
 ## Prerequisites
-- Spec must exist with a `## Task Breakdown` section
-- Run `/pm:spec-plan $FEATURE_NAME` first if the section is missing
+- A spec issue must exist with a `## Task Breakdown` section (run `/pm:spec-plan <feature-name>` first)
+- Must be authenticated: `gh auth status`
+- Must be inside a GitHub repository

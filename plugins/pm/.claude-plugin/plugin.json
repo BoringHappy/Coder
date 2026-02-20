@@ -1,6 +1,6 @@
 {
   "name": "pm",
-  "description": "Spec-driven project management plugin. Guides features from requirements through GitHub Issues using a SPEC.md doc as the single source of truth.",
+  "description": "Spec-driven project management plugin. Manages feature specs as GitHub Issues — from requirements through task decomposition using sub-issues.",
   "version": "1.0.0",
   "author": {
     "name": "CodeMate"

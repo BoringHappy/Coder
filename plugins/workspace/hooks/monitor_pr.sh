@@ -5,8 +5,6 @@
 STATE_FILE="${STATE_FILE:-/tmp/pr-monitor-state}"
 SESSION_STATUS_FILE="/tmp/.session_status"
 
-# shellcheck source=check_git_changes.sh
-source "$(dirname "$0")/check_git_changes.sh"
 
 # Load persisted state
 load_state() {
@@ -148,7 +146,11 @@ main() {
     # Priority: git changes → review comments → issue comments → PR readiness
 
     # 1. Uncommitted git changes (highest priority)
-    check_git_changes
+    local git_changes
+    git_changes=$(git status --porcelain 2>/dev/null || echo "")
+    if [ -n "$git_changes" ]; then
+        inject_prompt "Please use /git:commit skill to submit changes to github"
+    fi
 
     local pr_number
     pr_number=$(get_pr_number)

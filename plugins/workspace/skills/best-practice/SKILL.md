@@ -146,37 +146,24 @@ done
    Write this content:
 
    ```yaml
-   name: "📋 Spec"
-   description: Define requirements for a new feature before implementation
+   name: Spec
+   description: Track a feature spec managed by the pm plugin
+   title: "[Spec]: "
    labels: ["spec"]
    body:
      - type: markdown
        attributes:
          value: |
-           Use this template to define a feature spec. Run `/pm:spec-init <feature-name>` in CodeMate to create one interactively.
-
-     - type: input
-       id: feature-name
-       attributes:
-         label: Feature Name
-         description: Kebab-case identifier (e.g. user-auth, payment-flow)
-         placeholder: my-feature
-       validations:
-         required: true
+           This issue tracks a feature spec. It is managed automatically by the `/pm:spec-*` skills.
 
      - type: textarea
        id: problem
        attributes:
          label: Problem Statement
          description: What problem does this solve and why does it matter?
-       validations:
-         required: true
-
-     - type: textarea
-       id: users-goals
-       attributes:
-         label: Users & Goals
-         description: Who uses this and what do they want to achieve?
+         placeholder: |
+           Users currently have to... which causes...
+           This spec addresses that by...
        validations:
          required: true
 
@@ -184,53 +171,40 @@ done
        id: user-stories
        attributes:
          label: User Stories
-         description: "Format: As a <persona>, I want to <action> so that <outcome>"
+         description: "As a <role>, I want to <action> so that <outcome>"
          placeholder: |
-           - As a developer, I want to ...
+           - As a developer, I want to... so that...
+           - As an admin, I want to... so that...
        validations:
          required: true
 
      - type: textarea
-       id: functional-requirements
+       id: acceptance-criteria
        attributes:
-         label: Functional Requirements
+         label: Acceptance Criteria
+         description: Measurable outcomes that define done at the feature level
          placeholder: |
-           - Requirement 1
-           - Requirement 2
+           - [ ] Users can...
+           - [ ] System handles...
        validations:
          required: true
-
-     - type: textarea
-       id: non-functional
-       attributes:
-         label: Non-Functional Requirements
-         description: Performance, security, reliability, scalability
-         placeholder: |
-           - Response time < 200ms
 
      - type: textarea
        id: out-of-scope
        attributes:
          label: Out of Scope
+         description: What is explicitly excluded from this spec?
          placeholder: |
-           - Feature X is explicitly excluded
+           - Not included: ...
 
      - type: textarea
        id: dependencies
        attributes:
-         label: Dependencies & Constraints
+         label: Dependencies & Constraints (optional)
+         description: What blocks or limits this spec?
          placeholder: |
            - Requires Auth service
-
-     - type: textarea
-       id: success-criteria
-       attributes:
-         label: Success Criteria
-         description: Measurable outcomes that define done
-         placeholder: |
-           - All acceptance tests pass
-       validations:
-         required: true
+           - Must use existing DB schema
    ```
 
 4. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, ask the user to confirm overwrite.

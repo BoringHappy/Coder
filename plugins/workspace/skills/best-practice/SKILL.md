@@ -1,13 +1,13 @@
 ---
-name: spec-best-practice
+name: best-practice
 description: Bootstraps a target repo with spec workflow resources — GitHub Issue templates for specs and tasks, standard labels, and a PR template. Run once to set up a repo for spec-driven development.
 ---
 
-# Spec Best Practice
+# Best Practice
 
 Adds spec workflow resources to the current repository: GitHub Issue templates, standard labels, and a PR template.
 
-Usage: `/session:spec-best-practice`
+Usage: `/workspace:best-practice`
 
 ## Preflight
 

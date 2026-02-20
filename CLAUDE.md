@@ -72,9 +72,10 @@ The marketplace is fetched from the external repository: `BoringHappy/CodeMatePl
 - `/issue:triage-issue` - Apply priority and category labels based on content analysis
 - `/issue:classify-issue` - Post clarifying questions for ambiguous issues and add `needs-more-info` label
 
-**Session Plugin** (`session@codemate`):
+**Workspace Plugin** (`workspace@codemate`):
 - Session lifecycle hooks: tracks SessionStart, UserPromptSubmit, and Stop events to `/tmp/.session_status`
 - Slack notification on Stop: sends a message to `SLACK_WEBHOOK` when new commits are pushed (requires `SLACK_WEBHOOK` env var)
+- `/workspace:best-practice` - Bootstrap a repo with spec issue templates, labels, and PR template
 
 **Configuring Default Plugins:**
 
@@ -85,7 +86,7 @@ You can customize which marketplaces and plugins are installed by default using 
 DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
 
 # Override default plugins (comma-separated plugin@marketplace)
-DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,session@codemate
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate
 
 # Set to empty to disable all defaults
 DEFAULT_MARKETPLACES=

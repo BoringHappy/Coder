@@ -102,6 +102,22 @@ install_and_verify_plugin() {
     fi
 }
 
+# Function to update a Claude plugin to the latest version
+# Usage: update_plugin "index/total" "plugin-name"
+update_plugin() {
+    local progress="$1"
+    local plugin="$2"
+
+    printf "  [${progress}] Updating ${plugin}...\n"
+    if claude plugin update "$plugin" 2>&1; then
+        printf "  ${GREEN}✓ ${plugin} updated${RESET}\n"
+        return 0
+    else
+        printf "  ${YELLOW}⚠ Failed to update ${plugin}${RESET}\n"
+        return 1
+    fi
+}
+
 # Function to send command to tmux session and verify submission with retry
 # Usage: send_and_verify_command <session_name> <command> <max_attempts>
 send_and_verify_command() {

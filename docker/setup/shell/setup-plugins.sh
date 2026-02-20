@@ -80,4 +80,25 @@ if [ -n "$ALL_PLUGINS" ]; then
     done
 fi
 
+# Update all installed plugins to latest version
+if [ -n "$ALL_PLUGINS" ]; then
+    printf "\n${CYAN}Updating plugins:${RESET}\n"
+    IFS=',' read -ra PLUGIN_ARRAY <<< "$ALL_PLUGINS"
+    plugin_count=${#PLUGIN_ARRAY[@]}
+    plugin_index=1
+    for plugin in "${PLUGIN_ARRAY[@]}"; do
+        # Trim whitespace
+        plugin=$(echo "$plugin" | xargs)
+        if [ -n "$plugin" ]; then
+            # Skip invalid formats (already validated during install)
+            if [[ ! "$plugin" =~ ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+$ ]]; then
+                plugin_index=$((plugin_index + 1))
+                continue
+            fi
+            update_plugin "$plugin_index/$plugin_count" "$plugin"
+            plugin_index=$((plugin_index + 1))
+        fi
+    done
+fi
+
 printf "\n${GREEN}✓ Plugin setup complete${RESET}\n"

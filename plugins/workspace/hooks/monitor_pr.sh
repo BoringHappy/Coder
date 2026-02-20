@@ -120,14 +120,7 @@ main() {
 
     load_state
 
-    # Priority: git changes → review comments → issue comments → PR readiness
-
-    # 1. Uncommitted git changes (highest priority)
-    local git_changes
-    git_changes=$(git status --porcelain 2>/dev/null || echo "")
-    if [ -n "$git_changes" ]; then
-        inject_prompt "Please use /git:commit skill to submit changes to github"
-    fi
+    # Priority: review comments → issue comments → PR readiness
 
     local pr_number
     pr_number=$(get_pr_number)

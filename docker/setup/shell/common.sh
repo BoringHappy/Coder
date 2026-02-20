@@ -64,9 +64,9 @@ update_marketplaces() {
     fi
 }
 
-# Function to install and verify a Claude plugin (checks if already installed)
-# Usage: install_and_verify_plugin "index/total" "plugin-name" "skill1, skill2, skill3"
-install_and_verify_plugin() {
+# Function to install (if needed), verify, and update a Claude plugin
+# Usage: install_and_update_plugin "index/total" "plugin-name" "skill1, skill2, skill3"
+install_and_update_plugin() {
     local progress="$1"
     local plugin="$2"
     local skills="$3"
@@ -78,26 +78,33 @@ install_and_verify_plugin() {
         if [ -n "$skills" ]; then
             printf "    Skills: ${skills}\n"
         fi
-        return 0
-    fi
+    else
+        printf "  [${progress}] Installing ${plugin}...\n"
+        if claude plugin install "$plugin" 2>&1; then
+            printf "  ${GREEN}✓ ${plugin} installed${RESET}\n"
 
-    printf "  [${progress}] Installing ${plugin}...\n"
-    if claude plugin install "$plugin" 2>&1; then
-        printf "  ${GREEN}✓ ${plugin} installed${RESET}\n"
-
-        # Verify installation
-        installed_list=$(claude plugin list 2>/dev/null || echo "")
-        if echo "$installed_list" | grep -q "$plugin"; then
-            if [ -n "$skills" ]; then
-                printf "    Skills: ${skills}\n"
+            # Verify installation
+            installed_list=$(claude plugin list 2>/dev/null || echo "")
+            if echo "$installed_list" | grep -q "$plugin"; then
+                if [ -n "$skills" ]; then
+                    printf "    Skills: ${skills}\n"
+                fi
+            else
+                printf "  ${YELLOW}⚠ Plugin installed but not found in list${RESET}\n"
+                return 1
             fi
-            return 0
         else
-            printf "  ${YELLOW}⚠ Plugin installed but not found in list${RESET}\n"
+            printf "  ${RED}✗ ${plugin} installation failed${RESET}\n"
             return 1
         fi
+    fi
+
+    printf "  [${progress}] Updating ${plugin}...\n"
+    if claude plugin update "$plugin" 2>&1; then
+        printf "  ${GREEN}✓ ${plugin} updated${RESET}\n"
+        return 0
     else
-        printf "  ${RED}✗ ${plugin} installation failed${RESET}\n"
+        printf "  ${YELLOW}⚠ Failed to update ${plugin}${RESET}\n"
         return 1
     fi
 }

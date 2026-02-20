@@ -59,9 +59,9 @@ if [ -n "$CUSTOM_PLUGINS" ]; then
     fi
 fi
 
-# Install all plugins (functions check if already installed)
+# Install and update all plugins
 if [ -n "$ALL_PLUGINS" ]; then
-    printf "\n${CYAN}Installing plugins:${RESET}\n"
+    printf "\n${CYAN}Installing and updating plugins:${RESET}\n"
     IFS=',' read -ra PLUGIN_ARRAY <<< "$ALL_PLUGINS"
     plugin_count=${#PLUGIN_ARRAY[@]}
     plugin_index=1
@@ -74,7 +74,7 @@ if [ -n "$ALL_PLUGINS" ]; then
                 printf "  ${YELLOW}⚠ Skipping invalid plugin format: '$plugin' (expected: plugin@marketplace)${RESET}\n"
                 continue
             fi
-            install_and_verify_plugin "$plugin_index/$plugin_count" "$plugin" ""
+            install_and_update_plugin "$plugin_index/$plugin_count" "$plugin" ""
             plugin_index=$((plugin_index + 1))
         fi
     done

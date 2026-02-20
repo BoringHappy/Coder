@@ -102,12 +102,14 @@ install_and_verify_plugin() {
     fi
 }
 
-# Function to update a Claude plugin to the latest version
-# Usage: update_plugin "index/total" "plugin-name"
-update_plugin() {
+# Function to install (if needed) and update a Claude plugin to the latest version
+# Usage: install_and_update_plugin "index/total" "plugin-name" "skill1, skill2, skill3"
+install_and_update_plugin() {
     local progress="$1"
     local plugin="$2"
+    local skills="$3"
 
+    install_and_verify_plugin "$progress" "$plugin" "$skills"
     printf "  [${progress}] Updating ${plugin}...\n"
     if claude plugin update "$plugin" 2>&1; then
         printf "  ${GREEN}✓ ${plugin} updated${RESET}\n"

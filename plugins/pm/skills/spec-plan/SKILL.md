@@ -14,9 +14,9 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`source "$BASE_DIR/../scripts/helpers.sh"; GRANULARITY=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity: $GRANULARITY"`
+!`_H=$(find ~/.claude/plugins/cache/codemate/pm -name "helpers.sh" -path "*/spec-plan/scripts/*" | head -1); source "$_H"; GRANULARITY=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity: $GRANULARITY"`
 
-!`source "$BASE_DIR/../scripts/helpers.sh"; spec_plan_fetch_issue "$(echo "$ARGUMENTS" | awk '{print $1}')"`
+!`_H=$(find ~/.claude/plugins/cache/codemate/pm -name "helpers.sh" -path "*/spec-plan/scripts/*" | head -1); source "$_H"; spec_plan_fetch_issue "$(echo "$ARGUMENTS" | awk '{print $1}')"`
 
 ## Instructions
 
@@ -39,7 +39,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
 
    ```bash
-   source "$BASE_DIR/../scripts/helpers.sh"
+   source "$BASE_DIR/scripts/helpers.sh"
    write_issue_body "<full updated body with plan sections appended>" /tmp/spec-plan-body.md
    gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
    rm -f /tmp/spec-plan-body.md
@@ -80,7 +80,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 5. **Add `planned` label** to the spec issue:
    ```bash
-   source "$BASE_DIR/../scripts/helpers.sh"
+   source "$BASE_DIR/scripts/helpers.sh"
    ensure_planned_label
    gh issue edit <spec_issue_number> --add-label "planned"
    ```

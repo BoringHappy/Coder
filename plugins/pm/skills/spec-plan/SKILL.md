@@ -45,11 +45,14 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
    write_issue_body "<plan sections>" /tmp/spec-plan-body.md
-   gh issue comment <spec_issue_number> --body-file /tmp/spec-plan-body.md
+   COMMENT_URL=$(gh issue comment <spec_issue_number> --body-file /tmp/spec-plan-body.md)
    rm -f /tmp/spec-plan-body.md
+   REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+   COMMENT_ID=$(echo "$COMMENT_URL" | grep -oE '[0-9]+$')
+   gh api /repos/$REPO/issues/comments/$COMMENT_ID/reactions --method POST -f content="rocket"
    ```
 
-   The comment body contains only the plan sections (Architecture Decisions, Technical Approach, Task Breakdown, Effort Estimate).
+   The comment body contains only the plan sections (Architecture Decisions, Technical Approach, Task Breakdown, Effort Estimate). The 🚀 reaction is added automatically to mark it as the plan comment.
 
    ```markdown
 

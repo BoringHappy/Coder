@@ -22,17 +22,24 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    ```bash
    REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
-   # Find the most recent comment containing "## Task Breakdown"
-   COMMENT=$(gh api /repos/$REPO/issues/<spec_issue_number>/comments \
-     --jq '[.[] | select(.body | contains("## Task Breakdown"))] | last')
-   COMMENT_ID=$(echo "$COMMENT" | jq -r '.id')
+   # Find the most recent comment with a rocket reaction (marks it as the plan comment)
+   COMMENT_ID=$(gh api /repos/$REPO/issues/<spec_issue_number>/comments \
+     --jq '[.[] | select(.body | contains("## Task Breakdown"))] | last | .id')
 
    if [ -z "$COMMENT_ID" ] || [ "$COMMENT_ID" = "null" ]; then
      echo "[ERROR] No plan comment found on issue #<spec_issue_number>. Run /pm:spec-plan first."
      exit 1
    fi
 
-   # Check for +1 (👍) reaction
+   ROCKET=$(gh api /repos/$REPO/issues/comments/$COMMENT_ID/reactions \
+     --jq '[.[] | select(.content == "rocket")] | length')
+
+   if [ "$ROCKET" = "0" ]; then
+     echo "[ERROR] Comment #$COMMENT_ID is not a valid plan comment (missing 🚀 reaction)."
+     exit 1
+   fi
+
+   # Check for +1 (👍) approval reaction
    APPROVED=$(gh api /repos/$REPO/issues/comments/$COMMENT_ID/reactions \
      --jq '[.[] | select(.content == "+1")] | length')
 

@@ -226,7 +226,7 @@ codemate --repo https://github.com/yourname/project.git --upstream https://githu
 | `BRANCH_NAME` | 否 | 要工作的分支 |
 | `PR_NUMBER` | 否 | 要工作的现有 PR 编号 |
 | `ISSUE_NUMBER` | 否 | GitHub issue 编号（创建分支 `issue-NUMBER` 并使用 `/issue:read-issue` skill） |
-| `GITHUB_TOKEN` | 自动 | GitHub 个人访问令牌（如果未提供，默认为 `gh auth token`） |
+| `CODEMATE_GITHUB_TOKEN` | 自动 | GitHub 个人访问令牌（如果未提供，默认为 `gh auth token`） |
 | `GIT_USER_NAME` | 自动 | Git commit author 名称（如果未提供，默认为 `git config user.name`） |
 | `GIT_USER_EMAIL` | 自动 | Git commit author 邮箱（如果未提供，默认为 `git config user.email`） |
 | `CODEMATE_IMAGE` | 否 | 自定义 image（默认：`ghcr.io/boringhappy/codemate:latest`） |

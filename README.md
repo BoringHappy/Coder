@@ -190,7 +190,7 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `BRANCH_NAME` | No | Branch to work on |
 | `PR_NUMBER` | No | Existing PR number to work on |
 | `ISSUE_NUMBER` | No | GitHub issue number (creates branch `issue-NUMBER` and uses `/issue:read-issue` skill) |
-| `GITHUB_TOKEN` | Auto | GitHub personal access token (defaults to `gh auth token` if not provided) |
+| `CODEMATE_GITHUB_TOKEN` | Auto | GitHub personal access token (defaults to `gh auth token` if not provided) |
 | `GIT_USER_NAME` | Auto | Git commit author name (defaults to `git config user.name` if not provided) |
 | `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
 | `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:latest`) |

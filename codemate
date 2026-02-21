@@ -278,10 +278,10 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Check if gh is authenticated (only if GITHUB_TOKEN not in .env)
-    if [ -z "$GITHUB_TOKEN" ] && ! gh auth status &> /dev/null; then
+    # Check if gh is authenticated (only if CODEMATE_GITHUB_TOKEN not in .env)
+    if [ -z "$CODEMATE_GITHUB_TOKEN" ] && ! gh auth status &> /dev/null; then
         print_error "GitHub CLI is not authenticated"
-        echo "Please run: gh auth login or set GITHUB_TOKEN"
+        echo "Please run: gh auth login or set CODEMATE_GITHUB_TOKEN"
         exit 1
     fi
 
@@ -331,9 +331,9 @@ run_codemate() {
     fi
 
     # Get GitHub token from gh CLI if not already set in .env
-    if [ -z "$GITHUB_TOKEN" ]; then
-        GITHUB_TOKEN=$(gh auth token 2>/dev/null)
-        if [ -z "$GITHUB_TOKEN" ]; then
+    if [ -z "$CODEMATE_GITHUB_TOKEN" ]; then
+        CODEMATE_GITHUB_TOKEN=$(gh auth token 2>/dev/null)
+        if [ -z "$CODEMATE_GITHUB_TOKEN" ]; then
             print_error "Failed to get GitHub token or gh is not authenticated"
             exit 1
         fi
@@ -418,7 +418,7 @@ run_codemate() {
         -e "PR_TITLE=$PR_TITLE"
         -e "ISSUE_NUMBER=$ISSUE_NUMBER"
         -e "QUERY=$QUERY"
-        -e "GITHUB_TOKEN=$GITHUB_TOKEN"
+        -e "CODEMATE_GITHUB_TOKEN=$CODEMATE_GITHUB_TOKEN"
         -e "GIT_USER_NAME=$GIT_USER_NAME"
         -e "GIT_USER_EMAIL=$GIT_USER_EMAIL"
         -e "TMPDIR=/home/agent/.claude/tmp"
@@ -463,7 +463,7 @@ Environment Variables:
   PR_TITLE             PR title
   ISSUE_NUMBER         GitHub issue number
   QUERY                Initial query to send to Claude after startup
-  GITHUB_TOKEN         GitHub personal access token
+  CODEMATE_GITHUB_TOKEN         GitHub personal access token
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
   CODEMATE_IMAGE       Docker image to use (default: ghcr.io/boringhappy/codemate:latest)

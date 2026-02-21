@@ -8,6 +8,11 @@
 
 -
 
+## Related Spec
+
+<!-- Link the parent spec issue: Implements #<spec-issue-number> -->
+<!-- Link the task this PR implements: Closes #<task-issue-number> -->
+
 ## Related Issues
 
 <!-- Link related issues using #issue_number or "Closes #issue_number" to auto-close -->

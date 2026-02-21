@@ -75,11 +75,10 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
    Proceed? (yes/no)
    ```
 
-5. **Ensure labels exist**:
+5. **Ensure `task` label exists**:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
-   SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
-   ensure_task_labels "${SPEC_LABEL#spec:}"
+   ensure_task_labels
    ```
 
 6. **Close orphan sub-issues** (removed from spec):
@@ -111,13 +110,11 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
    b. Write the task body to a temp file and create the issue:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
-   SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
    write_issue_body "<body content>" /tmp/task-body.md
 
    TASK_URL=$(gh issue create \
      --title "<task title>" \
      --label "task" \
-     --label "$SPEC_LABEL" \
      --body-file /tmp/task-body.md)
    rm -f /tmp/task-body.md
    ```

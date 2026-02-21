@@ -16,7 +16,7 @@ Usage: `/pm:spec-abandon <issue-number>`
 
 !`echo "--- Fetching spec issue ---"; gh issue view "$ARGUMENTS" --json number,title,url,state --jq 'if .state == "OPEN" then "[OK] Spec issue #\(.number): \(.url)" else "[WARN] Spec issue #\(.number) is already \(.state)" end' 2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"`
 
-!`echo "--- Open task issues ---"; SPEC_LABEL=$(gh issue view "$ARGUMENTS" --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]' 2>/dev/null); gh issue list --label "$SPEC_LABEL" --label "task" --state open --json number,title,url --jq '.[] | "#\(.number) \(.title) \(.url)"' 2>/dev/null || echo "(none)"`
+!`echo "--- Open task issues ---"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); gh api /repos/$REPO/issues/$ARGUMENTS/sub_issues --jq '.[] | select(.state == "open") | "#\(.number) \(.title) \(.html_url)"' 2>/dev/null || echo "(none)"`
 
 ## Instructions
 

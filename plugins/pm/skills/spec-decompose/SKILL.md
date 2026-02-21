@@ -152,6 +152,7 @@ printf '%s\n' "$spec_body"
    TASK_URL=$(gh issue create \
      --title "<task title>" \
      --label "task" \
+     --type "Task" \
      --body-file /tmp/task-body.md)
    rm -f /tmp/task-body.md
    ```

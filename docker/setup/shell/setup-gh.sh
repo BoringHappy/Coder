@@ -11,9 +11,7 @@ fi
 
 printf "${YELLOW}Setting up GitHub CLI authentication...${RESET}\n"
 
-TOKEN="$CODEMATE_GITHUB_TOKEN"
-unset CODEMATE_GITHUB_TOKEN
-echo "$TOKEN" | gh auth login --with-token
+echo "$CODEMATE_GITHUB_TOKEN" | gh auth login --with-token
 
 printf "${YELLOW}Setting up git credential helper...${RESET}\n"
 gh auth setup-git

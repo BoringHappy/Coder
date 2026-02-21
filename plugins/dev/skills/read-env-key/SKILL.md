@@ -51,7 +51,7 @@ if printenv KEY_NAME > /dev/null 2>&1; then echo "✓ KEY_NAME exists"; else ech
 ```
 
 Examples:
-- `if [ -n "${GITHUB_TOKEN+x}" ]; then echo "✓ GITHUB_TOKEN exists"; else echo "✗ GITHUB_TOKEN does not exist"; fi`
+- `if [ -n "${CODEMATE_GITHUB_TOKEN+x}" ]; then echo "✓ CODEMATE_GITHUB_TOKEN exists"; else echo "✗ CODEMATE_GITHUB_TOKEN does not exist"; fi`
 - `if printenv API_KEY > /dev/null 2>&1; then echo "✓ API_KEY exists"; else echo "✗ API_KEY does not exist"; fi`
 
 ## Security Note

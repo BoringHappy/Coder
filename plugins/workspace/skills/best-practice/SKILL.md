@@ -54,6 +54,29 @@ for LABEL in "spec" "planned" "ready" "task"; do
     echo "[MISSING] Label '$LABEL'"
   fi
 done
+
+echo ""
+echo "--- Comparing templates with best-practice ---"
+for TMPL in "spec.yml" "task.yml"; do
+  if [ -f ".github/ISSUE_TEMPLATE/$TMPL" ]; then
+    if ! grep -q "^type:" ".github/ISSUE_TEMPLATE/$TMPL"; then
+      echo "[SUGGEST] $TMPL: missing 'type:' field (best-practice requires it)"
+    else
+      echo "[OK] $TMPL: $(grep '^type:' .github/ISSUE_TEMPLATE/$TMPL)"
+    fi
+  fi
+done
+
+echo ""
+echo "--- Checking repo issue types ---"
+ISSUE_TYPES=$(gh api repos/$REPO/issue-types --jq '.[].name' 2>/dev/null || echo "")
+for IT in "Spec" "Task"; do
+  if echo "$ISSUE_TYPES" | grep -qx "$IT"; then
+    echo "[OK] Issue type '$IT' exists"
+  else
+    echo "[MISSING] Issue type '$IT'"
+  fi
+done
 `
 
 ## Instructions
@@ -141,7 +164,7 @@ done
          placeholder: Any additional information...
    ```
 
-3. **Create `.github/ISSUE_TEMPLATE/spec.yml`**. If it already exists, ask the user to confirm overwrite before proceeding.
+3. **Create `.github/ISSUE_TEMPLATE/spec.yml`**. If it already exists, compare it against the best-practice definition below and output any differences as suggestions (e.g. missing `type:` field). Ask the user if they want to apply updates.
 
    Write this content:
 
@@ -208,7 +231,7 @@ done
            - Must use existing DB schema
    ```
 
-4. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, ask the user to confirm overwrite.
+4. **Create `.github/ISSUE_TEMPLATE/task.yml`**. If it already exists, compare it against the best-practice definition below and output any differences as suggestions (e.g. missing `type:` field). Ask the user if they want to apply updates.
 
    ```yaml
    name: Task
@@ -313,7 +336,17 @@ done
    gh label create "task"    --color "1D76DB" --description "Task from spec"                   --force 2>/dev/null || true
    ```
 
-6. **Create or update `.github/pull_request_template.md`**:
+6. **Ensure issue types `Spec` and `Task` exist** — check the repo's issue types. For each of `Spec` and `Task` that is missing, ask the user for approval before creating it:
+
+   ```bash
+   EXISTING_TYPES=$(gh api repos/$REPO/issue-types --jq '.[].name' 2>/dev/null || echo "")
+   # For each missing type, prompt user: "Issue type '<name>' not found. Create it? (yes/no)"
+   # If approved:
+   gh api repos/$REPO/issue-types --method POST -f name="Spec" -f color="5319E7" -f description="Spec-level tracking issue" 2>/dev/null || true
+   gh api repos/$REPO/issue-types --method POST -f name="Task" -f color="1D76DB" -f description="Task from spec" 2>/dev/null || true
+   ```
+
+7. **Create or update `.github/pull_request_template.md`**:
    - If it already exists and contains a `## Related Spec` section, skip.
    - If it exists but lacks `## Related Spec`, append it after the first `## ` section.
    - If it doesn't exist, create it with the content below.
@@ -349,9 +382,9 @@ done
    - [ ] Commit messages follow conventional commit style
    ```
 
-7. **Commit all created/modified files** using `/git:commit`.
+8. **Commit all created/modified files** using `/git:commit`.
 
-8. Output a summary:
+9. Output a summary:
 
    ```
    ✅ Spec best practices bootstrapped for <repo>
@@ -365,6 +398,9 @@ done
 
    Labels ensured:
      spec, planned, ready, task
+
+   Issue types ensured:
+     Spec, Task
 
    Next steps:
      - Create your first spec: /pm:spec-init <feature-name>

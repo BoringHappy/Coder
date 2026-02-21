@@ -2,6 +2,7 @@ name: Spec
 description: Track a feature spec managed by the pm plugin
 title: "[Spec]: "
 labels: ["spec"]
+type: Spec
 body:
   - type: markdown
     attributes:

@@ -150,6 +150,7 @@ done
    description: Track a feature spec managed by the pm plugin
    title: "[Spec]: "
    labels: ["spec"]
+   type: Spec
    body:
      - type: markdown
        attributes:
@@ -214,6 +215,7 @@ done
    description: Implementation task linked to a spec
    title: "[Task]: "
    labels: ["task"]
+   type: Task
    body:
      - type: markdown
        attributes:

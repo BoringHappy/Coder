@@ -2,6 +2,7 @@ name: Task
 description: Implementation task linked to a spec
 title: "[Task]: "
 labels: ["task"]
+type: Task
 body:
   - type: markdown
     attributes:

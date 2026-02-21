@@ -349,10 +349,15 @@ fi
    ACCOUNT_TYPE=$(gh api users/$OWNER --jq '.type' 2>/dev/null || echo "")
    if [ "$ACCOUNT_TYPE" = "Organization" ]; then
      EXISTING_TYPES=$(gh api orgs/$OWNER/issue-types --jq '.[].name' 2>/dev/null || echo "")
-     # For each missing type, prompt user: "Issue type '<name>' not found. Create it? (yes/no)"
-     # If approved:
-     gh api orgs/$OWNER/issue-types --method POST -f name="Spec" -f color="5319E7" -f description="Spec-level tracking issue" 2>/dev/null || true
-     gh api orgs/$OWNER/issue-types --method POST -f name="Task" -f color="1D76DB" -f description="Task from spec" 2>/dev/null || true
+     for IT_NAME in "Spec" "Task"; do
+       if ! echo "$EXISTING_TYPES" | grep -qx "$IT_NAME"; then
+         # Prompt user: "Issue type '<IT_NAME>' not found. Create it? (yes/no)"
+         # If approved:
+         COLOR=$([ "$IT_NAME" = "Spec" ] && echo "5319E7" || echo "1D76DB")
+         DESC=$([ "$IT_NAME" = "Spec" ] && echo "Spec-level tracking issue" || echo "Task from spec")
+         gh api orgs/$OWNER/issue-types --method POST -f name="$IT_NAME" -f color="$COLOR" -f description="$DESC" 2>/dev/null || true
+       fi
+     done
    fi
    ```
 

@@ -34,6 +34,7 @@ Usage: `/pm:spec-init <short-title>`
    gh issue create \
      --title "[Spec]: $ARGUMENTS" \
      --label "spec" \
+     --type "Spec" \
      --body-file /tmp/spec-body.md
    rm -f /tmp/spec-body.md
    ```

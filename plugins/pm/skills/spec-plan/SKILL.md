@@ -14,9 +14,30 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`_H=$(find ~/.claude/plugins/cache/codemate/pm -name "helpers.sh" -path "*/spec-plan/scripts/*" | head -1); source "$_H"; GRANULARITY=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity: $GRANULARITY"`
+!```bash
+GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
+GRANULARITY="${GRANULARITY:-pr}"
+case "$GRANULARITY" in
+  micro|pr|macro) echo "[INFO] Granularity: $GRANULARITY" ;;
+  *) echo "[ERROR] Invalid granularity: '$GRANULARITY'. Must be one of: micro, pr, macro" >&2; exit 1 ;;
+esac
+```
 
-!`_H=$(find ~/.claude/plugins/cache/codemate/pm -name "helpers.sh" -path "*/spec-plan/scripts/*" | head -1); source "$_H"; spec_plan_fetch_issue "$(echo "$ARGUMENTS" | awk '{print $1}')"`
+!```bash
+ARG=$(echo "$ARGUMENTS" | awk '{print $1}')
+echo "--- Fetching spec issue ---"
+spec=$(gh issue view "$ARG" --json number,title,url,body,state 2>/dev/null)
+if [ -z "$spec" ] || [ "$spec" = "null" ]; then echo "[ERROR] Issue #$ARG not found"; exit 1; fi
+printf '%s' "$spec" | jq -r '"[OK] Found spec issue #\(.number): \(.url)"'
+if printf '%s' "$spec" | jq -r '.body' | grep -q "## Architecture Decisions"; then
+  echo "[WARN] Plan sections already exist in spec issue"
+else
+  echo "[OK] Ready to plan"
+fi
+echo ""
+echo "--- Current spec issue body ---"
+printf '%s' "$spec" | jq -r '.body'
+```
 
 ## Instructions
 
@@ -43,8 +64,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 5. **Post the plan as a comment** on the spec issue:
 
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   write_issue_body "<plan sections>" /tmp/spec-plan-body.md
+   printf '%s' "<plan sections>" > /tmp/spec-plan-body.md
    COMMENT_URL=$(gh issue comment <spec_issue_number> --body-file /tmp/spec-plan-body.md)
    rm -f /tmp/spec-plan-body.md
    REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
@@ -89,8 +109,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 6. **Add `planned` label** to the spec issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   ensure_planned_label
+   gh label create "planned" --color "FBCA04" --description "Spec has a technical plan" --force 2>/dev/null || true
    gh issue edit <spec_issue_number> --add-label "planned"
    ```
 

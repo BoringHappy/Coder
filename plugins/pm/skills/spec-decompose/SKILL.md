@@ -14,7 +14,42 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 !`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-decompose <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
 
-!`_H=$(find ~/.claude/plugins/cache/codemate/pm -name "helpers.sh" -path "*/spec-decompose/scripts/*" | head -1); source "$_H"; ARG=$(echo "$ARGUMENTS" | awk '{print $1}'); GRAN=""; if echo "$ARGUMENTS" | grep -q -- '--granularity'; then GRAN=$(parse_granularity "$ARGUMENTS") || exit 1; echo "[INFO] Granularity override: $GRAN"; fi; spec_decompose_fetch_issue "$ARG" "$GRAN"`
+!```bash
+ARG=$(echo "$ARGUMENTS" | awk '{print $1}')
+GRAN=""
+if echo "$ARGUMENTS" | grep -q -- '--granularity'; then
+  GRAN=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')
+  GRAN="${GRAN:-pr}"
+  case "$GRAN" in
+    micro|pr|macro) echo "[INFO] Granularity override: $GRAN" ;;
+    *) echo "[ERROR] Invalid granularity: '$GRAN'. Must be one of: micro, pr, macro" >&2; exit 1 ;;
+  esac
+fi
+echo "--- Fetching spec issue ---"
+spec=$(gh issue view "$ARG" --json number,title,url,body,state,labels 2>/dev/null)
+if [ -z "$spec" ] || [ "$spec" = "null" ]; then echo "[ERROR] Issue #$ARG not found"; exit 1; fi
+spec_num=$(printf '%s' "$spec" | jq -r '.number')
+spec_url=$(printf '%s' "$spec" | jq -r '.url')
+spec_label=$(printf '%s' "$spec" | jq -r '[.labels[].name | select(startswith("spec:"))] | .[0]')
+echo "[OK] Found spec issue #$spec_num: $spec_url"
+spec_body=$(printf '%s' "$spec" | jq -r '.body')
+if ! printf '%s' "$spec_body" | grep -q "## Task Breakdown"; then
+  echo "[ERROR] No Task Breakdown section found. Run /pm:spec-plan $ARG first."; exit 1
+fi
+detected=$(printf '%s' "$spec_body" | grep -m1 '<!-- granularity:' | sed 's/.*granularity: *\([^ >]*\).*/\1/')
+gran="${GRAN:-${detected:-pr}}"
+echo "[INFO] Granularity: $gran | Label: $spec_label"
+repo=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+echo "[INFO] Repo: $repo | Spec issue: #$spec_num"
+echo ""
+echo "--- Existing sub-issues ---"
+gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+  "/repos/$repo/issues/$spec_num/sub_issues" \
+  --jq '.[] | "  #\(.number) [\(.state)] \(.title)"' 2>/dev/null || echo "  None"
+echo ""
+echo "--- Spec issue body ---"
+printf '%s\n' "$spec_body"
+```
 
 ## Instructions
 
@@ -77,8 +112,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 5. **Ensure `task` label exists**:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   ensure_task_labels
+   gh label create "task" --color "1D76DB" --description "Task from spec" --force 2>/dev/null || true
    ```
 
 6. **Close orphan sub-issues** (removed from spec):
@@ -90,8 +124,12 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    b. Remove it from the spec issue's sub-issues:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   remove_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "<orphan_issue_id>"
+   gh api \
+     --method DELETE \
+     -H "Accept: application/vnd.github+json" \
+     -H "X-GitHub-Api-Version: 2022-11-28" \
+     "/repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues" \
+     -F sub_issue_id="<orphan_issue_id>"
    ```
 
 7. **Create new task issues** and register as sub-issues:
@@ -109,8 +147,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    b. Write the task body to a temp file and create the issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   write_issue_body "<body content>" /tmp/task-body.md
+   printf '%s' "<body content>" > /tmp/task-body.md
 
    TASK_URL=$(gh issue create \
      --title "<task title>" \
@@ -127,14 +164,17 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
    d. Register as sub-issue of the spec issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   register_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "$TASK_ISSUE_ID"
+   gh api \
+     --method POST \
+     -H "Accept: application/vnd.github+json" \
+     -H "X-GitHub-Api-Version: 2022-11-28" \
+     "/repos/$REPO/issues/$SPEC_ISSUE_NUMBER/sub_issues" \
+     -F sub_issue_id="$TASK_ISSUE_ID"
    ```
 
 8. **Add `ready` label** to the spec issue:
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   ensure_ready_label
+   gh label create "ready" --color "0075CA" --description "Spec tasks have been decomposed" --force 2>/dev/null || true
    gh issue edit $SPEC_ISSUE_NUMBER --add-label "ready"
    ```
 

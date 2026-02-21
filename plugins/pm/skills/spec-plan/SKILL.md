@@ -40,14 +40,16 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
    - If the user requests changes, revise the plan in the conversation and re-present it. Repeat until confirmed.
    - Only proceed to the next step once the user explicitly approves.
 
-5. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
+5. **Post the plan as a comment** on the spec issue:
 
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
-   write_issue_body "<full updated body with plan sections appended>" /tmp/spec-plan-body.md
-   gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
+   write_issue_body "<plan sections>" /tmp/spec-plan-body.md
+   gh issue comment <spec_issue_number> --body-file /tmp/spec-plan-body.md
    rm -f /tmp/spec-plan-body.md
    ```
+
+   The comment body contains only the plan sections (Architecture Decisions, Technical Approach, Task Breakdown, Effort Estimate).
 
    ```markdown
 
@@ -89,8 +91,7 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
    gh issue edit <spec_issue_number> --add-label "planned"
    ```
 
-7. Confirm: "✅ Technical plan added to spec issue #<number> (granularity: <value>)"
-8. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <issue_number>`"
+7. Confirm: "✅ Plan posted as a comment on spec issue #<number>. React with 👍 to approve, then run `/pm:spec-decompose <number>` to create tasks."
 
 ## Prerequisites
 - A spec issue must exist (run `/pm:spec-init <title>` first)

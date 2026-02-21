@@ -36,7 +36,11 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
      - An effort estimate in days consistent with the chosen granularity
      - What it depends on (if anything)
 
-4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
+4. **Present the draft plan** in the conversation (do not write to the issue yet). Ask: "Does this plan look good, or would you like to discuss or adjust anything before I update the issue?"
+   - If the user requests changes, revise the plan in the conversation and re-present it. Repeat until confirmed.
+   - Only proceed to the next step once the user explicitly approves.
+
+5. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
 
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
@@ -78,15 +82,15 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
    - Critical path: <longest dependency chain>
    ```
 
-5. **Add `planned` label** to the spec issue:
+6. **Add `planned` label** to the spec issue:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
    ensure_planned_label
    gh issue edit <spec_issue_number> --add-label "planned"
    ```
 
-6. Confirm: "✅ Technical plan added to spec issue #<number> (granularity: <value>)"
-7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <issue_number>`"
+7. Confirm: "✅ Technical plan added to spec issue #<number> (granularity: <value>)"
+8. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <issue_number>`"
 
 ## Prerequisites
 - A spec issue must exist (run `/pm:spec-init <title>` first)

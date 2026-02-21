@@ -69,7 +69,7 @@ done
 
 echo ""
 echo "--- Checking repo issue types ---"
-ISSUE_TYPES=$(gh api repos/$REPO/issue-types --jq '.[].name' 2>/dev/null || echo "")
+ISSUE_TYPES=$(gh api orgs/$(echo $REPO | cut -d'/' -f1)/issue-types --jq '.[].name' 2>/dev/null || echo "")
 for IT in "Spec" "Task"; do
   if echo "$ISSUE_TYPES" | grep -qx "$IT"; then
     echo "[OK] Issue type '$IT' exists"
@@ -339,11 +339,11 @@ done
 6. **Ensure issue types `Spec` and `Task` exist** — check the repo's issue types. For each of `Spec` and `Task` that is missing, ask the user for approval before creating it:
 
    ```bash
-   EXISTING_TYPES=$(gh api repos/$REPO/issue-types --jq '.[].name' 2>/dev/null || echo "")
+   EXISTING_TYPES=$(gh api orgs/$(echo $REPO | cut -d'/' -f1)/issue-types --jq '.[].name' 2>/dev/null || echo "")
    # For each missing type, prompt user: "Issue type '<name>' not found. Create it? (yes/no)"
    # If approved:
-   gh api repos/$REPO/issue-types --method POST -f name="Spec" -f color="5319E7" -f description="Spec-level tracking issue" 2>/dev/null || true
-   gh api repos/$REPO/issue-types --method POST -f name="Task" -f color="1D76DB" -f description="Task from spec" 2>/dev/null || true
+   gh api orgs/$(echo $REPO | cut -d'/' -f1)/issue-types --method POST -f name="Spec" -f color="5319E7" -f description="Spec-level tracking issue" 2>/dev/null || true
+   gh api orgs/$(echo $REPO | cut -d'/' -f1)/issue-types --method POST -f name="Task" -f color="1D76DB" -f description="Task from spec" 2>/dev/null || true
    ```
 
 7. **Create or update `.github/pull_request_template.md`**:

@@ -18,14 +18,49 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 ## Instructions
 
-1. **Determine task splitting rules** from the granularity reported in preflight:
+1. **Find and verify the approved plan comment:**
+
+   ```bash
+   REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+   # Find the most recent comment with a rocket reaction (marks it as the plan comment)
+   COMMENT_ID=$(gh api /repos/$REPO/issues/<spec_issue_number>/comments \
+     --jq '[.[] | select(.body | contains("## Task Breakdown"))] | last | .id')
+
+   if [ -z "$COMMENT_ID" ] || [ "$COMMENT_ID" = "null" ]; then
+     echo "[ERROR] No plan comment found on issue #<spec_issue_number>. Run /pm:spec-plan first."
+     exit 1
+   fi
+
+   ROCKET=$(gh api /repos/$REPO/issues/comments/$COMMENT_ID/reactions \
+     --jq '[.[] | select(.content == "rocket")] | length')
+
+   if [ "$ROCKET" = "0" ]; then
+     echo "[ERROR] Comment #$COMMENT_ID is not a valid plan comment (missing 🚀 reaction)."
+     exit 1
+   fi
+
+   # Check for +1 (👍) approval reaction
+   APPROVED=$(gh api /repos/$REPO/issues/comments/$COMMENT_ID/reactions \
+     --jq '[.[] | select(.content == "+1")] | length')
+
+   if [ "$APPROVED" = "0" ]; then
+     echo "[ERROR] Plan comment #$COMMENT_ID has not been approved. React with 👍 on the plan comment to approve."
+     exit 1
+   fi
+
+   echo "[INFO] Plan approved (👍 x$APPROVED). Proceeding with decomposition."
+   ```
+
+   If no plan comment exists or it has no 👍 reaction, abort.
+
+2. **Determine task splitting rules** from the granularity reported in preflight:
    - `micro` — Split aggressively. Each task: 0.5–1 day. One concern per task (single endpoint, single component, single migration).
    - `pr` (default) — Keep tasks as PR-sized units. Each task: 1–3 days. Merge very small rows if they naturally belong together; split rows that are clearly too large.
    - `macro` — Merge related tasks into milestones. Each task: 3–7 days. Group rows by area. Aim for 3–5 tasks total.
 
-2. **Parse the Task Breakdown table** from the spec issue body. Apply the splitting rules to produce the **new task list** (list of titles + tags + dependencies).
+3. **Parse the Task Breakdown table** from the approved plan comment body. Apply the splitting rules to produce the **new task list** (list of titles + tags + dependencies).
 
-3. **Reconcile** against existing sub-issues fetched in preflight:
+4. **Reconcile** against existing sub-issues fetched in preflight:
 
    - **Match** existing sub-issues to new tasks using semantic similarity — consider two tasks the same if they describe the same intent, even if the title wording differs slightly (e.g. "Set up DB schema" matches "Database schema setup"). Do not rely on exact string comparison.
    - **New tasks** (in new list, no semantically matching sub-issue) → create issue + register as sub-issue.
@@ -40,14 +75,13 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
    Proceed? (yes/no)
    ```
 
-4. **Ensure labels exist**:
+5. **Ensure `task` label exists**:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
-   SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
-   ensure_task_labels "${SPEC_LABEL#spec:}"
+   ensure_task_labels
    ```
 
-5. **Close orphan sub-issues** (removed from spec):
+6. **Close orphan sub-issues** (removed from spec):
 
    a. Close the issue with a comment:
    ```bash
@@ -60,7 +94,7 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
    remove_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "<orphan_issue_id>"
    ```
 
-6. **Create new task issues** and register as sub-issues:
+7. **Create new task issues** and register as sub-issues:
 
    a. Read the task issue template to understand the expected fields:
    ```bash
@@ -76,13 +110,11 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
    b. Write the task body to a temp file and create the issue:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
-   SPEC_LABEL=$(gh issue view <spec_issue_number> --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]')
    write_issue_body "<body content>" /tmp/task-body.md
 
    TASK_URL=$(gh issue create \
      --title "<task title>" \
      --label "task" \
-     --label "$SPEC_LABEL" \
      --body-file /tmp/task-body.md)
    rm -f /tmp/task-body.md
    ```
@@ -99,14 +131,14 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
    register_sub_issue "$REPO" "$SPEC_ISSUE_NUMBER" "$TASK_ISSUE_ID"
    ```
 
-7. **Add `ready` label** to the spec issue:
+8. **Add `ready` label** to the spec issue:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
    ensure_ready_label
    gh issue edit $SPEC_ISSUE_NUMBER --add-label "ready"
    ```
 
-8. **Output a summary:**
+9. **Output a summary:**
    ```
    ✅ Decomposed <n> tasks for spec #<spec_issue_number> (granularity: <value>)
 
@@ -125,6 +157,6 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
    ```
 
 ## Prerequisites
-- A spec issue must exist with a `## Task Breakdown` section (run `/pm:spec-plan <issue-number>` first)
+- A spec issue must exist with a plan comment containing `## Task Breakdown` and a 👍 reaction (run `/pm:spec-plan <issue-number>` first, then approve the comment)
 - Must be authenticated: `gh auth status`
 - Must be inside a GitHub repository

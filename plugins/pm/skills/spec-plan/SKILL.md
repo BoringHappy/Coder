@@ -36,14 +36,23 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
      - An effort estimate in days consistent with the chosen granularity
      - What it depends on (if anything)
 
-4. **Write the updated body to a temp file and update the spec issue** to avoid shell escaping issues:
+4. **Present the draft plan** in the conversation (do not write to the issue yet). Ask: "Does this plan look good, or would you like to discuss or adjust anything before I update the issue?"
+   - If the user requests changes, revise the plan in the conversation and re-present it. Repeat until confirmed.
+   - Only proceed to the next step once the user explicitly approves.
+
+5. **Post the plan as a comment** on the spec issue:
 
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
-   write_issue_body "<full updated body with plan sections appended>" /tmp/spec-plan-body.md
-   gh issue edit <spec_issue_number> --body-file /tmp/spec-plan-body.md
+   write_issue_body "<plan sections>" /tmp/spec-plan-body.md
+   COMMENT_URL=$(gh issue comment <spec_issue_number> --body-file /tmp/spec-plan-body.md)
    rm -f /tmp/spec-plan-body.md
+   REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+   COMMENT_ID=$(echo "$COMMENT_URL" | grep -oE '[0-9]+$')
+   gh api /repos/$REPO/issues/comments/$COMMENT_ID/reactions --method POST -f content="rocket"
    ```
+
+   The comment body contains only the plan sections (Architecture Decisions, Technical Approach, Task Breakdown, Effort Estimate). The 🚀 reaction is added automatically to mark it as the plan comment.
 
    ```markdown
 
@@ -78,15 +87,14 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
    - Critical path: <longest dependency chain>
    ```
 
-5. **Add `planned` label** to the spec issue:
+6. **Add `planned` label** to the spec issue:
    ```bash
    source "$BASE_DIR/scripts/helpers.sh"
    ensure_planned_label
    gh issue edit <spec_issue_number> --add-label "planned"
    ```
 
-6. Confirm: "✅ Technical plan added to spec issue #<number> (granularity: <value>)"
-7. Suggest next step: "Ready to create tasks? Run: `/pm:spec-decompose <issue_number>`"
+7. Confirm: "✅ Plan posted as a comment on spec issue #<number>. React with 👍 to approve, then run `/pm:spec-decompose <number>` to create tasks."
 
 ## Prerequisites
 - A spec issue must exist (run `/pm:spec-init <title>` first)

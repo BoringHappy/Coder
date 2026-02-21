@@ -16,7 +16,7 @@ Usage: `/pm:spec-next <issue-number>`
 
 !`echo "--- Fetching spec issue ---"; gh issue view "$ARGUMENTS" --json number,title,url,state --jq '"[OK] Spec issue #\(.number)"' 2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"`
 
-!`echo "--- All task issues (with bodies for dependency resolution) ---"; SPEC_LABEL=$(gh issue view "$ARGUMENTS" --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]' 2>/dev/null); if [ -z "$SPEC_LABEL" ] || [ "$SPEC_LABEL" = "null" ]; then echo "[ERROR] No spec: label found on issue #$ARGUMENTS. Is this a spec issue?"; exit 1; fi; gh issue list --label "$SPEC_LABEL" --label "task" --state all --json number,title,state,url,body --jq '.' 2>/dev/null || echo "[]"`
+!`echo "--- All task issues (with bodies for dependency resolution) ---"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); gh api /repos/$REPO/issues/$ARGUMENTS/sub_issues --jq '.' 2>/dev/null || echo "[]"`
 
 ## Instructions
 

@@ -16,7 +16,7 @@ Usage: `/pm:spec-status <issue-number>`
 
 !`echo "--- Fetching spec issue ---"; gh issue view "$ARGUMENTS" --json number,title,url,body,state,labels --jq '"[OK] Spec issue #\(.number) [\(.state)]: \(.url)\n\(.body)"' 2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"`
 
-!`echo "--- Task issues ---"; SPEC_LABEL=$(gh issue view "$ARGUMENTS" --json labels --jq '[.labels[].name | select(startswith("spec:"))] | .[0]' 2>/dev/null); gh issue list --label "$SPEC_LABEL" --label "task" --state all --json number,title,state,url --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.url)"' 2>/dev/null || echo "(none)"`
+!`echo "--- Task issues ---"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); gh api /repos/$REPO/issues/$ARGUMENTS/sub_issues --jq '.[] | "#\(.number) [\(.state | ascii_upcase)] \(.title) \(.html_url)"' 2>/dev/null || echo "(none)"`
 
 ## Instructions
 

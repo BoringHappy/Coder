@@ -52,19 +52,14 @@ spec_decompose_fetch_issue() {
     echo "[ERROR] Issue #$arg not found"
     return 1
   fi
-  local spec_num spec_url spec_label spec_body detected gran repo
+  local spec_num spec_url spec_body detected gran repo
   spec_num=$(printf '%s' "$spec" | jq -r '.number')
   spec_url=$(printf '%s' "$spec" | jq -r '.url')
-  spec_label=$(printf '%s' "$spec" | jq -r '[.labels[].name | select(startswith("spec:"))] | .[0]')
   echo "[OK] Found spec issue #$spec_num: $spec_url"
   spec_body=$(printf '%s' "$spec" | jq -r '.body')
-  if ! printf '%s' "$spec_body" | grep -q "## Task Breakdown"; then
-    echo "[ERROR] No Task Breakdown section found. Run /pm:spec-plan $arg first."
-    return 1
-  fi
   detected=$(printf '%s' "$spec_body" | grep -m1 '<!-- granularity:' | sed 's/.*granularity: *\([^ >]*\).*/\1/')
   gran="${gran_override:-${detected:-pr}}"
-  echo "[INFO] Granularity: $gran | Label: $spec_label"
+  echo "[INFO] Granularity: $gran"
   repo=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
   echo "[INFO] Repo: $repo | Spec issue: #$spec_num"
   echo ""
@@ -88,11 +83,9 @@ ensure_spec_labels() {
 }
 
 # Ensure required labels exist for tasks
-# Usage: ensure_task_labels <feature-name>
+# Usage: ensure_task_labels
 ensure_task_labels() {
-  local name="$1"
   gh label create "task" --color "1D76DB" --description "Task from spec" --force 2>/dev/null || true
-  gh label create "spec:$name" --color "0E8A16" --description "Part of spec: $name" --force 2>/dev/null || true
 }
 
 # Ensure planned label exists

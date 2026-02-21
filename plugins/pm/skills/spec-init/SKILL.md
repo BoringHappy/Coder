@@ -29,8 +29,7 @@ Usage: `/pm:spec-init <short-title>`
 2. **Create the spec issue** — write the body to a temp file, then create the issue. If a spec template was found in preflight, mirror its section headings exactly. Otherwise use the default format below:
 
    ```bash
-   source "$BASE_DIR/scripts/helpers.sh"
-   write_issue_body "<body content>" /tmp/spec-body.md
+   printf '%s' "<body content>" > /tmp/spec-body.md
 
    gh issue create \
      --title "[Spec]: $ARGUMENTS" \

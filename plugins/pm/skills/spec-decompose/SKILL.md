@@ -95,7 +95,7 @@ printf '%s\n' "$spec_body"
 
 2. **Determine task splitting rules** from the granularity reported in preflight:
    - `micro` — Split aggressively. Each task: 0.5–1 day. One concern per task (single endpoint, single component, single migration).
-   - `pr` (default) — Keep tasks as PR-sized units. Each task: 1–3 days. Merge very small rows if they naturally belong together; split rows that are clearly too large.
+   - `pr` (default) — Keep tasks as PR-sized units. Each task: 1–3 days, ~200–400 LOC, reviewable in under 30 minutes. **Bias toward merging**: combine rows that share the same area or would naturally be reviewed together. Only split a row if it clearly exceeds the LOC/time ceiling on its own. Tests belong in the same task as the code they cover.
    - `macro` — Merge related tasks into milestones. Each task: 3–7 days. Group rows by area. Aim for 3–5 tasks total.
 
 3. **Parse the Task Breakdown table** from the approved plan comment body. Apply the splitting rules to produce the **new task list** (list of titles + tags + dependencies).

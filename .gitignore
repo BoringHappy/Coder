@@ -210,7 +210,8 @@ __marimo__/
 .todo.md
 
 .vscode/
-.claude/
+.claude/*
+!.claude/rules/
 settings.json
 .claude_in_docker/
 .claude_in_docker.json

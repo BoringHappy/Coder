@@ -446,7 +446,7 @@ Options:
   --pr-title TITLE     PR title (optional)
   --issue NUMBER       GitHub issue number to work on (creates branch issue-NUMBER)
   --query QUERY        Initial query to send to Claude after startup
-  --no-pr              Skip PR creation and branch creation for new branches
+  --no-pr              Skip PR creation and branch push for new branches
   --repo URL           Git repository URL (can be your own repo or a fork)
   --upstream URL       Upstream repository URL (optional, for fork-based workflows)
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
@@ -707,6 +707,11 @@ main() {
         fi
 
         print_info "Working on issue #${ISSUE_NUMBER} using branch: ${BRANCH_NAME}"
+    fi
+
+    # Warn if --no-pr is used with --pr (no-pr has no effect in this case)
+    if [ -n "$NO_PR" ] && [ -n "$PR_NUMBER" ]; then
+        print_warning "--no-pr has no effect when --pr is specified"
     fi
 
     # Validate required parameters

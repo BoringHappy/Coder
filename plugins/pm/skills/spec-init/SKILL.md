@@ -45,12 +45,14 @@ fi
    ```bash
    printf '%s' "<body content>" > /tmp/spec-body.md
 
-   gh issue create \
+   SPEC_URL=$(gh issue create \
      --title "[Spec]: $ARGUMENTS" \
      --label "spec" \
-     --type "Spec" \
-     --body-file /tmp/spec-body.md
+     --body-file /tmp/spec-body.md)
    rm -f /tmp/spec-body.md
+   SPEC_NUMBER=$(echo "$SPEC_URL" | grep -oE '[0-9]+$')
+   REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+   gh api -X PATCH repos/$REPO/issues/$SPEC_NUMBER --field type=Spec
    ```
 
    Default body format (used when no template exists):

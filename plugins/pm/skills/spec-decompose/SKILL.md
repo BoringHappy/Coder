@@ -157,7 +157,6 @@ printf '%s\n' "$spec_body"
    TASK_URL=$(gh issue create \
      --title "<task title>" \
      --label "task" \
-     --type "Task" \
      --body-file /tmp/task-body.md)
    rm -f /tmp/task-body.md
    ```
@@ -165,6 +164,7 @@ printf '%s\n' "$spec_body"
    c. Get the task issue's numeric ID (not number):
    ```bash
    TASK_ISSUE_NUMBER=$(echo "$TASK_URL" | grep -oE '[0-9]+$')
+   gh api -X PATCH repos/$REPO/issues/$TASK_ISSUE_NUMBER --field type=Task
    TASK_ISSUE_ID=$(gh api /repos/$REPO/issues/$TASK_ISSUE_NUMBER --jq '.id')
    ```
 

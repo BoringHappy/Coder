@@ -12,7 +12,12 @@ Usage: `/pm:spec-done <issue-number>`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-done <issue-number>"; exit 1; fi`
+!```bash
+if [ -z "$ARGUMENTS" ]; then
+  echo "[ERROR] No issue number provided. Usage: /pm:spec-done <issue-number>"
+  exit 1
+fi
+```
 
 !```bash
 echo "--- Fetching spec issue ---"

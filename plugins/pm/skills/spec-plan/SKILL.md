@@ -50,7 +50,7 @@ printf '%s' "$spec" | jq -r '.body'
 
 2. **Determine task sizing rules** from the granularity reported in preflight:
    - `micro` — Tasks are small and focused. Each task: 0.5–1 day. Aim for 10–20 tasks. Split by thin vertical slice (one endpoint, one component, one migration). Each task should be committable in isolation.
-   - `pr` (default) — Tasks are PR-sized shippable units. Each task: 1–3 days. Aim for 5–10 tasks. Each task should be independently reviewable and mergeable, delivering a coherent piece of functionality.
+   - `pr` (default) — Tasks map to one logical change: a single coherent unit of functionality that is independently reviewable and mergeable. Each task: 1–3 days, ~200–400 LOC, reviewable in under 30 minutes. Aim for 3–6 tasks. Tests for the change are included in the same task — do not split them out. Do not mix features with bug fixes; exclude unrelated refactoring into separate tasks.
    - `macro` — Tasks are large milestones. Each task: 3–7 days. Aim for 3–5 tasks. Each task represents a major deliverable (e.g. "complete data layer", "end-to-end API", "full UI flow").
 
 3. **Analyze the spec** above and produce a technical plan covering:

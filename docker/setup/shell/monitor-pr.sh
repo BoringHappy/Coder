@@ -115,6 +115,7 @@ check_pr_comments() {
     for attempt in 1 2 3; do
         comments_data=$(gh api repos/:owner/:repo/pulls/"$pr_number"/comments --jq "
             . $time_filter |
+            map(select(.user.login | endswith(\"[bot]\") | not)) |
             group_by(.in_reply_to_id // .id) |
             map(
                 if (.[-1].body | startswith(\"Claude Replied:\")) then
@@ -149,12 +150,14 @@ check_issue_comments() {
         if [ -n "$LAST_ISSUE_COMMENT_ID" ]; then
             comments=$(gh api repos/:owner/:repo/issues/"$pr_number"/comments --jq "
                 map(select(.id > $LAST_ISSUE_COMMENT_ID)) |
+                map(select(.user.login | endswith(\"[bot]\") | not)) |
                 map(select(.body | startswith(\"Claude Replied:\") | not)) |
                 map(select(.reactions.eyes == 0)) |
                 sort_by(.id)
             " 2>/dev/null)
         else
             comments=$(gh api repos/:owner/:repo/issues/"$pr_number"/comments --jq "
+                map(select(.user.login | endswith(\"[bot]\") | not)) |
                 map(select(.body | startswith(\"Claude Replied:\") | not)) |
                 map(select(.reactions.eyes == 0)) |
                 sort_by(.id)

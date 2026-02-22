@@ -11,11 +11,25 @@ Usage: `/pm:spec-init <short-title>`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No title provided. Usage: /pm:spec-init <short-title>"; exit 1; fi`
+!```bash
+if [ -z "$ARGUMENTS" ]; then
+  echo "[ERROR] No title provided. Usage: /pm:spec-init <short-title>"
+  exit 1
+fi
+```
 
-!`gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"'`
+!```bash
+gh repo view --json nameWithOwner -q '"Repo: \(.nameWithOwner)"'
+```
 
-!`if [ -f ".github/ISSUE_TEMPLATE/spec.yml" ]; then echo "--- Spec issue template ---"; cat ".github/ISSUE_TEMPLATE/spec.yml"; else echo "[WARN] No spec template found at .github/ISSUE_TEMPLATE/spec.yml"; fi`
+!```bash
+if [ -f ".github/ISSUE_TEMPLATE/spec.yml" ]; then
+  echo "--- Spec issue template ---"
+  cat ".github/ISSUE_TEMPLATE/spec.yml"
+else
+  echo "[WARN] No spec template found at .github/ISSUE_TEMPLATE/spec.yml"
+fi
+```
 
 ## Instructions
 

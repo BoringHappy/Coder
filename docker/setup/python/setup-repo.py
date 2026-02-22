@@ -55,6 +55,7 @@ def main():
 
     branch_name = os.getenv("BRANCH_NAME", "")
     pr_number = os.getenv("PR_NUMBER", "")
+    no_pr = os.getenv("NO_PR", "")
 
     if not branch_name and not pr_number:
         print(f"{RED}Skipping git PR setup: GIT_REPO_URL or BRANCH_NAME/PR_NUMBER not set{RESET}")
@@ -155,9 +156,8 @@ def main():
                 print(f"  Creating new branch: {BLUE}{branch_name}{RESET}")
                 run(f"git checkout -b {branch_name}")
 
-                # Check if fork workflow (upstream exists)
-                if upstream_repo_url:
-                    # Fork workflow: Don't create PR yet, let user create it when ready
+                # Check if fork workflow (upstream exists) or no-pr mode
+                if upstream_repo_url or no_pr:
                     print(f"  {YELLOW}Branch created locally. Create PR when ready.{RESET}")
                     pr_url = ""
                 else:

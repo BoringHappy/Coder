@@ -20,6 +20,7 @@ PR_NUMBER="${PR_NUMBER:-}"
 PR_TITLE="${PR_TITLE:-}"
 ISSUE_NUMBER="${ISSUE_NUMBER:-}"
 QUERY="${QUERY:-}"
+NO_PR="${NO_PR:-}"
 CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
 BUILD_LOCAL=false
 DOCKERFILE_PATH="docker/Dockerfile"
@@ -418,6 +419,7 @@ run_codemate() {
         -e "PR_TITLE=$PR_TITLE"
         -e "ISSUE_NUMBER=$ISSUE_NUMBER"
         -e "QUERY=$QUERY"
+        -e "NO_PR=$NO_PR"
         -e "CODEMATE_GITHUB_TOKEN=$CODEMATE_GITHUB_TOKEN"
         -e "GIT_USER_NAME=$GIT_USER_NAME"
         -e "GIT_USER_EMAIL=$GIT_USER_EMAIL"
@@ -444,6 +446,7 @@ Options:
   --pr-title TITLE     PR title (optional)
   --issue NUMBER       GitHub issue number to work on (creates branch issue-NUMBER)
   --query QUERY        Initial query to send to Claude after startup
+  --no-pr              Skip PR creation and branch creation for new branches
   --repo URL           Git repository URL (can be your own repo or a fork)
   --upstream URL       Upstream repository URL (optional, for fork-based workflows)
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
@@ -572,6 +575,10 @@ main() {
                 fi
                 QUERY="$2"
                 shift 2
+                ;;
+            --no-pr)
+                NO_PR="true"
+                shift
                 ;;
             --repo)
                 if [ -z "$2" ]; then

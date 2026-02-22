@@ -12,7 +12,12 @@ Usage: `/pm:spec-plan <issue-number> [--granularity micro|pr|macro]`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
+!```bash
+if [ -z "$ARGUMENTS" ]; then
+  echo "[ERROR] No issue number provided. Usage: /pm:spec-plan <issue-number> [--granularity micro|pr|macro]"
+  exit 1
+fi
+```
 
 !```bash
 GRANULARITY=$(echo "$ARGUMENTS" | sed -n 's/.*--granularity[[:space:]]\+\([^[:space:]]\+\).*/\1/p')

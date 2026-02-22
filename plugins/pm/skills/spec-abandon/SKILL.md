@@ -12,11 +12,30 @@ Usage: `/pm:spec-abandon <issue-number>`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-abandon <issue-number>"; echo ""; echo "Available specs:"; gh issue list --label "spec" --state open --json number,title --jq '.[] | "  #\(.number) \(.title)"' 2>/dev/null || echo "  (none found)"; exit 1; fi`
+!```bash
+if [ -z "$ARGUMENTS" ]; then
+  echo "[ERROR] No issue number provided. Usage: /pm:spec-abandon <issue-number>"
+  echo ""
+  echo "Available specs:"
+  gh issue list --label "spec" --state open --json number,title --jq '.[] | "  #\(.number) \(.title)"' 2>/dev/null || echo "  (none found)"
+  exit 1
+fi
+```
 
-!`echo "--- Fetching spec issue ---"; gh issue view "$ARGUMENTS" --json number,title,url,state --jq 'if .state == "OPEN" then "[OK] Spec issue #\(.number): \(.url)" else "[WARN] Spec issue #\(.number) is already \(.state)" end' 2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"`
+!```bash
+echo "--- Fetching spec issue ---"
+gh issue view "$ARGUMENTS" --json number,title,url,state \
+  --jq 'if .state == "OPEN" then "[OK] Spec issue #\(.number): \(.url)" else "[WARN] Spec issue #\(.number) is already \(.state)" end' \
+  2>/dev/null || echo "[ERROR] Issue #$ARGUMENTS not found"
+```
 
-!`echo "--- Open task issues ---"; REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner'); gh api /repos/$REPO/issues/$ARGUMENTS/sub_issues --jq '.[] | select(.state == "open") | "#\(.number) \(.title) \(.html_url)"' 2>/dev/null || echo "(none)"`
+!```bash
+echo "--- Open task issues ---"
+REPO=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+gh api /repos/$REPO/issues/$ARGUMENTS/sub_issues \
+  --jq '.[] | select(.state == "open") | "#\(.number) \(.title) \(.html_url)"' \
+  2>/dev/null || echo "(none)"
+```
 
 ## Instructions
 

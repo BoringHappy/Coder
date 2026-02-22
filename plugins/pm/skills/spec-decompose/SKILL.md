@@ -12,7 +12,12 @@ Usage: `/pm:spec-decompose <issue-number> [--granularity micro|pr|macro]`
 
 ## Preflight
 
-!`if [ -z "$ARGUMENTS" ]; then echo "[ERROR] No issue number provided. Usage: /pm:spec-decompose <issue-number> [--granularity micro|pr|macro]"; exit 1; fi`
+!```bash
+if [ -z "$ARGUMENTS" ]; then
+  echo "[ERROR] No issue number provided. Usage: /pm:spec-decompose <issue-number> [--granularity micro|pr|macro]"
+  exit 1
+fi
+```
 
 !```bash
 ARG=$(echo "$ARGUMENTS" | awk '{print $1}')

@@ -9,7 +9,7 @@ Lists all feature specs as GitHub Issues labeled with `spec`.
 
 ## Specs
 
-!`echo "--- Fetching spec issues ---"; gh issue list --label "spec" --state all --limit 200 --json number,title,state,url,labels --jq 'if length == 0 then "No spec issues found. Create your first spec with: /pm:spec-init <title>" else "SPEC_ISSUES:\n" + (. | tojson) end' 2>/dev/null || echo "[]"`
+!`echo "--- Fetching spec issues ---"; gh issue list --label "spec" --state all --limit 200 --json number,title,state,url,labels --jq '[.[] | select(.labels | map(.name) | contains(["done"]) | not)] | if length == 0 then "No spec issues found. Create your first spec with: /pm:spec-init <title>" else "SPEC_ISSUES:\n" + (. | tojson) end' 2>/dev/null || echo "[]"`
 
 ## Instructions
 

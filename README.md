@@ -19,7 +19,7 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 - zsh with Oh My Zsh
 - Persistent Claude configuration
 - Built-in Claude Code skills for PR workflow automation
-- Slack notifications when Claude stops (via `SLACK_WEBHOOK`)
+- Slack and Lark notifications when Claude stops (via `SLACK_WEBHOOK` / `LARK_WEBHOOK`)
 - tmux session management with PR comment monitoring
 
 ## Quick Start
@@ -31,6 +31,8 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 - Anthropic API key
 
 Run `codemate --setup` to create the required configuration files (global config in `~/.codemate/` and project `.env`).
+
+> **Note:** `git` is also required as a prerequisite — the script checks for it at startup.
 
 #### Mac Users
 
@@ -73,6 +75,9 @@ codemate --repo https://github.com/your-org/your-repo.git --branch feature/xyz
 # Run with branch name (auto-detects repo from: --repo > .env > current directory's git remote)
 codemate --branch feature/your-branch
 
+# Run with a custom PR title
+codemate --branch feature/your-branch --pr-title "My feature title"
+
 # Run with existing PR
 codemate --pr 123
 
@@ -82,6 +87,9 @@ codemate --issue 456
 # Fork-based workflow (for open-source contributions)
 codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --branch fix-bug
 codemate --repo https://github.com/yourname/project.git --upstream https://github.com/maintainer/project.git --issue 789
+
+# Skip PR creation on new branches (useful for forks or draft work)
+codemate --branch feature/xyz --no-pr
 
 # Run with custom volume mounts (optional)
 codemate --branch feature/xyz --mount ~/data:/data
@@ -189,17 +197,20 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `UPSTREAM_REPO_URL` | No | Upstream repository URL (for fork-based workflows) |
 | `BRANCH_NAME` | No | Branch to work on |
 | `PR_NUMBER` | No | Existing PR number to work on |
+| `PR_TITLE` | No | PR title for newly created PRs |
 | `ISSUE_NUMBER` | No | GitHub issue number (creates branch `issue-NUMBER` and uses `/issue:read-issue` skill) |
+| `NO_PR` | No | Set to `true` to skip PR creation and branch push for new branches |
 | `CODEMATE_GITHUB_TOKEN` | Auto | GitHub personal access token (defaults to `gh auth token` if not provided) |
 | `GIT_USER_NAME` | Auto | Git commit author name (defaults to `git config user.name` if not provided) |
 | `GIT_USER_EMAIL` | Auto | Git commit author email (defaults to `git config user.email` if not provided) |
 | `CODEMATE_IMAGE` | No | Custom image (default: `ghcr.io/boringhappy/codemate:latest`) |
-| `SLACK_WEBHOOK` | No | Slack Incoming Webhook URL for notifications when Claude stops |
+| `SLACK_WEBHOOK` | No | Slack Incoming Webhook URL for notifications when Claude stops (only sent if new commits exist) |
+| `LARK_WEBHOOK` | No | Lark Incoming Webhook URL for notifications when Claude stops (only sent if new commits exist) |
 | `ANTHROPIC_AUTH_TOKEN` | No | Anthropic API token (for custom API endpoints) |
 | `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
 | `QUERY` | No | Initial query to send to Claude after startup |
 | `DEFAULT_MARKETPLACES` | No | Comma-separated default plugin marketplaces (default: `vercel-labs/agent-browser,BoringHappy/CodeMate`) |
-| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate`) |
+| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate`) |
 | `CUSTOM_MARKETPLACES` | No | Comma-separated list of custom plugin marketplace repositories (e.g., `username/repo1,org/repo2`) |
 | `CUSTOM_PLUGINS` | No | Comma-separated list of custom plugins to install (e.g., `plugin1@marketplace1,plugin2@marketplace2`) |
 
@@ -209,12 +220,15 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 CodeMate uses a separate [base image (`codemate-base`)](https://github.com/BoringHappy/CodeMate/pkgs/container/codemate-base) that is rebuilt weekly to keep system packages and development tools up-to-date.
 
 On startup, the container:
-1. Clones/updates repository to `/home/agent/<repo-name>`
-2. Checks out specified branch or PR
-3. Creates PR if working on new branch
-4. Starts Claude Code in a tmux session with `--dangerously-skip-permissions` flag
-5. Sends initial query to Claude if `--query` is provided
-6. Runs a cron job to monitor PR comments (every minute)
+1. Configures git user from environment variables
+2. Authenticates GitHub CLI with token
+3. Installs/updates plugins from configured marketplaces
+4. Clones/updates repository to `/home/agent/<repo-name>`
+5. Checks out specified branch or PR
+6. Creates a draft PR if working on a new branch (unless `--no-pr` or fork workflow)
+7. Starts Claude Code in a tmux session with `--dangerously-skip-permissions` flag
+8. Sends initial query to Claude if `--query` is provided
+9. Runs a cron job every minute to monitor the PR for new comments, CI failures, and review-ready state
 
 ## Skills
 
@@ -231,10 +245,10 @@ On startup, the container:
 | Command | Description |
 |---------|-------------|
 | `/pr:get-details` | Fetch PR information including title, description, file changes, and review comments |
+| `/pr:create` | Create a pull request from the current branch; supports standard and fork workflows |
 | `/pr:fix-comments` | Read PR review comments, fix the issues, commit changes, and reply to comments |
 | `/pr:update` | Update PR title and/or summary. Use `--summary-only` to update only the summary |
 | `/pr:ack-comments` | Acknowledge PR issue comments by adding 👀 reaction |
-| `/pr:read-issue` | ~~Moved to `/issue:read-issue`~~ Read GitHub issue details including title, description, labels, and comments |
 
 **Issue Plugin** (`issue@codemate`):
 | Command | Description |
@@ -243,6 +257,33 @@ On startup, the container:
 | `/issue:refine-issue` | Rewrite issue body to match template (plan-then-execute, requires approval) |
 | `/issue:triage-issue` | Apply priority and category labels based on content analysis |
 | `/issue:classify-issue` | Post clarifying questions for ambiguous issues and add `needs-more-info` label |
+
+**PM Plugin** (`pm@codemate`):
+| Command | Description |
+|---------|-------------|
+| `/pm:spec-list` | List all spec GitHub Issues with their status and task counts |
+| `/pm:spec-init <name>` | Start a guided brainstorming session to create a new spec as a GitHub Issue |
+| `/pm:spec-plan <issue-number> [--granularity micro\|pr\|macro]` | Post a technical implementation plan as a comment on the spec issue; user must 👍 the comment to approve before decomposing |
+| `/pm:spec-decompose <issue-number> [--granularity micro\|pr\|macro]` | Create task sub-issues from the approved plan comment; requires 👍 reaction on the plan comment |
+| `/pm:spec-status <issue-number>` | Show live progress summary from GitHub Issues |
+| `/pm:spec-next <issue-number>` | Find the next actionable task based on dependencies |
+| `/pm:spec-done <issue-number>` | Summarize changes, post a done comment, close the spec issue, and add `done` label |
+| `/pm:spec-abandon <issue-number>` | Close the spec issue and optionally its linked task issues |
+
+The `--granularity` flag controls task sizing:
+- `micro` — 0.5–1 day tasks (fine-grained, commit-level)
+- `pr` — 1–3 day tasks, ~200–400 LOC per PR (default)
+- `macro` — 3–7 day milestones / epics
+
+**Workspace Plugin** (`workspace@codemate`):
+| Command | Description |
+|---------|-------------|
+| `/workspace:best-practice` | Bootstrap a repo with spec issue templates, labels, and PR template |
+
+The workspace plugin also installs session lifecycle hooks:
+- **SessionStart** — records session start time and current commit
+- **UserPromptSubmit** — records each prompt submission timestamp
+- **Stop** — checks for new commits, sends Slack/Lark notifications if `SLACK_WEBHOOK` or `LARK_WEBHOOK` is set
 
 **Browser Plugin** (`agent-browser`):
 | Command | Description |
@@ -258,7 +299,7 @@ You can extend CodeMate with your own custom plugins by adding them to your `.en
 DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
 
 # Override default plugins (optional)
-DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate
 
 # Set to empty to disable all defaults (optional)
 DEFAULT_MARKETPLACES=
@@ -322,7 +363,16 @@ codemate --branch issue-456 --query "Please use /issue:read-issue skill to read 
 
 ## PR Comment Monitoring
 
-CodeMate automatically monitors PR comments and notifies Claude when new feedback arrives. A cron job runs every minute to check for new comments.
+CodeMate automatically monitors PR comments and notifies Claude when new feedback arrives. A cron job runs every minute to check for new comments. The monitor only acts when Claude's session is idle (stopped).
+
+### What Gets Monitored
+
+Each cron run checks the following in priority order (only one action is taken per run):
+
+1. **CI failures** — if a CI check fails on the current branch, Claude is sent the failure logs and asked to fix them
+2. **PR ready for review** — when a draft PR is marked ready for review, Claude is asked to update the PR title and description via `/pr:update` and add a `pr-updated` label
+3. **Issue comments** — new general PR comments (Conversation tab) without a 👀 reaction are forwarded to Claude
+4. **Review comments** — unresolved inline code comments (Files changed tab) trigger `/pr:fix-comments`
 
 ### Comment Types
 
@@ -338,7 +388,7 @@ GitHub PRs have two types of comments that CodeMate monitors:
 When someone leaves a **review comment** (inline code comment):
 
 1. Monitor detects unresolved review comments
-2. Sends message to Claude: `"Please Use /fix-comments skill to address comments"`
+2. Sends message to Claude: `"Please use /fix-comments skill to address comments"`
 3. Claude uses `/pr:fix-comments` skill to:
    - Read the feedback
    - Make code changes
@@ -358,9 +408,9 @@ When someone leaves an **issue comment** (general PR comment):
 ### Filtering Logic
 
 Comments are filtered out if they:
+- Are posted by bots (login ending in `[bot]`)
 - Start with "Claude Replied:" (already handled)
 - Have 👀 reaction (already acknowledged)
-- Were created by Claude itself
 
 ## Best Practices
 

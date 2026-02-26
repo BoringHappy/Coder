@@ -19,10 +19,12 @@ CodeMate solves this by running Claude Code in an isolated Docker container wher
 - zsh with Oh My Zsh
 - Persistent Claude configuration
 - Built-in Claude Code skills for PR workflow automation
-- Slack notifications when Claude stops (via `SLACK_WEBHOOK`)
+- Slack and Lark notifications when Claude stops (via `SLACK_WEBHOOK` / `LARK_WEBHOOK`)
 - tmux session management with PR comment monitoring
 
 ## Quick Start
+
+https://github.com/user-attachments/assets/bb0c68ef-da05-401a-adb3-ea8ccc22667c
 
 ### Prerequisites
 
@@ -210,7 +212,7 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
 | `QUERY` | No | Initial query to send to Claude after startup |
 | `DEFAULT_MARKETPLACES` | No | Comma-separated default plugin marketplaces (default: `vercel-labs/agent-browser,BoringHappy/CodeMate`) |
-| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate`) |
+| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate`) |
 | `CUSTOM_MARKETPLACES` | No | Comma-separated list of custom plugin marketplace repositories (e.g., `username/repo1,org/repo2`) |
 | `CUSTOM_PLUGINS` | No | Comma-separated list of custom plugins to install (e.g., `plugin1@marketplace1,plugin2@marketplace2`) |
 
@@ -263,12 +265,17 @@ On startup, the container:
 |---------|-------------|
 | `/pm:spec-list` | List all spec GitHub Issues with their status and task counts |
 | `/pm:spec-init <name>` | Start a guided brainstorming session to create a new spec as a GitHub Issue |
-| `/pm:spec-plan <name>` | Append a technical implementation plan to the spec issue |
-| `/pm:spec-decompose <name>` | Create task sub-issues from the spec's task breakdown table |
-| `/pm:spec-status <name>` | Show live progress summary from GitHub Issues |
-| `/pm:spec-next <name>` | Find the next actionable task based on dependencies |
-| `/pm:spec-abandon <name>` | Close the spec issue and optionally its linked task issues |
-| `/pm:spec-done <name>` | Mark a spec as done |
+| `/pm:spec-plan <issue-number> [--granularity micro\|pr\|macro]` | Post a technical implementation plan as a comment on the spec issue; user must 👍 the comment to approve before decomposing |
+| `/pm:spec-decompose <issue-number> [--granularity micro\|pr\|macro]` | Create task sub-issues from the approved plan comment; requires 👍 reaction on the plan comment |
+| `/pm:spec-status <issue-number>` | Show live progress summary from GitHub Issues |
+| `/pm:spec-next <issue-number>` | Find the next actionable task based on dependencies |
+| `/pm:spec-done <issue-number>` | Summarize changes, post a done comment, close the spec issue, and add `done` label |
+| `/pm:spec-abandon <issue-number>` | Close the spec issue and optionally its linked task issues |
+
+The `--granularity` flag controls task sizing:
+- `micro` — 0.5–1 day tasks (fine-grained, commit-level)
+- `pr` — 1–3 day tasks, ~200–400 LOC per PR (default)
+- `macro` — 3–7 day milestones / epics
 
 **Workspace Plugin** (`workspace@codemate`):
 | Command | Description |
@@ -294,7 +301,7 @@ You can extend CodeMate with your own custom plugins by adding them to your `.en
 DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
 
 # Override default plugins (optional)
-DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate
+DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate
 
 # Set to empty to disable all defaults (optional)
 DEFAULT_MARKETPLACES=

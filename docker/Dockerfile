@@ -17,7 +17,7 @@ RUN echo "* * * * * agent /usr/local/bin/setup/shell/monitor-pr.sh >> /tmp/pr-mo
 
 # Environment variables for plugin configuration
 ENV DEFAULT_MARKETPLACES="BoringHappy/CodeMate"
-ENV DEFAULT_PLUGINS="git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate"
+ENV DEFAULT_PLUGINS="git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate"
 
 # Switch to agent user and install Claude Code
 USER agent

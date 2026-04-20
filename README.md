@@ -210,7 +210,7 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
 | `QUERY` | No | Initial query to send to Claude after startup |
 | `DEFAULT_MARKETPLACES` | No | Comma-separated default plugin marketplaces (default: `BoringHappy/CodeMate`) |
-| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate`) |
+| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate`) |
 | `CUSTOM_MARKETPLACES` | No | Comma-separated list of custom plugin marketplace repositories (e.g., `username/repo1,org/repo2`) |
 | `CUSTOM_PLUGINS` | No | Comma-separated list of custom plugins to install (e.g., `plugin1@marketplace1,plugin2@marketplace2`) |
 
@@ -294,7 +294,7 @@ You can extend CodeMate with your own custom plugins by adding them to your `.en
 DEFAULT_MARKETPLACES=BoringHappy/CodeMate
 
 # Override default plugins (optional)
-DEFAULT_PLUGINS=git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate
+DEFAULT_PLUGINS=git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate
 
 # Set to empty to disable all defaults (optional)
 DEFAULT_MARKETPLACES=

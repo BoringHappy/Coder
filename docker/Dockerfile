@@ -21,7 +21,8 @@ ENV DEFAULT_PLUGINS="git@codemate,pr@codemate,dev@codemate,issue@codemate,worksp
 
 # Switch to agent user and install Claude Code
 USER agent
-RUN curl -fsSL https://claude.ai/install.sh | bash
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && npm install -g @cometix/ccline
 
 ENTRYPOINT ["/usr/local/bin/setup/setup.sh"]
 CMD ["/usr/local/bin/setup/run.sh"]

@@ -234,8 +234,8 @@ codemate --repo https://github.com/yourname/project.git --upstream https://githu
 | `ANTHROPIC_AUTH_TOKEN` | 否 | Anthropic API token（用于自定义 API 端点） |
 | `ANTHROPIC_BASE_URL` | 否 | Anthropic API 基础 URL（用于自定义 API 端点） |
 | `QUERY` | 否 | 启动后发送给 Claude 的初始 query |
-| `DEFAULT_MARKETPLACES` | 否 | 逗号分隔的默认插件市场（默认：`vercel-labs/agent-browser,BoringHappy/CodeMate`） |
-| `DEFAULT_PLUGINS` | 否 | 逗号分隔的默认插件（默认：`agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate`） |
+| `DEFAULT_MARKETPLACES` | 否 | 逗号分隔的默认插件市场（默认：`BoringHappy/CodeMate`） |
+| `DEFAULT_PLUGINS` | 否 | 逗号分隔的默认插件（默认：`git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate`） |
 | `CUSTOM_MARKETPLACES` | 否 | 逗号分隔的自定义插件市场仓库列表（例如：`username/repo1,org/repo2`） |
 | `CUSTOM_PLUGINS` | 否 | 逗号分隔的要安装的自定义插件列表（例如：`plugin1@marketplace1,plugin2@marketplace2`） |
 
@@ -254,7 +254,7 @@ CodeMate 使用单独的[基础镜像（`codemate-base`）](https://github.com/B
 
 ## Skills
 
-[CodeMate](https://github.com/BoringHappy/CodeMate) 预装了来自 [agent-browser](https://github.com/vercel-labs/agent-browser) 的 skills。这些 skills 在启动容器时自动可用，并为 Git、PR 管理和浏览器交互提供工作流自动化。
+[CodeMate](https://github.com/BoringHappy/CodeMate) 预装了 skills，在启动容器时自动可用，为 Git、PR 管理等提供工作流自动化。
 
 ### 可用插件
 
@@ -280,21 +280,16 @@ CodeMate 使用单独的[基础镜像（`codemate-base`）](https://github.com/B
 | `/issue:triage-issue` | 根据内容分析应用优先级和分类标签 |
 | `/issue:classify-issue` | 为不明确的 issue 发布澄清问题并添加 `needs-more-info` 标签 |
 
-**浏览器插件** (`agent-browser`)：
-| 命令 | 描述 |
-|---------|-------------|
-| `/agent-browser` | 自动化浏览器交互，用于 Web 测试、表单填充、截图和数据提取 |
-
 ### 自定义插件
 
 你可以通过在 `.env` 文件中添加自定义插件来扩展 CodeMate：
 
 ```bash
 # 覆盖默认市场（可选）
-DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
+DEFAULT_MARKETPLACES=BoringHappy/CodeMate
 
 # 覆盖默认插件（可选）
-DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate
+DEFAULT_PLUGINS=git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate
 
 # 设置为空以禁用所有默认值（可选）
 DEFAULT_MARKETPLACES=

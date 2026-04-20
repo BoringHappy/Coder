@@ -209,8 +209,8 @@ codemate --build -f ./Dockerfile.custom --tag codemate:custom --branch feature/x
 | `ANTHROPIC_AUTH_TOKEN` | No | Anthropic API token (for custom API endpoints) |
 | `ANTHROPIC_BASE_URL` | No | Anthropic API base URL (for custom API endpoints) |
 | `QUERY` | No | Initial query to send to Claude after startup |
-| `DEFAULT_MARKETPLACES` | No | Comma-separated default plugin marketplaces (default: `vercel-labs/agent-browser,BoringHappy/CodeMate`) |
-| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate`) |
+| `DEFAULT_MARKETPLACES` | No | Comma-separated default plugin marketplaces (default: `BoringHappy/CodeMate`) |
+| `DEFAULT_PLUGINS` | No | Comma-separated default plugins (default: `git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate`) |
 | `CUSTOM_MARKETPLACES` | No | Comma-separated list of custom plugin marketplace repositories (e.g., `username/repo1,org/repo2`) |
 | `CUSTOM_PLUGINS` | No | Comma-separated list of custom plugins to install (e.g., `plugin1@marketplace1,plugin2@marketplace2`) |
 
@@ -232,7 +232,7 @@ On startup, the container:
 
 ## Skills
 
-[CodeMate](https://github.com/BoringHappy/CodeMate) comes with pre-installed skills from the [agent-browser](https://github.com/vercel-labs/agent-browser). These skills are automatically available when you start the container and provide workflow automation for Git, PR management, and browser interactions.
+[CodeMate](https://github.com/BoringHappy/CodeMate) comes with pre-installed skills automatically available when you start the container, providing workflow automation for Git, PR management, and more.
 
 ### Available Plugins
 
@@ -258,7 +258,7 @@ On startup, the container:
 | `/issue:triage-issue` | Apply priority and category labels based on content analysis |
 | `/issue:classify-issue` | Post clarifying questions for ambiguous issues and add `needs-more-info` label |
 
-**PM Plugin** (`pm@codemate`):
+**PM Plugin** (`pm@codemate`) — _recommended for local Claude Code, not bundled in the Docker image. Install via `claude plugin install pm@codemate` or add to `CUSTOM_PLUGINS` if you want it inside the container._
 | Command | Description |
 |---------|-------------|
 | `/pm:spec-list` | List all spec GitHub Issues with their status and task counts |
@@ -285,21 +285,16 @@ The workspace plugin also installs session lifecycle hooks:
 - **UserPromptSubmit** — records each prompt submission timestamp
 - **Stop** — checks for new commits, sends Slack/Lark notifications if `SLACK_WEBHOOK` or `LARK_WEBHOOK` is set
 
-**Browser Plugin** (`agent-browser`):
-| Command | Description |
-|---------|-------------|
-| `/agent-browser` | Automate browser interactions for web testing, form filling, screenshots, and data extraction |
-
 ### Custom Plugins
 
 You can extend CodeMate with your own custom plugins by adding them to your `.env` file:
 
 ```bash
 # Override default marketplaces (optional)
-DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
+DEFAULT_MARKETPLACES=BoringHappy/CodeMate
 
 # Override default plugins (optional)
-DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate,pm@codemate
+DEFAULT_PLUGINS=git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate
 
 # Set to empty to disable all defaults (optional)
 DEFAULT_MARKETPLACES=

@@ -12,6 +12,7 @@ sudo service cron start || sudo cron || true
 
 run_setup_script "$SETUP_DIR/shell/setup-git.sh" "Running setup-git.sh..."
 run_setup_script "$SETUP_DIR/shell/setup-gh.sh" "Running setup-gh.sh..."
+run_setup_script "$SETUP_DIR/python/setup-ccline.py" "Running setup-ccline.py..."
 run_setup_script "$SETUP_DIR/shell/setup-plugins.sh" "Running setup-plugins.sh..."
 run_setup_script "$SETUP_DIR/python/setup-repo.py" "Running setup-repo.py..."
 

@@ -258,7 +258,7 @@ On startup, the container:
 | `/issue:triage-issue` | Apply priority and category labels based on content analysis |
 | `/issue:classify-issue` | Post clarifying questions for ambiguous issues and add `needs-more-info` label |
 
-**PM Plugin** (`pm@codemate`):
+**PM Plugin** (`pm@codemate`) — _recommended for local Claude Code, not bundled in the Docker image. Install via `claude plugin install pm@codemate` or add to `CUSTOM_PLUGINS` if you want it inside the container._
 | Command | Description |
 |---------|-------------|
 | `/pm:spec-list` | List all spec GitHub Issues with their status and task counts |

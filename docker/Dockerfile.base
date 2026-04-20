@@ -78,7 +78,6 @@ USER agent
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
     && sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 
-
 # Install Rust, cargo, rust-script, and uv
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
     && echo 'source $HOME/.cargo/env' >> /home/agent/.zshrc \

@@ -47,13 +47,9 @@ CodeMate uses the CodeMatePlugin marketplace to distribute plugins. Plugins are 
 The marketplace is fetched from the external repository: `BoringHappy/CodeMatePlugin`
 
 **Default Marketplaces:**
-- `vercel-labs/agent-browser` - Browser automation tools
 - `codemate` (BoringHappy/CodeMate) - CodeMate plugins
 
 **Default Plugins:**
-
-**Agent Browser** (`agent-browser@agent-browser`):
-- `/agent-browser:agent-browser` - Browser automation CLI for AI agents
 
 **Git Plugin** (`git@codemate`):
 - `/git:commit` - Stage, commit, and push changes
@@ -83,10 +79,10 @@ You can customize which marketplaces and plugins are installed by default using 
 
 ```bash
 # Override default marketplaces (comma-separated GitHub repo paths)
-DEFAULT_MARKETPLACES=vercel-labs/agent-browser,BoringHappy/CodeMate
+DEFAULT_MARKETPLACES=BoringHappy/CodeMate
 
 # Override default plugins (comma-separated plugin@marketplace)
-DEFAULT_PLUGINS=agent-browser@agent-browser,git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate
+DEFAULT_PLUGINS=git@codemate,pr@codemate,dev@codemate,issue@codemate,workspace@codemate
 
 # Set to empty to disable all defaults
 DEFAULT_MARKETPLACES=

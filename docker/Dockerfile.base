@@ -23,7 +23,7 @@ RUN set -ex \
     && mkdir -p /usr/local/share/npm-global \
     && chown -R agent:agent /usr/local/share/npm-global
 
-# Install CLI tools, development packages, Node.js LTS, and agent-browser
+# Install CLI tools, development packages, and Node.js LTS
 # Optimize apt: use AWS mirror and disable unused repositories (multiverse, backports)
 RUN sed -i 's|http://ports.ubuntu.com|http://us-east-1.ec2.ports.ubuntu.com|g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || \
     sed -i 's|http://ports.ubuntu.com|http://us-east-1.ec2.ports.ubuntu.com|g' /etc/apt/sources.list \
@@ -69,10 +69,7 @@ RUN set -euxo pipefail \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && chsh -s $(which zsh) agent \
-    && npm install -g agent-browser \
-    && agent-browser install --with-deps \
-    && npm cache clean --force \
-    && npx playwright install-deps chromium
+    && npm cache clean --force
 
 # Switch to agent user for user-specific installations
 USER agent
@@ -81,9 +78,6 @@ USER agent
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended \
     && sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="ys"/g' /home/agent/.zshrc
 
-# Install Playwright browsers and add agent-browser wrapper function
-RUN npx playwright install chromium \
-    && echo 'agent-browser() { if [ -n "$HTTPS_PROXY" ]; then command agent-browser --proxy "$HTTPS_PROXY" "$@"; else command agent-browser "$@"; fi; }' >> /home/agent/.zshrc
 
 # Install Rust, cargo, rust-script, and uv
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \

@@ -6,7 +6,7 @@ FROM ${BASE_IMAGE}
 
 # Environment variables
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=/home/agent/.pixi/bin:/home/agent/.local/bin:/usr/local/share/npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=/home/agent/.local/bin:/usr/local/share/npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
@@ -87,3 +87,6 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
     && echo 'eval "$(uv generate-shell-completion zsh)"' >> /home/agent/.zshrc \
     && curl -fsSL https://pixi.sh/install.sh | sh \
     && echo 'eval "$(pixi completion --shell zsh)"' >> /home/agent/.zshrc
+
+# Add pixi bin directory to PATH so pixi-managed binaries are available
+ENV PATH=/home/agent/.pixi/bin:${PATH}

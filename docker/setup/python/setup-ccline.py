@@ -12,7 +12,7 @@ SETTINGS_FILE = os.path.expanduser("~/.claude/settings.json")
 
 STATUS_LINE_CONFIG = {
     "type": "command",
-    "command": "~/.claude/ccline/ccline",
+    "command": "ccline",
     "padding": 0,
 }
 

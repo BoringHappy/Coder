@@ -21,6 +21,7 @@ PR_TITLE="${PR_TITLE:-}"
 ISSUE_NUMBER="${ISSUE_NUMBER:-}"
 QUERY="${QUERY:-}"
 NO_PR="${NO_PR:-}"
+NETWORK="${NETWORK:-}"
 CODEMATE_IMAGE="${CODEMATE_IMAGE:-ghcr.io/boringhappy/codemate:latest}"
 BUILD_LOCAL=false
 DOCKERFILE_PATH="docker/Dockerfile"
@@ -361,9 +362,11 @@ run_codemate() {
     local branch_sanitized=$(echo "$branch_for_name" | sed 's/[^a-zA-Z0-9_-]/-/g')
     CONTAINER_NAME="codemate-${repo_for_name}-${branch_sanitized}"
 
-    # Detect OS for network flag
+    # Determine network flag: explicit --network overrides OS-based default
     NETWORK_FLAG=""
-    if [ "$(uname -s)" != "Darwin" ]; then
+    if [ -n "$NETWORK" ]; then
+        NETWORK_FLAG="--network $NETWORK"
+    elif [ "$(uname -s)" != "Darwin" ]; then
         NETWORK_FLAG="--network host"
     fi
 
@@ -447,6 +450,8 @@ Options:
   --issue NUMBER       GitHub issue number to work on (creates branch issue-NUMBER)
   --query QUERY        Initial query to send to Claude after startup
   --no-pr              Skip PR creation and branch push for new branches
+  --network NETWORK    Docker network to use (e.g. host, bridge, container:<name>)
+                       Overrides the default (host on Linux, none on macOS)
   --repo URL           Git repository URL (can be your own repo or a fork)
   --upstream URL       Upstream repository URL (optional, for fork-based workflows)
   --mount PATH:PATH    Custom volume mount (can be used multiple times)
@@ -470,6 +475,7 @@ Environment Variables:
   GIT_USER_NAME        Git commit author name
   GIT_USER_EMAIL       Git commit author email
   CODEMATE_IMAGE       Docker image to use (default: ghcr.io/boringhappy/codemate:latest)
+  NETWORK              Docker network to use (overrides OS-based default)
   SLACK_WEBHOOK        Slack Incoming Webhook URL for notifications when Claude stops
 
 Examples:
@@ -511,6 +517,10 @@ Examples:
 
   # Run with initial query
   codemate --branch feature/xyz --query "Please review the code and fix any issues"
+
+  # Run sharing another container's network (useful for sidecar/proxy setups)
+  codemate --branch feature/xyz --network container:my-proxy
+  codemate --branch feature/xyz --network bridge
 
 EOF
 }
@@ -579,6 +589,15 @@ main() {
             --no-pr)
                 NO_PR="true"
                 shift
+                ;;
+            --network)
+                if [ -z "$2" ]; then
+                    print_error "--network requires a network name"
+                    show_usage
+                    exit 1
+                fi
+                NETWORK="$2"
+                shift 2
                 ;;
             --repo)
                 if [ -z "$2" ]; then

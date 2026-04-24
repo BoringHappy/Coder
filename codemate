@@ -362,12 +362,12 @@ run_codemate() {
     local branch_sanitized=$(echo "$branch_for_name" | sed 's/[^a-zA-Z0-9_-]/-/g')
     CONTAINER_NAME="codemate-${repo_for_name}-${branch_sanitized}"
 
-    # Determine network flag: explicit --network overrides OS-based default
-    NETWORK_FLAG=""
+    # Determine network args: explicit --network overrides OS-based default
+    local network_args=()
     if [ -n "$NETWORK" ]; then
-        NETWORK_FLAG="--network $NETWORK"
+        network_args=(--network "$NETWORK")
     elif [ "$(uname -s)" != "Darwin" ]; then
-        NETWORK_FLAG="--network host"
+        network_args=(--network host)
     fi
 
     # Check if container is already running
@@ -411,7 +411,7 @@ run_codemate() {
     local docker_cmd=(
         docker run --rm --name "$CONTAINER_NAME"
         --pull always
-        $NETWORK_FLAG
+        "${network_args[@]}"
         -it
         "${volume_mounts[@]}"
         $env_file_flag
@@ -451,7 +451,7 @@ Options:
   --query QUERY        Initial query to send to Claude after startup
   --no-pr              Skip PR creation and branch push for new branches
   --network NETWORK    Docker network to use (e.g. host, bridge, container:<name>)
-                       Overrides the default (host on Linux, none on macOS)
+                       Overrides the default (host on Linux, Docker Desktop default on macOS)
   --repo URL           Git repository URL (can be your own repo or a fork)
   --upstream URL       Upstream repository URL (optional, for fork-based workflows)
   --mount PATH:PATH    Custom volume mount (can be used multiple times)

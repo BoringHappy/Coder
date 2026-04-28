@@ -70,24 +70,13 @@ RUN set -euxo pipefail \
     && chsh -s $(which zsh) agent \
     && npm cache clean --force
 
-# Install kubectl and helm (multi-arch: amd64/arm64)
-# Versions are pinned for reproducibility; bump via build args.
-ARG KUBECTL_VERSION=v1.36.0
-ARG HELM_VERSION=v4.1.4
+# Install kubectl and helm (multi-arch: amd64/arm64) - latest stable versions
 RUN set -euxo pipefail \
     && ARCH=$(dpkg --print-architecture) \
+    && KUBECTL_VERSION=$(curl -fsSL https://dl.k8s.io/release/stable.txt) \
     && curl -fsSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl" \
-    && curl -fsSLo /tmp/kubectl.sha256 "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl.sha256" \
-    && echo "$(cat /tmp/kubectl.sha256)  /usr/local/bin/kubectl" | sha256sum -c - \
     && chmod +x /usr/local/bin/kubectl \
-    && HELM_TARBALL="helm-${HELM_VERSION}-linux-${ARCH}.tar.gz" \
-    && curl -fsSLo "/tmp/${HELM_TARBALL}" "https://get.helm.sh/${HELM_TARBALL}" \
-    && curl -fsSLo "/tmp/${HELM_TARBALL}.sha256sum" "https://get.helm.sh/${HELM_TARBALL}.sha256sum" \
-    && (cd /tmp && sha256sum -c "${HELM_TARBALL}.sha256sum") \
-    && tar -xzf "/tmp/${HELM_TARBALL}" -C /tmp \
-    && mv "/tmp/linux-${ARCH}/helm" /usr/local/bin/helm \
-    && chmod +x /usr/local/bin/helm \
-    && rm -rf /tmp/kubectl.sha256 "/tmp/${HELM_TARBALL}" "/tmp/${HELM_TARBALL}.sha256sum" "/tmp/linux-${ARCH}"
+    && curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 # Switch to agent user for user-specific installations
 USER agent

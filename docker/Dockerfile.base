@@ -70,6 +70,14 @@ RUN set -euxo pipefail \
     && chsh -s $(which zsh) agent \
     && npm cache clean --force
 
+# Install kubectl and helm (multi-arch: amd64/arm64) - latest stable versions
+RUN set -euxo pipefail \
+    && ARCH=$(dpkg --print-architecture) \
+    && KUBECTL_VERSION=$(curl -fsSL https://dl.k8s.io/release/stable.txt) \
+    && curl -fsSLo /usr/local/bin/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl" \
+    && chmod +x /usr/local/bin/kubectl \
+    && curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
 # Switch to agent user for user-specific installations
 USER agent
 

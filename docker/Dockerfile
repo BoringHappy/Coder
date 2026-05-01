@@ -9,6 +9,12 @@ USER root
 # Copy setup scripts as root (755 allows agent user to read/execute)
 COPY --chmod=755 setup /usr/local/bin/setup
 
+# Install tmux configuration for the agent user.
+# Enables mouse scroll, focus events, and Kitty Keyboard Protocol passthrough
+# so Shift+Enter and similar modified keys work in Claude Code from any
+# CSI-u-capable host terminal (iTerm2, Ghostty, WezTerm, Kitty, etc.).
+COPY --chown=agent:agent --chmod=644 tmux.conf /home/agent/.tmux.conf
+
 # Setup cron job for PR monitoring (runs every minute)
 # Using /etc/cron.d format which requires user field and is auto-loaded by cron daemon
 # Note: Environment variables are read from /proc/1/environ by monitor-pr.sh

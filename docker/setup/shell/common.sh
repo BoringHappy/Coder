@@ -119,8 +119,12 @@ send_and_verify_command() {
     local SESSION_STATUS_FILE="/tmp/.session_status"
 
     # Send the command
+    # Use literal "Enter" key name rather than C-m: with extended-keys always
+    # enabled in tmux.conf, C-m is encoded as a CSI u modified-key sequence
+    # (\x1b[109;5u) that Claude Code does not interpret as Enter, so the
+    # prompt would never submit.
     tmux send-keys -t "$session_name" "$command"
-    tmux send-keys -t "$session_name" C-m
+    tmux send-keys -t "$session_name" Enter
 
     # Verify submission with retry
     while [ $attempt -le $max_attempts ]; do
@@ -134,7 +138,7 @@ send_and_verify_command() {
             else
                 printf "${YELLOW}Command not submitted (status: $STATUS), attempt $attempt/$max_attempts${RESET}\n"
                 if [ $attempt -lt $max_attempts ]; then
-                    tmux send-keys -t "$session_name" C-m
+                    tmux send-keys -t "$session_name" Enter
                 fi
             fi
         else
